@@ -506,7 +506,7 @@ const OGGETTI_BY_ID = Object.fromEntries(OGGETTI.map(o=>[o.id,o]));
 function S(id,name,text,extra){return Object.assign({id,name,text},extra||{});}
 const SPELLS = {
   essenza:[
-    S("sp_analisi","Analisi Planare","Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare (Mago) / gratis (altre classi affini se non Veggente... regola: costa comunque risorsa salvo Veggente).",{reward:{type:"peek",n:1,discard:true},cost:1}),
+    S("sp_analisi","Analisi Planare","Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare.",{reward:{type:"peek",n:1,discard:true},cost:1}),
     S("sp_convulsione","Convulsione Planare","Raro: rimescola per intero il mazzo Piani.",{reward:{type:"reshuffle"},cost:1}),
     S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",{combatHelper:2}),
     S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{manualUse:true}),
@@ -537,7 +537,7 @@ const SPELLS = {
   divinazione:[
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
-    S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3}}),
+    S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
     S("sp_vaticinio","Vaticinio","Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",{manualUse:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
     S("sp_richiamofondo","Richiamo dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Gratuito. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},daTestare:true}),
@@ -649,6 +649,8 @@ function makeChar(name, clsKey, bonus){
     charges:{ special:true }, // class special charge available
     negromanteUsed:false,
     stealthedThisEncounter:false,
+    pendingFollia:null, // 'salto' | 'trascina' — azione dovuta al prossimo turno
+    pendingCorruzione:null, // 'contrario' | 'ostile' — azione dovuta al prossimo turno
     log:[],
   };
   if(bonus && bonus.stat){ c.stats[bonus.stat]=Math.min(6,c.stats[bonus.stat]+bonus.amount); c.start[bonus.stat]=c.stats[bonus.stat]; }
@@ -914,7 +916,14 @@ function cardArt(id, icon, name, famClass){
 }
 
 /* ---------------- DRAW / RESOLUTION FLOW ---------------- */
+function reinsertPianoCard(id){
+  // "le carte Piano risolte tornano nel mazzo (si ributtano dentro)": nessuna garanzia
+  // di non-ripetizione, quindi la stessa carta può ripresentarsi già al turno successivo.
+  const pos = Math.floor(Math.random()*(state.mazzoPiani.length+1));
+  state.mazzoPiani.splice(pos,0,id);
+}
 function doJump(){
+  applyPendingMadnessActions();
   state.jumps++;
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
@@ -926,7 +935,7 @@ function doJump(){
     return;
   }
   const plane = PIANI_BY_ID[drawnId];
-  state.mazzoPiani.push(drawnId); // "si ributta dentro dopo ogni carta risolta"
+  reinsertPianoCard(drawnId);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   // reset resistance charge for this family for everyone
   state.players.forEach(c=> resetResistanceForPlane(c, plane.family));
@@ -939,6 +948,18 @@ function doJump(){
   logMsg(`🚪 Il gruppo salta: <strong>${plane.name}</strong>.`);
   applyPlaneIntrinsic(plane);
   render();
+}
+function startJump(){
+  // "Party al completo, tutti per la manina": l'unità del gruppo rivela la carta Piano
+  // in cima al mazzo prima di saltare. Non è una scelta: resta quella la destinazione.
+  const nextId = state.mazzoPiani[0];
+  const label = nextId==='__PT__' ? 'Una destinazione leggendaria del Piano Terreno' : (PIANI_BY_ID[nextId]?.name || '?');
+  openModal(`<h3>🤝 Il gruppo si tiene per mano</h3>
+    <p>Uniti, vedete la carta in cima al mazzo Piani prima di saltare — resta quella la destinazione, non è una scelta:</p>
+    <p style="font-size:1.3rem;font-family:'Cinzel',serif;text-align:center;margin:1rem 0;">${escapeHtml(label)}</p>
+    <div class="row mt1"><button class="primary" id="btnConfirmJump">🌀 Salta</button></div>`);
+  const btn=document.getElementById('btnConfirmJump');
+  if(btn) btn.onclick=()=>{ closeModal(); doJump(); };
 }
 function checkLevelUp(c){
   if(c.jumps>0 && c.jumps%5===0){
@@ -1076,6 +1097,7 @@ function resolveAutoCombat(acts, entityDefs, ctx){
   logMsg(`⚔️ ${acts.map(c=>c.name).join(', ')} risolve un combattimento automatico contro ${entityDefs[0].name} in ${rounds} giro/i.`);
 }
 function reshuffleMazzoPiani(){
+  if(inStasi()){ logMsg('⏳ Qui nulla può cambiare: il mazzo Piani non è manipolabile (Stasi).', 'warn'); return; }
   state.mazzoPiani = shuffle(state.mazzoPiani);
   logMsg('🔀 Il mazzo Piani viene rimescolato per intero.');
 }
@@ -1110,19 +1132,68 @@ function applySanLoss(c,n){
 }
 function triggerFollia(c){
   const r=d6();
-  let effect;
-  if(r<=2) effect='Nulla, nonostante il campanello d\'allarme.';
-  else if(r<=4) effect='Al turno successivo si lancerà da solo in un portale casuale.';
-  else effect='Al turno successivo tenterà di trascinare con sé un compagno (Contesa di Forza).';
-  logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): ${effect}`, 'warn');
+  if(r<=2){ logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
+  if(r<=4){ c.pendingFollia='salto'; logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno si lancerà da solo in un portale casuale.`, 'warn'); return; }
+  c.pendingFollia='trascina';
+  logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza).`, 'warn');
 }
 function triggerCorruzione(c){
   const r=d6();
-  let effect;
-  if(r<=2) effect='Nulla, nonostante il campanello d\'allarme.';
-  else if(r<=4) effect='Al turno successivo farà il contrario del resto del gruppo.';
-  else effect='Al turno successivo agirà contro il team.';
-  logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): ${effect}`, 'warn');
+  if(r<=2){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
+  if(r<=4){ c.pendingCorruzione='contrario'; logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno farà il contrario del resto del gruppo.`, 'warn'); return; }
+  c.pendingCorruzione='ostile';
+  logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno agirà contro il team.`, 'warn');
+}
+/* -------- risoluzione delle azioni dovute a Follia/Corruzione al turno successivo -------- */
+function resolveForceContest(a,b){
+  for(let i=0;i<20;i++){
+    const ra=checkRoll(a,'for'), rb=checkRoll(b,'for');
+    if(ra.success && !rb.success) return a;
+    if(rb.success && !ra.success) return b;
+    // entrambi riescono o entrambi falliscono: si ritira (nessun vincitore ancora)
+  }
+  return a;
+}
+function soloForcedJump(group, reason){
+  if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
+  const drawnId = state.mazzoPiani.shift();
+  const names = group.map(x=>x.name).join(' e ');
+  if(drawnId==='__PT__'){
+    reinsertPianoCard('__PT__');
+    logMsg(`🌀 Salto forzato da ${reason}: ${names} pesca un segnaposto Piano Terreno — nessun effetto speciale, si tratta come una carta normale.`, 'warn');
+    return;
+  }
+  const plane = PIANI_BY_ID[drawnId];
+  reinsertPianoCard(drawnId);
+  logMsg(`🌀 Salto forzato da ${reason}: ${names} ${group.length>1?'finiscono':'finisce'} da ${group.length>1?'soli':'solo'} in <strong>${plane.name}</strong> (destinazione totalmente casuale, senza le informazioni del gruppo unito).`, 'warn');
+  group.forEach(x=>resetResistanceForPlane(x, plane.family));
+  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type};
+  const fn = PLANE_EFFECTS[plane.effectKey];
+  if(fn) fn(plane, group, ctx);
+  logMsg(`(Turno solitario: applicato solo l'effetto intrinseco del piano. L'eventuale Incontro va gestito manualmente dal tavolo per ${names}, dato che il resto del gruppo prosegue nel frattempo con il proprio salto.)`);
+}
+function applyPendingMadnessActions(){
+  activeChars().forEach(c=>{
+    if(c.pendingFollia){
+      const action = c.pendingFollia; c.pendingFollia=null;
+      if(action==='salto'){ soloForcedJump([c], 'Follia'); }
+      else {
+        const others = activeChars().filter(x=>x.id!==c.id);
+        if(others.length===0){ soloForcedJump([c], 'Follia'); }
+        else {
+          const target = others[Math.floor(Math.random()*others.length)];
+          const winner = resolveForceContest(c, target);
+          if(winner===c){ logMsg(`🌀 ${c.name} (Follia) trascina con sé ${target.name}, afferrandolo per la manina a forza: Contesa di Forza vinta.`, 'warn'); soloForcedJump([c,target], 'Follia'); }
+          else { logMsg(`🌀 ${target.name} resiste alla presa di ${c.name} (Follia): solo ${c.name} si lancia comunque da solo.`, 'warn'); soloForcedJump([c], 'Follia'); }
+        }
+      }
+    }
+    if(c.pendingCorruzione){
+      const action = c.pendingCorruzione; c.pendingCorruzione=null;
+      if(action==='contrario') logMsg(`👹 ${c.name} (Corruzione): in questo turno fa esattamente il contrario di quello che fa il resto del gruppo — il tavolo interpreta l'azione.`, 'warn');
+      else logMsg(`👹 ${c.name} (Corruzione): in questo turno agisce contro il team, un'azione ostile verso i compagni (usa spell/oggetti d'attacco se ne possiede) — singola e circoscritta a questo turno, nessun effetto duraturo.`, 'warn');
+    }
+  });
 }
 
 /* -------- Incontro drawing / d6 generic crossover -------- */
@@ -1131,10 +1202,9 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
   if(acts.length===0){ render(); return; }
   applyGironeEffects(plane, acts);
   let deckKey = forcedDeck || plane.deck || 'generico';
-  if(!forcedDeck){
-    const roll = d6();
-    if(roll===6 && deckKey!=='generico'){ logMsg('🎲 d6 = 6 → si pesca dal sotto-mazzo Generico invece che da quello tematico.'); deckKey='generico'; }
-  }
+  // "uguale per tutti i piani, senza eccezioni" — vale anche in Demoniaco e Piano Negativo (girone forzato).
+  const roll = d6();
+  if(roll===6 && deckKey!=='generico'){ logMsg('🎲 d6 = 6 → si pesca dal sotto-mazzo Generico invece che da quello tematico.'); deckKey='generico'; }
   const deck = state.subdecks[deckKey];
   if(deck.length===0){
     state.subdecks[deckKey] = shuffle(state.subdecksDiscard[deckKey]);
@@ -1143,12 +1213,13 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
   const cardId = state.subdecks[deckKey].shift();
   state.subdecksDiscard[deckKey].push(cardId);
   const card = INCONTRI[deckKey].find(c=>c.id===cardId);
-  state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id) };
+  state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[] };
   logMsg(`🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`);
   render();
 }
 
 function currentPlane(){ return state.currentDraw ? PIANI_BY_ID[state.currentDraw.planeId] : null; }
+function inStasi(){ const p=currentPlane(); return !!p && p.id==='stasi'; }
 function currentIncontro(){ if(!state.currentDraw||!state.currentDraw.incontroId) return null; return INCONTRI[state.currentDraw.incontroDeck].find(c=>c.id===state.currentDraw.incontroId); }
 
 function renderDrawFlow(){
@@ -1197,8 +1268,23 @@ function renderIncontroAction(){
     return;
   }
   if(card.type==='incontro'){
-    el.innerHTML = renderCombatPanel(plane, card, acts);
-    bindCombatPanel(plane, card, acts);
+    const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
+    const decided = state.currentDraw.stealthDecided||{};
+    const stealthEligible = stealthAllowed ? acts.filter(c=>CLASSES[c.cls].stealth && !decided[c.id]) : [];
+    if(stealthEligible.length){
+      el.innerHTML = renderStealthPanel(stealthEligible);
+      bindStealthPanel(stealthEligible);
+      return;
+    }
+    const hidden = state.currentDraw.hidden||[];
+    const fighters = acts.filter(c=>!hidden.includes(c.id));
+    if(fighters.length===0){
+      el.innerHTML = `<p class="hint">🥷 Tutti i presenti sono riusciti a restare nascosti: nessuno scontro, né rischi né ricompense.</p><button class="primary" id="btnResolveDone">Continua</button>`;
+      document.getElementById('btnResolveDone').onclick=finishIncontro;
+      return;
+    }
+    el.innerHTML = renderCombatPanel(plane, card, fighters);
+    bindCombatPanel(plane, card, fighters);
     return;
   }
   if(card.type==='check'){
@@ -1267,6 +1353,35 @@ function nativeStatFor(plane){
   if(plane.check==='for_or_int') return Math.random()<0.5?'for':'int';
   if(plane.check==='choice') return 'for';
   return plane.check||'for';
+}
+
+/* ---------- furtività (Ladro, Saltimbanco) ---------- */
+function renderStealthPanel(chars){
+  return `<div class="manual-box"><h4>🥷 Furtività</h4>
+    <p style="font-size:.85rem;">Chi ha Furtività vede l'Incontro e decide se tentare di restare nascosto (check di Destrezza) prima che si affronti lo scontro: chi la usa vede solo se stesso, non tutto il gruppo.</p>
+    ${chars.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${escapeHtml(c.name)} (Des ${effectiveStat(c,'des')})</span>
+      <button class="small" data-stealth-try="${c.id}">Tenta di restare nascosto</button>
+      <button class="small" data-stealth-skip="${c.id}">Affronta apertamente</button>
+    </div>`).join('')}
+  </div>`;
+}
+function bindStealthPanel(chars){
+  const decide=(c, hid)=>{
+    state.currentDraw.stealthDecided = state.currentDraw.stealthDecided||{};
+    state.currentDraw.stealthDecided[c.id]=true;
+    if(hid){ state.currentDraw.hidden = state.currentDraw.hidden||[]; state.currentDraw.hidden.push(c.id); }
+    render(); setTimeout(renderIncontroAction,0);
+  };
+  document.querySelectorAll('[data-stealth-try]').forEach(b=>b.onclick=()=>{
+    const c=chars.find(x=>x.id===b.dataset.stealthTry);
+    const r=checkRoll(c,'des');
+    logMsg(`🥷 ${c.name} tenta la Furtività: ${r.roll} vs ${r.val} → ${r.success?'resta nascosto, evita lo scontro (né rischi né ricompense)':'scoperto, affronterà l\'Incontro normalmente'}.`);
+    decide(c, r.success);
+  });
+  document.querySelectorAll('[data-stealth-skip]').forEach(b=>b.onclick=()=>{
+    const c=chars.find(x=>x.id===b.dataset.stealthSkip);
+    decide(c, false);
+  });
 }
 
 /* ---------- combat / contesa ---------- */
@@ -1460,9 +1575,18 @@ function showPeekModal(r){
   render(); // no-op, just ensure state consistent
   const cards = r.type==='peekBottom' ? [state.mazzoPiani[state.mazzoPiani.length-1]] : state.mazzoPiani.slice(0,n);
   const names = cards.map(id=>id==='__PT__'?'Piano Terreno (segnaposto)':PIANI_BY_ID[id]?.name);
+  const stasi = inStasi();
+  let actionsHtml = '';
+  if(stasi){
+    actionsHtml = `<p class="hint">⏳ Qui a Stasi il mazzo Piani non è manipolabile: puoi solo guardare, non riordinare né scartare.</p>`;
+  } else {
+    if(r.discard){ actionsHtml += `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-discardpeek="${i}">Scarta in fondo #${i+1} e pesca un'altra</button>`).join('')}</div>`; }
+    if(r.chooseBottom){ actionsHtml += `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-sendbottom="${i}">Manda in fondo #${i+1}, lascia le altre in cima</button>`).join('')}</div>`; }
+    if(r.type==='peekBottom'){ actionsHtml += `<div class="row mt1"><button class="primary" id="btnMoveBottomTop">Porta questa carta in cima</button></div>`; }
+  }
   openModal(`<h3>👁️ Anteprima mazzo Piani</h3><ul>${names.map(n=>`<li>${n}</li>`).join('')}</ul>
-    ${r.discard? `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-discardpeek="${i}">Scarta in fondo #${i+1} e pesca un'altra</button>`).join('')}</div>`:''}
-    <div class="row mt1">${r.type==='peekBottom'?`<button class="primary" id="btnMoveBottomTop">Porta questa carta in cima</button>`:''}<button id="btnClosePeek">Chiudi</button></div>`);
+    ${actionsHtml}
+    <div class="row mt1"><button id="btnClosePeek">Chiudi</button></div>`);
   const closeBtn=document.getElementById('btnClosePeek'); if(closeBtn) closeBtn.onclick=()=>{ closeModal(); finishIncontro(); };
   const moveBtn=document.getElementById('btnMoveBottomTop');
   if(moveBtn) moveBtn.onclick=()=>{ const bottom=state.mazzoPiani.pop(); state.mazzoPiani.unshift(bottom); logMsg('🔮 La carta in fondo al mazzo diventa la prossima destinazione.'); closeModal(); finishIncontro(); };
@@ -1470,8 +1594,20 @@ function showPeekModal(r){
     const i=+b.dataset.discardpeek;
     const id = state.mazzoPiani.splice(i,1)[0];
     state.mazzoPiani.push(id);
-    logMsg('🔮 Carta scartata in fondo al mazzo, se ne pesca una nuova al posto suo.');
-    closeModal(); showPeekModal(r);
+    if(r.noRedraw){
+      logMsg('🔮 Carta scartata in fondo al mazzo: senza pescarne subito un\'altra, il prossimo salto pescherà semplicemente la nuova carta in cima.');
+      closeModal(); finishIncontro();
+    } else {
+      logMsg('🔮 Carta scartata in fondo al mazzo, se ne pesca una nuova al posto suo.');
+      closeModal(); showPeekModal(r);
+    }
+  });
+  document.querySelectorAll('[data-sendbottom]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.sendbottom;
+    const id = state.mazzoPiani.splice(i,1)[0];
+    state.mazzoPiani.push(id);
+    logMsg('🔮 Una delle 3 carte viste viene mandata in fondo al mazzo; le altre due restano in cima.');
+    closeModal(); finishIncontro();
   });
 }
 
@@ -1704,12 +1840,18 @@ function useItem(c, idx){
 function useSpell(c, idx){
   const id=c.spells[idx]; const sp=SPELLS_BY_ID[id];
   if(!sp) return;
+  const cost = sp.cost||0;
+  if(cost>0){
+    if(c.resources<cost){ logMsg(`⚠️ ${c.name} non ha abbastanza risorse planari per lanciare ${sp.name} (serve ${cost}).`,'warn'); return; }
+    c.resources -= cost;
+    logMsg(`💠 ${c.name} spende ${cost} risorsa/e planare/i per lanciare ${sp.name}.`);
+  }
   if(sp.reward){
     const r=sp.reward;
-    if(r.type==='peek'||r.type==='peekBottom'){ c.spells.splice(idx,1 ,); c.spells.splice(idx,0,id); showPeekModal(r); return; }
-    if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
-    if(r.type==='healOther'){ logMsg(`✨ ${c.name} lancia ${sp.name}: scegli il bersaglio dal pannello Gestisci del compagno e applica +${r.n} ${STAT_LABEL[r.stat||'pv']}.`); }
-    if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
+    if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); }
+    else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
+    else if(r.type==='healOther'){ logMsg(`✨ ${c.name} lancia ${sp.name}: scegli il bersaglio dal pannello Gestisci del compagno e applica +${r.n} ${STAT_LABEL[r.stat||'pv']}.`); }
+    else if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
   }
@@ -1726,7 +1868,7 @@ function closeModal(){ document.getElementById('modalRoot').close(); }
 
 /* ---------- bind game-level events ---------- */
 function bindGame(){
-  const jb=document.getElementById('btnJump'); if(jb) jb.onclick=doJump;
+  const jb=document.getElementById('btnJump'); if(jb) jb.onclick=startJump;
   const ap=document.getElementById('btnAfterPlane'); if(ap) ap.onclick=finishIncontro;
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
   setTimeout(renderIncontroAction,0);
