@@ -656,6 +656,7 @@ function makeChar(name, clsKey, bonus){
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
+    planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
   if(bonus && bonus.stat){ c.stats[bonus.stat]=Math.min(6,c.stats[bonus.stat]+bonus.amount); c.start[bonus.stat]=c.stats[bonus.stat]; }
@@ -689,6 +690,15 @@ function applyDamage(c, stat, n, ctx){
     logMsg(`🛡️ ${c.name} para il colpo grazie alla Resistenza.`);
     return;
   }
+  if(!ctx.ignoreResistance && n>0 && checkItemEntryBlock(c, ctx)) return;
+  if(n>0 && c.equipped.shield){
+    const sh = OGGETTI_BY_ID[c.equipped.shield];
+    if(sh && (sh.blockFirstHitAnyType || (sh.blockFirstHitPhysical && ctx.type==='fisico'))){
+      logMsg(`🛡️ ${c.name} para il colpo con ${sh.name}, che poi si rompe.`);
+      c.equipped.shield=null;
+      return;
+    }
+  }
   const before = c.stats[stat];
   let val = before - n;
   const floor = statFloor(stat);
@@ -713,9 +723,44 @@ function checkResistanceBlocks(c, ctx){
   c.resistanceUsed[fam]=true;
   return true;
 }
-function resetResistanceForPlane(c, planeFam){
-  // "si ricarica a ogni ingresso" -> reset flag for this family on new plane entry
-  c.resistanceUsed[planeFam]=false;
+function resetResistanceForPlane(c){
+  // "si ricarica a ogni ingresso": ogni blocco-primo-danno (Resistenza di classe
+  // e oggetti passivi di protezione) si ricarica per intero a ogni nuovo ingresso.
+  c.resistanceUsed = {};
+}
+function checkItemEntryBlock(c, ctx){
+  if(!ctx.planeId && !ctx.family && !ctx.type && !ctx.combat) return false;
+  const items = [c.equipped.armor, ...(c.equipped.rings||[])].filter(Boolean);
+  for(const id of items){
+    const it = OGGETTI_BY_ID[id]; if(!it) continue;
+    const key = 'item:'+id;
+    if(c.resistanceUsed[key]) continue;
+    let matches=false;
+    if(it.blockPlane){
+      const planes = Array.isArray(it.blockPlane)?it.blockPlane:[it.blockPlane];
+      if(ctx.planeId && planes.includes(ctx.planeId)) matches=true;
+    }
+    if(it.blockEntryType && ctx.type===it.blockEntryType) matches=true;
+    if(it.blockEntryFamily && ctx.family===it.blockEntryFamily) matches=true;
+    if(it.blockFirstHitCombatAlways && ctx.combat) matches=true;
+    if(matches){ c.resistanceUsed[key]=true; logMsg(`🛡️ ${c.name} para il colpo grazie a ${it.name}.`); return true; }
+  }
+  // gli oggetti "protezione" passivi (amuleti, ciondoli) proteggono anche solo tenuti in inventario
+  for(const id of c.inventory){
+    const it = OGGETTI_BY_ID[id]; if(!it || it.cat!=='protezione') continue;
+    const key = 'item:'+id;
+    if(c.resistanceUsed[key]) continue;
+    let matches=false;
+    if(it.blockPlane){
+      const planes = Array.isArray(it.blockPlane)?it.blockPlane:[it.blockPlane];
+      if(ctx.planeId && planes.includes(ctx.planeId)) matches=true;
+    }
+    if(it.blockEntryType && ctx.type===it.blockEntryType) matches=true;
+    if(it.blockEntryFamily && ctx.family===it.blockEntryFamily) matches=true;
+    if(it.blockFirstHitCombatAlways && ctx.combat) matches=true;
+    if(matches){ c.resistanceUsed[key]=true; logMsg(`🛡️ ${c.name} para il colpo grazie a ${it.name}.`); return true; }
+  }
+  return false;
 }
 function handlePvThreshold(c){
   const cls=CLASSES[c.cls];
@@ -890,7 +935,7 @@ function renderCharCard(c){
     <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} salti personali</div>
     <div class="stat-dice">
-      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
+      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''}" ${c.planeDebuff?.[s]?'title="Depotenziato per tutta la permanenza nel piano"':''}><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
     </div>
     <div class="char-meta">
       <span>🔁 ${c.rerolls} reroll</span>
@@ -914,6 +959,9 @@ function renderTurnArea(){
       <button class="primary" id="btnJump" style="font-size:1.05rem;padding:.8rem 1.6rem;">🌀 Salta nel portale</button>
     </div>`;
   }
+  if(state.currentDraw.phase==='boss'){
+    return `<div class="panel center"><h2>⚔️ Scontro contro un boss in corso</h2><p class="hint">Risolvilo dalla finestra di dialogo.</p></div>`;
+  }
   return renderDrawFlow();
 }
 
@@ -934,7 +982,7 @@ function reinsertPianoCard(id){
 }
 function doJump(){
   applyPendingMadnessActions();
-  activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); });
+  activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
   state.jumps++;
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
@@ -1026,7 +1074,7 @@ function activeChars(){ return state.players.filter(p=>p.status==='active'||p.st
 
 function applyPlaneIntrinsic(plane){
   const acts = activeChars();
-  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type};
+  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
   const fn = PLANE_EFFECTS[plane.effectKey];
   if(fn) fn(plane, acts, ctx);
   else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
@@ -1069,8 +1117,8 @@ const PLANE_EFFECTS = {
   },
   tempesta:(p,acts,ctx)=>{ if(acts.length){ const v=acts[Math.floor(Math.random()*acts.length)]; logMsg(`⚡ Fulmine a fine turno su ${v.name}.`); applyDamage(v,'pv',1,ctx); } },
   cristallo:(p,acts,ctx)=>{ logMsg('💎 Incantesimi e danni fisici raddoppiati (+100%) qui: tienine conto quando applichi danni o spell.'); },
-  luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); if(!r.success){ ['for','des','int'].forEach(s=>applyTempDebuff(c,s)); logMsg(`☀️ ${c.name} fallisce (Luce): -1 For/Des/Int per la permanenza.`);} }); },
-  tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyTempDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per la permanenza.'); },
+  luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name} fallisce (Luce): -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
+  tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
   sogno:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`💭 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'lucido':'perde il turno (persiste finché non supera il check)'}.`); }); },
   specchi:(p,acts,ctx)=>{ logMsg('🪞 Ogni personaggio sceglie una statistica e affronta il proprio riflesso (usa Gestisci → Contesa singola).'); },
   ordine:(p,acts,ctx)=>{ logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello (usa Gestisci).'); },
@@ -1114,6 +1162,7 @@ function demonContribution(acts){
   return {user, roll:r, hit, dmg:hit?1:0};
 }
 function resolveAutoCombat(acts, entityDefs, ctx){
+  if(!acts || acts.length===0) return; // nessuno presente/cosciente: niente da risolvere
   // Combattimento one-shot risolto automaticamente giro dopo giro (usato per effetti intrinseci di piano, es. Ombra),
   // senza passare dall'interfaccia interattiva del normale Incontro del turno.
   const entities = entityDefs.map(e=>({...e, hp: e.hp!==undefined?e.hp:e.value}));
@@ -1131,7 +1180,7 @@ function resolveAutoCombat(acts, entityDefs, ctx){
     let remaining=teamDmg;
     entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
     const passThrough=Math.max(0, entityDmg-teamDmg);
-    if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ applyDamage(acts[idx%acts.length],'pv',1,ctx); idx++; } }
+    if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ applyDamage(acts[idx%acts.length],'pv',1,{...ctx, combat:true}); idx++; } }
   }
   logMsg(`⚔️ ${acts.map(c=>c.name).join(', ')} risolve un combattimento automatico contro ${entityDefs[0].name} in ${rounds} giro/i.`);
 }
@@ -1194,6 +1243,7 @@ function resolveForceContest(a,b){
   return a;
 }
 function soloForcedJump(group, reason){
+  group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
@@ -1206,7 +1256,7 @@ function soloForcedJump(group, reason){
   reinsertPianoCard(drawnId);
   logMsg(`🌀 Salto forzato da ${reason}: ${names} ${group.length>1?'finiscono':'finisce'} da ${group.length>1?'soli':'solo'} in <strong>${plane.name}</strong> (destinazione totalmente casuale, senza le informazioni del gruppo unito).`, 'warn');
   group.forEach(x=>resetResistanceForPlane(x, plane.family));
-  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type};
+  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
   const fn = PLANE_EFFECTS[plane.effectKey];
   if(fn) fn(plane, group, ctx);
   logMsg(`(Turno solitario: applicato solo l'effetto intrinseco del piano. L'eventuale Incontro va gestito manualmente dal tavolo per ${names}, dato che il resto del gruppo prosegue nel frattempo con il proprio salto.)`);
@@ -1376,7 +1426,7 @@ function applyConsequence(cons, targets, plane){
         let stat=cons.stat; if(stat==='native') stat = nativeStatFor(plane); if(stat==='random') stat=STATS[Math.floor(Math.random()*6)];
         applyTempDebuff(c,stat); break;
       }
-      case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family}); break;
+      case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
       case 'loseTurn': logMsg(`⏳ ${c.name} perde il turno.`); break;
       case 'loseItem': if(c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`);} break;
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
@@ -1439,13 +1489,18 @@ function renderCombatPanel(plane, card, acts){
     let gravity = card.forceBase2 ? gravityValue(card.gravity,{girone:1}) : gravityValue(card.gravity, plane);
     let entities=[];
     if(card.swarm==='auto'){
-      const n = gravity<=2?3:2;
-      for(let i=0;i<n;i++) entities.push({name:card.name+' #'+(i+1), statKey:checkStat||'for', value:Math.max(1,gravity-1)});
+      // "gravità -1 rispetto al girone corrente (mai sotto 1)": gravity è già il valore finale
+      // per creatura (1 al 1°/2° girone, 2 al 3°) — 3 creature a valore 1, 2 a valore 2.
+      const n = gravity<=1?3:2;
+      for(let i=0;i<n;i++) entities.push({name:card.name+' #'+(i+1), statKey:checkStat||'for', value:gravity});
     } else if(card.swarm){
-      for(let i=0;i<card.swarm;i++) entities.push({name:card.name+' #'+(i+1), statKey:checkStat||'for', value:Math.max(1,gravity-1)});
+      for(let i=0;i<card.swarm;i++) entities.push({name:card.name+' #'+(i+1), statKey:checkStat||'for', value:gravity});
     } else {
       entities.push({name:card.name, statKey:checkStat||'for', value:gravity});
     }
+    const deckKey = state.currentDraw.incontroDeck;
+    if(deckKey==='demoni') entities.forEach(e=>e.demon=true);
+    if(deckKey==='nonmorti') entities.forEach(e=>e.undead=true);
     state.currentDraw.combat = { entities, rounds:0, checkStat, randomEach:card.check==='random', choiceEach:card.check==='choice', damageStat:card.damageStat||'pv' };
   }
   const cb = state.currentDraw.combat;
@@ -1477,6 +1532,7 @@ function bindCombatPanel(plane, card, acts){
   };
 }
 function fightRound(plane, card, acts, cb){
+  if(!acts || acts.length===0){ logMsg('💀 Nessun personaggio cosciente può più combattere: lo scontro si interrompe.','bad'); finishIncontro(); return; }
   cb.rounds++;
   let log=[];
   let teamDmg=0;
@@ -1519,7 +1575,7 @@ function fightRound(plane, card, acts, cb){
     let idx=0;
     for(let i=0;i<passThrough;i++){
       const target = acts[idx%acts.length];
-      applyDamage(target, dmgStat, 1, {family:plane.family});
+      applyDamage(target, dmgStat, 1, {family:plane.family, planeId:plane.id, combat:true});
       idx++;
     }
   }
@@ -1533,7 +1589,7 @@ function fightRound(plane, card, acts, cb){
   const allDead = cb.entities.every(e=>e.hp<=0);
   if(allDead){
     logMsg('🏆 Tutte le entità sono state sconfitte.');
-    grantCombatReward(plane, card, acts);
+    grantCombatReward(plane, card, acts, cb);
     finishIncontro();
   }
 }
@@ -1541,14 +1597,15 @@ function persistCombat(plane, cb){
   state.pendingPersistent = state.pendingPersistent||{};
   state.pendingPersistent[plane.id] = cb;
 }
-function grantCombatReward(plane, card, acts){
+function grantCombatReward(plane, card, acts, cb){
   const type = plane.type || FAMILIES[plane.family]?.type;
   if(type==='fisico'){
     const it = drawOggetto();
     if(it && acts.length){ const who=acts[Math.floor(Math.random()*acts.length)]; who.inventory.push(it); logMsg(`🎁 ${who.name} trova ${OGGETTI_BY_ID[it].name}.`); }
   } else {
     const stat = nativeStatFor(plane);
-    const permanent = card.forte;
+    // "permanente contro un'entità boss (gravità 3 o superiore)", non legato al flag "forte"
+    const permanent = cb && cb.entities.some(e=>(e.value||0)>=3);
     const minVal = Math.min(...acts.map(c=>c.stats[stat]));
     acts.filter(c=>c.stats[stat]===minVal).forEach(c=>{
       if(permanent){ c.stats[stat]=Math.min(6,c.stats[stat]+1); c.start[stat]=Math.max(c.start[stat],c.stats[stat]); logMsg(`🎁 ${c.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (boss sconfitto).`); }
@@ -1686,8 +1743,7 @@ function finishIncontro(){
 /* ---------- Recupero ---------- */
 function recuperoFor(c){
   healStat(c,'pv',1);
-  const d = activeTempDebuffs(c);
-  if(d.length){ /* leave choice to UI in Gestisci; here just cure first one for reward auto-cases */ }
+  activeTempDebuffs(c).forEach(s=>cureOneDebuff(c,s));
   Object.entries(CLASSES[c.cls].affinity||{}).forEach(([school,base])=>{
     const have = c.spells.filter(id=>SPELLS_BY_ID[id] && SPELLS[school].some(s=>s.id===id)).length;
     if(have<base){ const s=drawSpell(school); if(s) c.spells.push(s); }
@@ -1726,6 +1782,10 @@ function openPianoTerrenoModal(dest){
   } else if(dest.kind==='terrestre'){
     const exitChar = state.players.find(c=>CLASSES[c.cls].exitPlane===dest.id && (c.status==='active'||c.status==='undead'));
     body += exitChar ? `<div class="row mt1"><button class="primary" data-win="${exitChar.id}">${exitChar.name} esce e vince subito</button><button id="btnPTClose">Resta col gruppo</button></div>` : `<div class="row mt1"><button id="btnPTClose">Continua</button></div>`;
+  } else if(dest.kind==='specialProposta'){
+    body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptstatua="${c.id}">${c.name} risveglia la statua</button>`).join('')}</div><div id="ptCheckResult"></div><button class="primary mt1" id="btnPTClose">Nessuno per ora</button>`;
+  } else if(dest.kind==='bossProposta'){
+    body += `<div class="row mt1"><button class="primary" id="btnStartBossP">Affronta il guardiano meccanico</button><button id="btnPTClose">Ignora e continua</button></div>`;
   } else {
     body += `<div class="row mt1"><button class="primary" id="btnPTClose">Applicato, continua</button></div>`;
   }
@@ -1743,7 +1803,7 @@ function bindPianoTerrenoModal(dest){
       const acts = activeChars();
       acts.forEach(c=>resetResistanceForPlane(c,'terrestre'));
       if(dest.id==='eta_terra_antica'){
-        acts.forEach(c=>applyDamage(c,'pv',1,{family:'terrestre', type:'fisico'}));
+        acts.forEach(c=>applyDamage(c,'pv',1,{family:'terrestre', type:'fisico', planeId:dest.id}));
         logMsg("🌋 Età della Terra Antica: pericoloso dal primo all'ultimo istante, 1 danno a tutti i presenti (chi ha Resistenza Terrestre lo para).");
       } else if(dest.id==='flora_aliena'){
         acts.forEach(c=>recuperoFor(c));
@@ -1762,6 +1822,27 @@ function bindPianoTerrenoModal(dest){
     render();
     renderBossFight(dest, boss, stat);
   };
+  const bossPBtn=document.getElementById('btnStartBossP');
+  if(bossPBtn) bossPBtn.onclick=()=>{
+    closeModal();
+    const r=d6(); const stat = r<=3?'for':'des';
+    const boss = {name:'Guardiano Meccanico', value:dest.value||3};
+    state.currentDraw = { planeId:null, phase:'boss', incontroDeck:null, incontroId:null, targets: activeChars().map(c=>c.id), bossCard:{name:boss.name,check:stat,gravity:boss.value-2,text:'Scontro contro il Guardiano Meccanico della Fucina degli Dei.',type:'incontro',persistent:false} };
+    state.currentDraw.bossMode=true;
+    render();
+    renderBossFight(dest, boss, stat, ()=>{
+      closeModal(); state.currentDraw=null; render();
+      openEquipBoostModal();
+    });
+  };
+  document.querySelectorAll('[data-ptstatua]').forEach(b=>b.onclick=()=>{
+    const c=state.players.find(x=>x.id===b.dataset.ptstatua);
+    const gain=STATS[Math.floor(Math.random()*6)];
+    const lose=STATS[Math.floor(Math.random()*6)];
+    c.stats[gain]=Math.min(6,c.stats[gain]+1); c.start[gain]=Math.max(c.start[gain],c.stats[gain]);
+    applyPermDebuff(c, lose);
+    document.getElementById('ptCheckResult').innerHTML = `<p class="hint">🗿 ${c.name}: +1 permanente a ${STAT_LABEL[gain]}, ma depotenziamento permanente a ${STAT_LABEL[lose]} come prezzo.</p>`;
+  });
   const cuoreBtn=document.getElementById('btnCuoreBonus');
   if(cuoreBtn) cuoreBtn.onclick=()=>{
     activeChars().forEach(c=>{ const it=drawOggetto(); if(it) c.inventory.push(it); c.resources++; });
@@ -1804,7 +1885,28 @@ function bindPianoTerrenoModal(dest){
     else { applyDamage(c,'anima',1,{ignoreResistance:true}); logMsg(`👑 ${c.name} perde la Contesa: 1 danno diretto ad Anima.`); }
   });
 }
-function renderBossFight(dest, boss, stat){
+function openEquipBoostModal(){
+  const options = [];
+  activeChars().forEach(c=>{
+    if(c.equipped.weapon) options.push({c, id:c.equipped.weapon});
+    if(c.equipped.armor) options.push({c, id:c.equipped.armor});
+  });
+  if(options.length===0){ logMsg("🔨 Nessuno ha un'arma o un'armatura equipaggiata da potenziare: il dono della Fucina va perso."); render(); return; }
+  openModal(`<h3>🔨 Fucina degli Dei</h3><p>Scegli quale arma/armatura potenziare permanentemente (+1 danno su ogni colpo a segno):</p>
+    <div class="row">${options.map((o,i)=>`<button class="small" data-forgeboost="${i}">${escapeHtml(o.c.name)}: ${escapeHtml(OGGETTI_BY_ID[o.id].name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-forgeboost]').forEach(b=>b.onclick=()=>{
+    const o=options[+b.dataset.forgeboost];
+    const it=OGGETTI_BY_ID[o.id];
+    it.dmgBonusAny=(it.dmgBonusAny||0)+1;
+    logMsg(`🔨 ${it.name} viene potenziato permanentemente: +1 danno su ogni colpo a segno.`,'good');
+    closeModal(); render();
+  });
+}
+function renderBossFight(dest, boss, stat, onWin){
+  onWin = onWin || (()=>{
+    closeModal(); state.currentDraw=null; render();
+    openPianoTerrenoModal({id:'__win__', name:'Finale B', text:'Il gruppo ha sconfitto '+boss.name+'!', kind:'finaleA'});
+  });
   openModal(`<h3>⚔️ ${boss.name}</h3><div id="bossArea"></div>`);
   const cb = { entities:[{name:boss.name, statKey:stat, value:boss.value, hp:boss.value}], rounds:0, checkStat:stat, damageStat:'pv' };
   state.currentDraw.combat = cb;
@@ -1812,11 +1914,16 @@ function renderBossFight(dest, boss, stat){
   function draw(){
     document.getElementById('bossArea').innerHTML = `<p>${boss.name}: PV ${cb.entities[0].hp}/${boss.value}</p><div class="row"><button class="primary" id="bfRound">Tira un giro</button>${cb.rounds>0?'<button id="bfFlee">Ritirati</button>':''}</div>`;
     document.getElementById('bfRound').onclick=()=>{
-      fightRoundGeneric(cb, activeChars(), plane, {damageStat:'pv'});
+      const fighters = activeChars();
+      if(fighters.length===0){
+        logMsg('💀 Nessun personaggio cosciente può più combattere: lo scontro si interrompe.','bad');
+        closeModal(); state.currentDraw=null; render();
+        return;
+      }
+      fightRoundGeneric(cb, fighters, plane, {damageStat:'pv'});
       if(cb.entities[0].hp<=0){
         logMsg(`🏆 ${boss.name} è sconfitto!`,'good');
-        closeModal(); state.currentDraw=null; render();
-        openPianoTerrenoModal({id:'__win__', name:'Finale B', text:'Il gruppo ha sconfitto '+boss.name+'!', kind:'finaleA'});
+        onWin();
       } else draw();
     };
     const fleeBtn=document.getElementById('bfFlee');
@@ -1825,6 +1932,7 @@ function renderBossFight(dest, boss, stat){
   draw();
 }
 function fightRoundGeneric(cb, acts, plane, opts){
+  if(!acts || acts.length===0) return; // guardia di sicurezza: il chiamante deve controllare prima di invocare
   cb.rounds++;
   let teamDmg=0, entityDmg=0;
   acts.forEach(c=>{
@@ -1844,7 +1952,7 @@ function fightRoundGeneric(cb, acts, plane, opts){
   cb.entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
   const passThrough=Math.max(0,entityDmg-teamDmg);
   logMsg(`⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`);
-  if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ const t=acts[idx%acts.length]; applyDamage(t, opts.damageStat||'pv', 1, {family:plane.family}); idx++; } }
+  if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ const t=acts[idx%acts.length]; applyDamage(t, opts.damageStat||'pv', 1, {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
 }
 
 /* ---------- Character management modal (Gestisci) ---------- */
@@ -1872,7 +1980,11 @@ function openCharManageModal(id){
     <div class="row mt1"><button id="mgrClose" class="primary">Chiudi</button></div>
   `;
   openModal(body);
-  document.getElementById('mgrRecupero').onclick=()=>{ recuperoFor(c); render(); openCharManageModal(id); };
+  document.getElementById('mgrRecupero').onclick=()=>{
+    const plane = currentPlane();
+    if(!plane || !RECUPERO_PLANES.has(plane.id)){ toast('Non sei in un piano di Recupero al momento.'); return; }
+    recuperoFor(c); render(); openCharManageModal(id);
+  };
   const specialBtn=document.getElementById('mgrSpecial');
   if(specialBtn) specialBtn.onclick=()=>{ useClassSpecial(c); render(); openCharManageModal(id); };
   const rerollBtn=document.getElementById('mgrReroll');
@@ -1936,6 +2048,22 @@ function revertMirrorBoost(c){
   logMsg(`🪞 ${c.name}: il potenziamento del Labirinto degli Specchi finisce.`);
   c.mirrorBoost=null;
 }
+function applyPlaneDebuff(c, stat){
+  if(c.planeDebuff[stat]) return; // già attivo per questa permanenza: non si applica due volte
+  const before = c.stats[stat];
+  const after = Math.max(1, before-1);
+  if(after===before) return; // già al minimo: nessun malus reale, quindi nessun revert da tenere in sospeso
+  c.stats[stat]=after;
+  c.planeDebuff[stat]=true;
+  logMsg(`⬇️ ${c.name} subisce un depotenziamento a ${STAT_LABEL[stat]} per tutta la permanenza nel piano (non curabile a Recupero, finisce lasciando il piano).`);
+}
+function revertPlaneDebuffs(c){
+  if(!c.planeDebuff) { c.planeDebuff={}; return; }
+  Object.keys(c.planeDebuff).forEach(s=>{
+    if(c.planeDebuff[s]){ c.stats[s]=Math.min(6,c.stats[s]+1); }
+  });
+  c.planeDebuff={};
+}
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
   if(!it) return;
@@ -1951,6 +2079,30 @@ function useItem(c, idx){
     c.inventory.splice(idx,1);
     return;
   }
+  if(it.selfRecupero){
+    recuperoFor(c);
+    logMsg(`🛌 ${it.name}: il piano corrente diventa Recupero solo per ${c.name}.`);
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.combatDamageAll){
+    const cb = state.currentDraw && state.currentDraw.combat;
+    if(!cb || !cb.entities || !cb.entities.some(e=>e.hp>0)){ logMsg(`⚠️ ${it.name}: nessuna entità presente da colpire in questo momento.`,'warn'); return; }
+    cb.entities.forEach(e=>{ if(e.hp>0) e.hp -= it.combatDamageAll; });
+    logMsg(`⚡ ${c.name} usa ${it.name}: ${it.combatDamageAll} danno diretto a tutte le entità presenti, senza tirare.`,'good');
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.spellBoostItem){
+    c.nextSpellBoost = true;
+    logMsg(`✨ ${c.name} usa ${it.name}: il prossimo incantesimo lanciato è potenziato (+100%).`);
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.cat==='protezione' && !it.slot){
+    logMsg(`ℹ️ ${it.name} è un oggetto passivo: protegge automaticamente restando nell'inventario, non serve equipaggiarlo o usarlo.`);
+    return;
+  }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
   if(it.oneUse) c.inventory.splice(idx,1);
 }
@@ -1963,22 +2115,40 @@ function useSpell(c, idx){
     c.resources -= cost;
     logMsg(`💠 ${c.name} spende ${cost} risorsa/e planare/i per lanciare ${sp.name}.`);
   }
+  const boosted = !!c.nextSpellBoost;
+  if(boosted){ c.nextSpellBoost=false; logMsg(`✨ ${c.name} lancia ${sp.name} con il potenziamento pronto: effetto raddoppiato (+100%).`); }
   if(sp.reward){
     const r=sp.reward;
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); }
     else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
-    else if(r.type==='healOther'){ openHealOtherModal(c, sp, r); }
+    else if(r.type==='healOther'){ openHealOtherModal(c, sp, r, boosted?2:1); }
     else if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
+  } else if(sp.selfRecupero){
+    recuperoFor(c);
+    logMsg(`🛌 ${sp.name}: il piano corrente diventa Recupero solo per ${c.name}.`);
+  } else if(sp.combatDamageAll){
+    const cb = state.currentDraw && state.currentDraw.combat;
+    if(!cb || !cb.entities || !cb.entities.some(e=>e.hp>0)){ logMsg(`⚠️ ${sp.name}: nessuna entità presente da colpire in questo momento.`,'warn'); }
+    else {
+      const dmg = sp.combatDamageAll * (boosted?2:1);
+      cb.entities.forEach(e=>{
+        if(e.hp<=0) return;
+        if(sp.filterUndeadDemon && !(e.undead||e.demon)) return;
+        e.hp -= dmg;
+      });
+      logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio.`);
+    }
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
   }
   c.spells.splice(idx,1);
 }
 
-function openHealOtherModal(caster, sp, r){
+function openHealOtherModal(caster, sp, r, mult){
+  mult = mult||1;
   const stat = r.stat||'pv';
   const bonus = (caster.cls==='chierico' && stat==='pv') ? 1 : 0;
-  const amount = (r.n||1) + bonus;
+  const amount = (r.n||1)*mult + bonus;
   const targets = activeChars();
   openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}${bonus?' (incluso il bonus di classe del Chierico)':''}.</p>
     <div class="row">${targets.map(t=>`<button class="small" data-healtarget="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
