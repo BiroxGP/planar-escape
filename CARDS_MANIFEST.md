@@ -1,0 +1,275 @@
+# Planar Escape — Manifest immagini carte
+
+Ogni riga = un file da creare in assets/cards/, con esattamente questo nome, per farlo comparire automaticamente al posto del segnaposto colorato.
+
+## Piani (mazzo Piani, 36 carte)
+- assets/cards/fuoco.png  ->  Fuoco (elementare)
+- assets/cards/veleno.png  ->  Veleno (elementare)
+- assets/cards/acqua.png  ->  Acqua (elementare)
+- assets/cards/terra.png  ->  Terra (elementare)
+- assets/cards/aria.png  ->  Aria (elementare)
+- assets/cards/tempesta.png  ->  Tempesta (elementare)
+- assets/cards/cristallo.png  ->  Cristallo (elementare)
+- assets/cards/luce.png  ->  Luce (eterei)
+- assets/cards/tenebre.png  ->  Tenebre (eterei)
+- assets/cards/sogno.png  ->  Sogno (eterei)
+- assets/cards/specchi.png  ->  Specchi (eterei)
+- assets/cards/astrale.png  ->  Astrale (eterei)
+- assets/cards/ordine.png  ->  Ordine (armonia)
+- assets/cards/legge.png  ->  Legge (armonia)
+- assets/cards/sacro.png  ->  Sacro (armonia)
+- assets/cards/stasi.png  ->  Stasi (armonia)
+- assets/cards/sole.png  ->  Sole (armonia)
+- assets/cards/metallo.png  ->  Metallo (armonia)
+- assets/cards/logica.png  ->  Logica (armonia)
+- assets/cards/verita.png  ->  Verità (armonia)
+- assets/cards/eternita.png  ->  Eternità (armonia)
+- assets/cards/caos.png  ->  Caos (entropia)
+- assets/cards/vuoto.png  ->  Vuoto (entropia)
+- assets/cards/sangue.png  ->  Sangue (entropia)
+- assets/cards/decadimento.png  ->  Decadimento (entropia)
+- assets/cards/putrefazione.png  ->  Putrefazione (entropia)
+- assets/cards/tempo.png  ->  Tempo (entropia)
+- assets/cards/cenere.png  ->  Cenere (entropia)
+- assets/cards/oblio.png  ->  Oblio (entropia)
+- assets/cards/ombra.png  ->  Ombra (entropia)
+- assets/cards/porte_di_brace.png  ->  Le Porte di Brace (Demoniaco, 1° girone) (demoniaco)
+- assets/cards/baratro_in_fiamme.png  ->  Il Baratro in Fiamme (Demoniaco, 2° girone) (demoniaco)
+- assets/cards/gelo_dellabisso.png  ->  Il Gelo dell'Abisso (Demoniaco, 3° girone) (demoniaco)
+- assets/cards/palude_sconsacrata.png  ->  La Palude Sconsacrata (Piano Negativo, 1°) (nonmorti)
+- assets/cards/velo_dei_sussurri.png  ->  Il Velo dei Sussurri (Piano Negativo, 2°) (nonmorti)
+- assets/cards/voragine_della_negativita.png  ->  La Voragine della Negatività (Piano Negativo, 3°) (nonmorti)
+
+## Incontri (98 carte, per sotto-mazzo)
+### elementare
+- assets/cards/el_nessuno.png  ->  Nessun evento
+- assets/cards/el_elementale.png  ->  Elementale
+- assets/cards/el_sciame.png  ->  Sciame minore
+- assets/cards/el_vena.png  ->  Vena preziosa
+- assets/cards/el_instabilita.png  ->  Instabilità
+- assets/cards/el_guida.png  ->  Guida elementale
+- assets/cards/el_mercante.png  ->  Mercante elementale
+- assets/cards/el_custode.png  ->  Custode del piano
+- assets/cards/el_amplificazione.png  ->  Amplificazione
+- assets/cards/el_rifugio.png  ->  Rifugio temporaneo
+- assets/cards/el_frattura.png  ->  Frattura planare
+- assets/cards/el_onda.png  ->  Onda d'Urto
+- assets/cards/el_vento.png  ->  Vento Ingannatore
+- assets/cards/el_grotta.png  ->  Grotta di Cristallo
+- assets/cards/el_fumo.png  ->  Fumo Tossico
+### demoni
+- assets/cards/de_nessuno.png  ->  Nessun evento
+- assets/cards/de_tentatore.png  ->  Tentatore
+- assets/cards/de_bruto.png  ->  Bruto infernale
+- assets/cards/de_patto.png  ->  Patto di sangue
+- assets/cards/de_orda.png  ->  Orda minore
+- assets/cards/de_bottino.png  ->  Bottino infernale
+- assets/cards/de_sussurro.png  ->  Sussurro tentatore
+- assets/cards/de_guardiano.png  ->  Guardiano del girone
+- assets/cards/de_fiamme.png  ->  Fiamme eterne
+- assets/cards/de_mercante.png  ->  Mercante d'anime
+- assets/cards/de_legione.png  ->  Legione in marcia
+- assets/cards/de_infranto.png  ->  Patto Infranto
+### nonmorti
+- assets/cards/nm_nessuno.png  ->  Nessun evento
+- assets/cards/nm_appestato.png  ->  Appestato
+- assets/cards/nm_spettro.png  ->  Spettro
+- assets/cards/nm_nugolo.png  ->  Nugolo necrotico
+- assets/cards/nm_tomba.png  ->  Tomba saccheggiabile
+- assets/cards/nm_nebbia.png  ->  Nebbia di decomposizione
+- assets/cards/nm_lich.png  ->  Lich minore
+- assets/cards/nm_catena.png  ->  Catena di non-vita
+- assets/cards/nm_reliquia.png  ->  Reliquia protettiva
+- assets/cards/nm_eco.png  ->  Eco di un caduto
+- assets/cards/nm_mano.png  ->  Mano Putrescente
+- assets/cards/nm_cripta.png  ->  Cripta Sigillata
+### eterei
+- assets/cards/et_nessuno.png  ->  Nessun evento
+- assets/cards/et_frammento.png  ->  Frammento di sé
+- assets/cards/et_visione.png  ->  Visione ingannevole
+- assets/cards/et_guida.png  ->  Guida onirica
+- assets/cards/et_distorsione.png  ->  Distorsione
+- assets/cards/et_eco.png  ->  Eco di un altro piano
+- assets/cards/et_entita.png  ->  Entità eterea maggiore
+- assets/cards/et_silenzio.png  ->  Silenzio assoluto
+- assets/cards/et_portale.png  ->  Portale instabile
+- assets/cards/et_reliquia.png  ->  Reliquia astrale
+- assets/cards/et_quiete.png  ->  Quiete astrale
+- assets/cards/et_ombra.png  ->  Ombra in agguato
+- assets/cards/et_incubo.png  ->  Incubo ricorrente
+- assets/cards/et_doppio.png  ->  Doppio specchiato
+- assets/cards/et_sogno.png  ->  Frammento di sogno
+### armonia
+- assets/cards/ar_nessuno.png  ->  Nessun evento
+- assets/cards/ar_giudice.png  ->  Giudice dell'Ordine
+- assets/cards/ar_esattore.png  ->  Esattore della Legge
+- assets/cards/ar_custode.png  ->  Custode Sacro
+- assets/cards/ar_automa.png  ->  Automa di Metallo
+- assets/cards/ar_oracolo.png  ->  Oracolo della Verità
+- assets/cards/ar_eternita.png  ->  Custode di Eternità
+- assets/cards/ar_statua.png  ->  Statua di Stasi
+- assets/cards/ar_benedizione.png  ->  Benedizione
+- assets/cards/ar_geometria.png  ->  Geometria perfetta
+- assets/cards/ar_bagliore.png  ->  Bagliore del Sole
+- assets/cards/ar_pattodonore.png  ->  Patto d'Onore
+- assets/cards/ar_paradosso.png  ->  Paradosso logico
+- assets/cards/ar_ingranaggio.png  ->  Ingranaggio inceppato
+- assets/cards/ar_illuminazione.png  ->  Illuminazione improvvisa
+### entropia
+- assets/cards/en_nessuno.png  ->  Nessun evento
+- assets/cards/en_caos.png  ->  Manifestazione del Caos
+- assets/cards/en_voragine.png  ->  Voragine del Vuoto
+- assets/cards/en_sciame.png  ->  Sciame di Decadimento
+- assets/cards/en_spettro.png  ->  Spettro del Tempo
+- assets/cards/en_cenere.png  ->  Tempesta di Cenere
+- assets/cards/en_oblio.png  ->  Sussurro dell'Oblio
+- assets/cards/en_ombra.png  ->  Ombra strisciante
+- assets/cards/en_relitto.png  ->  Relitto insanguinato
+- assets/cards/en_avatar.png  ->  Avatar dell'Entropia
+- assets/cards/en_corrosione.png  ->  Corrosione lenta
+- assets/cards/en_eco.png  ->  Eco del Nulla
+- assets/cards/en_marcescenza.png  ->  Marcescenza contagiosa
+- assets/cards/en_richiamo.png  ->  Richiamo di sangue
+- assets/cards/en_voce.png  ->  Voce dimenticata
+### generico
+- assets/cards/ge_nessuno.png  ->  Nessun evento
+- assets/cards/ge_viandante.png  ->  Viandante smarrito
+- assets/cards/ge_mercante.png  ->  Mercante planare
+- assets/cards/ge_ecocasa.png  ->  Eco di casa
+- assets/cards/ge_stranezza.png  ->  Stranezza del portale
+- assets/cards/ge_relitto.png  ->  Relitto di un viaggiatore
+- assets/cards/ge_predatore.png  ->  Predatore planare
+- assets/cards/ge_bivio.png  ->  Bivio
+- assets/cards/ge_segnale.png  ->  Segnale di richiamo
+- assets/cards/ge_cacciatore.png  ->  Cacciatore di taglie planare
+- assets/cards/ge_anomalia.png  ->  Anomalia temporale
+- assets/cards/ge_randagio.png  ->  Randagio planare
+- assets/cards/ge_superstite.png  ->  Superstite planare
+- assets/cards/ge_legame.png  ->  Legame a distanza
+
+## Oggetti (60 carte)
+- assets/cards/o_spada_corta.png  ->  Spada Corta (arma)
+- assets/cards/o_fionda.png  ->  Fionda (arma)
+- assets/cards/o_bastone.png  ->  Bastone Semplice (arma)
+- assets/cards/o_spadafiamm.png  ->  Spada Fiammeggiante (arma)
+- assets/cards/o_asciatitani.png  ->  Ascia dei Titani (arma)
+- assets/cards/o_pugnaleombra.png  ->  Pugnale dell'Ombra (arma)
+- assets/cards/o_arcolungo.png  ->  Arco Lungo Planare (arma)
+- assets/cards/o_martello.png  ->  Martello del Giudizio (arma)
+- assets/cards/o_bacchetta.png  ->  Bacchetta Runica da Combattimento (arma)
+- assets/cards/o_spadatitano.png  ->  Spada del Titano Decaduto (arma)
+- assets/cards/o_scettromente.png  ->  Scettro della Mente Infinita (arma)
+- assets/cards/o_lamavento.png  ->  Lama del Vento Silente (arma)
+- assets/cards/o_lamaduellante.png  ->  Lama del Duellante (arma)
+- assets/cards/o_scettrosaggio.png  ->  Scettro del Guerriero Saggio (arma)
+- assets/cards/o_pugnaleacume.png  ->  Pugnale dell'Acume (arma)
+- assets/cards/o_spadaequilibrio.png  ->  Spada dell'Equilibrio Perfetto (arma)
+- assets/cards/o_tridente.png  ->  Tridente delle Essenze (arma)
+- assets/cards/o_armaturapiastre.png  ->  Armatura di Piastre Antica (armatura)
+- assets/cards/o_corazzacolosso.png  ->  Corazza del Colosso (armatura)
+- assets/cards/o_scudoultimo.png  ->  Scudo dell'Ultimo Respiro (armatura)
+- assets/cards/o_scudoferro.png  ->  Scudo di Ferro (armatura)
+- assets/cards/o_mantoetereo.png  ->  Manto Etereo (armatura)
+- assets/cards/o_piastrebaluardo.png  ->  Piastre del Baluardo (armatura)
+- assets/cards/o_vestesilenzioso.png  ->  Veste del Silenzioso (armatura)
+- assets/cards/o_tunicainiziato.png  ->  Tunica dell'Iniziato (armatura)
+- assets/cards/o_anelloferro.png  ->  Anello di Ferro Vitale (anello)
+- assets/cards/o_anellomente.png  ->  Anello della Chiara Mente (anello)
+- assets/cards/o_anellopasso.png  ->  Anello del Passo Leggero (anello)
+- assets/cards/o_anelloanima.png  ->  Anello dell'Anima Salda (anello)
+- assets/cards/o_anellolegame.png  ->  Anello del Legame (anello)
+- assets/cards/o_anellocolpo.png  ->  Anello del Colpo Pesante (anello)
+- assets/cards/o_pozionecura1.png  ->  Pozione di Cura +1 (pozione)
+- assets/cards/o_elisir.png  ->  Elisir di Ripristino (pozione)
+- assets/cards/o_filtrochiarezza.png  ->  Filtro di Chiarezza (pozione)
+- assets/cards/o_filtroredenzione.png  ->  Filtro di Redenzione (pozione)
+- assets/cards/o_pozionecura2.png  ->  Pozione di Cura +2 (pozione)
+- assets/cards/o_tonicofuria.png  ->  Tonico della Furia (pozione)
+- assets/cards/o_distillato.png  ->  Distillato Planare (pozione)
+- assets/cards/o_amuletofuoco.png  ->  Amuleto contro il Fuoco (protezione)
+- assets/cards/o_talismanoveleno.png  ->  Talismano Anti-Veleno (protezione)
+- assets/cards/o_amuletofulmine.png  ->  Amuleto del Fulmine (protezione)
+- assets/cards/o_ciondoloequilibrio.png  ->  Ciondolo dell'Equilibrio (protezione)
+- assets/cards/o_sigillosacro.png  ->  Sigillo Sacro (protezione)
+- assets/cards/o_auraassorbente.png  ->  Aura Assorbente (protezione)
+- assets/cards/o_reliquiafredda.png  ->  Reliquia Fredda (protezione)
+- assets/cards/o_bacchettafulmine.png  ->  Bacchetta del Fulmine (oneshot)
+- assets/cards/o_bacchettarinvio.png  ->  Bacchetta del Rinvio (oneshot)
+- assets/cards/o_vergascambio.png  ->  Verga dello Scambio (oneshot)
+- assets/cards/o_bastonerifugio.png  ->  Bastone del Rifugio (oneshot)
+- assets/cards/o_scettrocongelamento.png  ->  Scettro di Congelamento (oneshot)
+- assets/cards/o_dadorunico.png  ->  Dado Runico (oneshot)
+- assets/cards/o_specchioinfranto.png  ->  Specchio Infranto (particolare)
+- assets/cards/o_frammentocristallo.png  ->  Frammento di Cristallo (particolare)
+- assets/cards/o_chiaveplanare.png  ->  Chiave Planare (particolare)
+- assets/cards/o_medaglionegirone.png  ->  Medaglione del Girone (particolare)
+- assets/cards/o_acquasanta.png  ->  Acqua Santa (particolare)
+- assets/cards/o_cimeliodelviandante.png  ->  Cimelio del Viandante (particolare)
+- assets/cards/o_grimoriodelfurore.png  ->  Grimorio del Furore (particolare)
+- assets/cards/o_cuoreabisso.png  ->  Cuore dell'Abisso (particolare)
+- assets/cards/o_ancoracasa.png  ->  Ancora di Casa (particolare)
+
+## Spell (31 carte)
+### essenza
+- assets/cards/sp_analisi.png  ->  Analisi Planare
+- assets/cards/sp_convulsione.png  ->  Convulsione Planare
+- assets/cards/sp_manofantasma.png  ->  Mano Fantasma
+- assets/cards/sp_veloillusorio.png  ->  Velo Illusorio
+- assets/cards/sp_sfera.png  ->  Sfera Antiplanare
+- assets/cards/sp_teletrasporto.png  ->  Teletrasporto Planare
+- assets/cards/sp_drenaggio.png  ->  Drenaggio d'Essenza
+- assets/cards/sp_estrazione.png  ->  Estrazione Arcana
+- assets/cards/sp_sagoma.png  ->  Sagoma Illusoria
+- assets/cards/sp_charme.png  ->  Charme
+- assets/cards/sp_trasmutazione.png  ->  Trasmutazione Minore
+- assets/cards/sp_veloint.png  ->  Velo Interplanare
+- assets/cards/sp_ecofondo.png  ->  Eco dal Fondo
+### flusso
+- assets/cards/sp_manirisan.png  ->  Mani Risananti
+- assets/cards/sp_tempra.png  ->  Tempra
+- assets/cards/sp_benedizione.png  ->  Benedizione
+- assets/cards/sp_paroladiconforto.png  ->  Parola di Conforto
+- assets/cards/sp_assoluzione.png  ->  Assoluzione
+- assets/cards/sp_manobenedetta.png  ->  Mano Benedetta
+- assets/cards/sp_cerchio.png  ->  Cerchio di Protezione
+- assets/cards/sp_fiammapurif.png  ->  Fiamma Purificatrice
+- assets/cards/sp_ristoro.png  ->  Ristoro
+- assets/cards/sp_sigillo.png  ->  Sigillo
+- assets/cards/sp_rinascita.png  ->  Rinascita
+- assets/cards/sp_egida.png  ->  Egida
+### divinazione
+- assets/cards/sp_sguardo.png  ->  Sguardo Fugace
+- assets/cards/sp_occhiodestino.png  ->  Occhio del Destino
+- assets/cards/sp_terzocchio.png  ->  Terzo Occhio
+- assets/cards/sp_vaticinio.png  ->  Vaticinio
+- assets/cards/sp_buonasorte.png  ->  Buona Sorte
+- assets/cards/sp_richiamofondo.png  ->  Richiamo dal Fondo
+
+## Piano Terreno (12 destinazioni)
+- assets/cards/via_di_casa.png  ->  La Via di Casa
+- assets/cards/antro_creatura.png  ->  L'Antro della Creatura
+- assets/cards/finale_c.png  ->  Finale C
+- assets/cards/cuore_montagna.png  ->  Il Cuore della Montagna
+- assets/cards/fondo_mare.png  ->  Il Fondo del Mare
+- assets/cards/labirinto_specchi.png  ->  Il Labirinto degli Specchi
+- assets/cards/trono_vuoto.png  ->  Il Trono Vuoto
+- assets/cards/biblioteca_infinita.png  ->  La Biblioteca Infinita
+- assets/cards/giardino_pietrificato.png  ->  Il Giardino Pietrificato
+- assets/cards/fucina_dei.png  ->  La Fucina degli Dei
+- assets/cards/eta_terra_antica.png  ->  Età della Terra Antica
+- assets/cards/flora_aliena.png  ->  Flora Aliena
+
+## Icone classi (13, opzionali — vengono usate solo emoji per ora)
+- assets/classes/guerriero.png  ->  Guerriero
+- assets/classes/barbaro.png  ->  Barbaro
+- assets/classes/ladro.png  ->  Ladro
+- assets/classes/veggente.png  ->  Veggente
+- assets/classes/mago.png  ->  Mago
+- assets/classes/chierico.png  ->  Chierico
+- assets/classes/druido.png  ->  Druido
+- assets/classes/warlock.png  ->  Warlock
+- assets/classes/negromante.png  ->  Negromante
+- assets/classes/sciamano.png  ->  Sciamano
+- assets/classes/saltimbanco.png  ->  Saltimbanco
+- assets/classes/monaco.png  ->  Monaco
+- assets/classes/paladino.png  ->  Paladino
