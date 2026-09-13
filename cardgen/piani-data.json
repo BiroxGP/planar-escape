@@ -1,0 +1,370 @@
+[
+  {
+    "id": "fuoco",
+    "name": "Fuoco",
+    "family": "elementare",
+    "check": "for",
+    "recupero": false,
+    "text": "Danno immediato a tutti all'ingresso (salvo protezione), più 1 danno a ogni turno di permanenza.",
+    "effectKey": "fuoco",
+    "deck": "elementare"
+  },
+  {
+    "id": "veleno",
+    "name": "Veleno",
+    "family": "elementare",
+    "check": "pv",
+    "recupero": false,
+    "text": "Danno a tutti alla fine di ogni turno, quasi inevitabile.",
+    "effectKey": "veleno",
+    "deck": "elementare"
+  },
+  {
+    "id": "acqua",
+    "name": "Acqua",
+    "family": "elementare",
+    "check": "for",
+    "recupero": false,
+    "text": "Corrente che trascina (check di gruppo) e necessità di respirare dal 2° turno.",
+    "effectKey": "acqua",
+    "deck": "elementare"
+  },
+  {
+    "id": "terra",
+    "name": "Terra",
+    "family": "elementare",
+    "check": "for",
+    "recupero": false,
+    "text": "Si resta interrati: check d'impatto, poi si scava (max 3 turni o si muore tutti).",
+    "effectKey": "terra",
+    "deck": "elementare"
+  },
+  {
+    "id": "aria",
+    "name": "Aria",
+    "family": "elementare",
+    "check": "des",
+    "recupero": false,
+    "text": "Venti che disorientano: chi fallisce affronta un Incontro extra da solo.",
+    "effectKey": "aria",
+    "deck": "elementare"
+  },
+  {
+    "id": "tempesta",
+    "name": "Tempesta",
+    "family": "elementare",
+    "check": "des",
+    "recupero": false,
+    "text": "Fulmini improvvisi: 1 danno diretto a un membro a caso a fine turno.",
+    "effectKey": "tempesta",
+    "deck": "elementare"
+  },
+  {
+    "id": "cristallo",
+    "name": "Cristallo",
+    "family": "elementare",
+    "check": "san",
+    "recupero": false,
+    "text": "Amplifica incantesimi (+100%) ma anche i danni fisici subiti (+100%).",
+    "effectKey": "cristallo",
+    "deck": "elementare"
+  },
+  {
+    "id": "luce",
+    "name": "Luce",
+    "family": "eterei",
+    "check": "int",
+    "recupero": false,
+    "text": "Accecante: fallire = -1 a Forza/Destrezza/Intelletto per la permanenza.",
+    "effectKey": "luce",
+    "deck": "eterei"
+  },
+  {
+    "id": "tenebre",
+    "name": "Tenebre",
+    "family": "eterei",
+    "check": null,
+    "recupero": false,
+    "text": "Buio totale: automatico -1 a Forza/Destrezza/Intelletto per la permanenza.",
+    "effectKey": "tenebre",
+    "deck": "eterei"
+  },
+  {
+    "id": "sogno",
+    "name": "Sogno",
+    "family": "eterei",
+    "check": "int",
+    "recupero": false,
+    "text": "Illusioni persistenti: check ripetuto ogni turno o si perde il turno.",
+    "effectKey": "sogno",
+    "deck": "eterei"
+  },
+  {
+    "id": "specchi",
+    "name": "Specchi",
+    "family": "eterei",
+    "check": "choice",
+    "recupero": false,
+    "text": "Contesa contro il proprio riflesso, su una caratteristica a scelta.",
+    "effectKey": "specchi",
+    "deck": "eterei"
+  },
+  {
+    "id": "astrale",
+    "name": "Astrale",
+    "family": "eterei",
+    "check": null,
+    "recupero": true,
+    "text": "Piano calmo per eccellenza: nessun danno attivo, ottimo per il Recupero.",
+    "effectKey": "astrale",
+    "deck": "eterei"
+  },
+  {
+    "id": "ordine",
+    "name": "Ordine",
+    "family": "armonia",
+    "check": "pv",
+    "recupero": true,
+    "text": "Si può riportare una caratteristica al valore di partenza di 1° livello.",
+    "effectKey": "ordine",
+    "deck": "armonia"
+  },
+  {
+    "id": "legge",
+    "name": "Legge",
+    "family": "armonia",
+    "check": "anima",
+    "recupero": false,
+    "text": "Ogni oggetto preso richiede un pegno in cambio (baratto forzato).",
+    "effectKey": "legge",
+    "deck": "armonia"
+  },
+  {
+    "id": "sacro",
+    "name": "Sacro",
+    "family": "armonia",
+    "check": "san",
+    "recupero": true,
+    "text": "Piano protetto: non-morti/demoni subiscono danno passivo; si recupera anche 1 San.",
+    "effectKey": "sacro",
+    "deck": "armonia"
+  },
+  {
+    "id": "stasi",
+    "name": "Stasi",
+    "family": "armonia",
+    "check": "pv",
+    "recupero": false,
+    "text": "Nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.",
+    "effectKey": "stasi",
+    "deck": "armonia"
+  },
+  {
+    "id": "sole",
+    "name": "Sole",
+    "family": "armonia",
+    "check": "anima",
+    "recupero": false,
+    "text": "Non-morti/demoni subiscono danno passivo; chi ha Corruzione affronta un check extra di Anima.",
+    "effectKey": "sole",
+    "deck": "armonia"
+  },
+  {
+    "id": "metallo",
+    "name": "Metallo",
+    "family": "armonia",
+    "check": "des",
+    "recupero": false,
+    "text": "Chi fallisce resta incastrato: perde il turno e subisce 1 danno.",
+    "effectKey": "metallo",
+    "deck": "armonia"
+  },
+  {
+    "id": "logica",
+    "name": "Logica",
+    "family": "armonia",
+    "check": "int",
+    "recupero": false,
+    "text": "Nessun reroll utilizzabile da nessuna fonte mentre si è qui.",
+    "effectKey": "logica",
+    "deck": "armonia"
+  },
+  {
+    "id": "verita",
+    "name": "Verità",
+    "family": "armonia",
+    "check": "int",
+    "recupero": false,
+    "text": "Chi fallisce subisce un depotenziamento temporaneo a Sanità Mentale.",
+    "effectKey": "verita",
+    "deck": "armonia"
+  },
+  {
+    "id": "eternita",
+    "name": "Eternità",
+    "family": "armonia",
+    "check": null,
+    "recupero": true,
+    "text": "Archivio cosmico: nessun danno attivo, il tempo non consuma nulla.",
+    "effectKey": "eternita",
+    "deck": "armonia"
+  },
+  {
+    "id": "caos",
+    "name": "Caos",
+    "family": "entropia",
+    "check": "random",
+    "recupero": false,
+    "text": "Ogni check usa una statistica casuale; il mazzo Piani viene rimescolato all'ingresso.",
+    "effectKey": "caos",
+    "deck": "entropia"
+  },
+  {
+    "id": "vuoto",
+    "name": "Vuoto",
+    "family": "entropia",
+    "check": null,
+    "recupero": false,
+    "text": "A ogni turno si sceglie cosa perdere fra 1 PV, un oggetto, uno spell o un'abilità.",
+    "effectKey": "vuoto",
+    "deck": "entropia"
+  },
+  {
+    "id": "sangue",
+    "name": "Sangue",
+    "family": "entropia",
+    "check": "anima",
+    "recupero": false,
+    "text": "Ogni check/combattimento fallito costa anche 1 PV; le perdite di PV raddoppiano.",
+    "effectKey": "sangue",
+    "deck": "entropia"
+  },
+  {
+    "id": "decadimento",
+    "name": "Decadimento",
+    "family": "entropia",
+    "check": null,
+    "recupero": false,
+    "text": "Si perde un oggetto a ogni turno di permanenza (automatico), salvo protezioni.",
+    "effectKey": "decadimento",
+    "deck": "entropia",
+    "type": "fisico"
+  },
+  {
+    "id": "putrefazione",
+    "name": "Putrefazione",
+    "family": "entropia",
+    "check": null,
+    "recupero": false,
+    "text": "A ogni turno -1 temporaneo a Forza o Destrezza (d6, automatico).",
+    "effectKey": "putrefazione",
+    "deck": "entropia",
+    "type": "fisico"
+  },
+  {
+    "id": "tempo",
+    "name": "Tempo",
+    "family": "entropia",
+    "check": "int",
+    "recupero": false,
+    "text": "Chi fallisce subisce un depotenziamento temporaneo casuale (d6 fra le 6 statistiche).",
+    "effectKey": "tempo",
+    "deck": "entropia"
+  },
+  {
+    "id": "cenere",
+    "name": "Cenere",
+    "family": "entropia",
+    "check": "for",
+    "recupero": false,
+    "text": "Chi fallisce perde un oggetto, sbriciolato dal vento.",
+    "effectKey": "cenere",
+    "deck": "entropia"
+  },
+  {
+    "id": "oblio",
+    "name": "Oblio",
+    "family": "entropia",
+    "check": "int",
+    "recupero": false,
+    "text": "Chi fallisce dimentica temporaneamente uno spell o un'abilità (o 1 Intelletto).",
+    "effectKey": "oblio",
+    "deck": "entropia"
+  },
+  {
+    "id": "ombra",
+    "name": "Ombra",
+    "family": "entropia",
+    "check": "des",
+    "recupero": false,
+    "text": "Combattimento one-shot con la propria ombra (Contesa di Destrezza).",
+    "effectKey": "ombra",
+    "deck": "entropia"
+  },
+  {
+    "id": "porte_di_brace",
+    "name": "Le Porte di Brace (Demoniaco, 1° girone)",
+    "family": "demoniaco",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "1° girone infernale, di fuoco. Nessuna Corruzione qui. Incontro obbligatorio ogni turno.",
+    "effectKey": "porte_di_brace",
+    "deck": "demoni",
+    "girone": 1
+  },
+  {
+    "id": "baratro_in_fiamme",
+    "name": "Il Baratro in Fiamme (Demoniaco, 2° girone)",
+    "family": "demoniaco",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "2° girone infernale, fuoco più intenso. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",
+    "effectKey": "baratro_in_fiamme",
+    "deck": "demoni",
+    "girone": 2
+  },
+  {
+    "id": "gelo_dellabisso",
+    "name": "Il Gelo dell'Abisso (Demoniaco, 3° girone)",
+    "family": "demoniaco",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "3° girone infernale, ghiaccio. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",
+    "effectKey": "gelo_dellabisso",
+    "deck": "demoni",
+    "girone": 3
+  },
+  {
+    "id": "palude_sconsacrata",
+    "name": "La Palude Sconsacrata (Piano Negativo, 1°)",
+    "family": "nonmorti",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "1° livello dei non-morti. Incontro obbligatorio ogni turno.",
+    "effectKey": "palude_sconsacrata",
+    "deck": "nonmorti",
+    "girone": 1
+  },
+  {
+    "id": "velo_dei_sussurri",
+    "name": "Il Velo dei Sussurri (Piano Negativo, 2°)",
+    "family": "nonmorti",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "2° livello. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",
+    "effectKey": "velo_dei_sussurri",
+    "deck": "nonmorti",
+    "girone": 2
+  },
+  {
+    "id": "voragine_della_negativita",
+    "name": "La Voragine della Negatività (Piano Negativo, 3°)",
+    "family": "nonmorti",
+    "check": "for_or_int",
+    "recupero": false,
+    "text": "3° livello, il più profondo. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",
+    "effectKey": "voragine_della_negativita",
+    "deck": "nonmorti",
+    "girone": 3
+  }
+]

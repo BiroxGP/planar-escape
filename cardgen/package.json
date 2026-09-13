@@ -1,0 +1,13 @@
+{
+  "name": "planar-escape-cardgen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compositore di carte per Planar Escape: unisce template + testo dei dati + illustrazioni generate in PNG pronti per la stampa.",
+  "scripts": {
+    "extract": "node extract-data.js",
+    "render:piani": "node render.js"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}
