@@ -415,7 +415,7 @@ const INCONTRI = {
   entropia:[
     C("en_nessuno","Nessun evento","nessun","Il nulla, per una volta, è letteralmente nulla."),
     C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca, su una statistica casuale.",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
-    C("en_voragine","Voragine del Vuoto","check","Si sceglie cosa perdere fra PV, oggetto, spell o abilità.",{reward:{type:"choiceLoss"}}),
+    C("en_voragine","Voragine del Vuoto","ricompensa","Si sceglie cosa perdere fra PV, oggetto, spell o abilità.",{reward:{type:"choiceLoss"}}),
     C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto.",{onFail:{type:"loseItem"},auto:true}),
     C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo.",{check:"int",gravity:0,onLoseExtra:"loseTurn"}),
     C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa.",{check:"des",onFail:{type:"scatterSelf"}}),
@@ -1867,7 +1867,7 @@ function renderRewardPanel(card, acts){
     case 'choice3': return `<button class="primary" id="btnApplyReward">Applica: Resistenza gruppo + guarda 2 carte, scegline 1 in cima + o rimescola (scegli quale al tavolo)</button>`;
     case 'itemPlusCheck': return `<button class="primary" id="btnApplyReward">Pesca oggetto (check San a parte, manuale)</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
-    case 'resourceForSacrifice': return `<div>${acts.map(c=>`<button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button><button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button>`).join('')}</div>`;
+    case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
     default: return `<button class="primary" id="btnApplyReward">Applica e continua</button>`;
   }
 }
@@ -1893,6 +1893,8 @@ function bindRewardPanel(card, acts){
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
   document.querySelectorAll('[data-lose]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.lose.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length){ c.inventory.pop(); } done(); });
+  const declineBtn=document.getElementById('btnDeclineReward');
+  if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo rinuncia alla ricompensa: nessun sacrificio, nessuna risorsa.'); done(); };
   document.querySelectorAll('[data-sacrifice]').forEach(b=>b.onclick=()=>{
     const [id,what]=b.dataset.sacrifice.split('-'); const c=acts.find(x=>x.id===id);
     let sacrificed=false;
