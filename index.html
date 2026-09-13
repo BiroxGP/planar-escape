@@ -982,7 +982,44 @@ function renderTurnArea(){
   if(state.currentDraw.phase==='boss'){
     return `<div class="panel center"><h2>⚔️ Scontro contro un boss in corso</h2><p class="hint">Risolvilo dalla finestra di dialogo.</p></div>`;
   }
+  if(state.currentDraw.phase==='vuoto-choice'){
+    return renderVuotoChoice();
+  }
   return renderDrawFlow();
+}
+function renderVuotoChoice(){
+  const plane = currentPlane();
+  const acts = activeChars();
+  const choices = state.currentDraw.vuotoChoices||{};
+  const allDone = acts.every(c=>choices[c.id]);
+  return `<div class="panel">
+    <div class="card-display">
+      ${cardArt(plane.id, FAMILIES[plane.family]?.icon||'🕳️', plane.name, 'fam-entropia')}
+      <div class="card-body"><h2>🕳️ ${plane.name}</h2><p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p></div>
+    </div>
+    <p class="hint">Ogni presente deve scegliere cosa perdere — obbligatorio, una sola volta a testa.</p>
+    ${acts.map(c=>{
+      const done = !!choices[c.id];
+      const hasAbility = c.rerolls>0 || (CLASSES[c.cls].special && c.charges.special);
+      return `<div class="row" style="margin-bottom:.5rem; align-items:center;">
+        <span style="min-width:110px;">${escapeHtml(c.name)}${done?' ✓':''}</span>
+        <button class="small" data-vuoto="${c.id}:pv" ${done?'disabled':''}>-1 PV</button>
+        <button class="small" data-vuoto="${c.id}:item" ${done||!c.inventory.length?'disabled':''}>Perdi oggetto</button>
+        <button class="small" data-vuoto="${c.id}:spell" ${done||!c.spells.length?'disabled':''}>Perdi uno spell</button>
+        <button class="small" data-vuoto="${c.id}:ability" ${done||!hasAbility?'disabled':''}>Perdi un'abilità</button>
+      </div>`;
+    }).join('')}
+    ${allDone ? `<button class="primary mt1" id="btnVuotoContinue">Continua</button>` : `<p class="hint">Mancano ancora delle scelte prima di poter continuare.</p>`}
+  </div>`;
+}
+function applyVuotoLoss(c, what){
+  if(what==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); logMsg(`🕳️ ${c.name} sceglie di perdere 1 PV.`); }
+  else if(what==='item' && c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di perdere ${OGGETTI_BY_ID[lost]?.name}.`); }
+  else if(what==='spell' && c.spells.length){ const idx=Math.floor(Math.random()*c.spells.length); const lost=c.spells.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di dimenticare ${SPELLS_BY_ID[lost]?.name}.`); }
+  else if(what==='ability'){
+    if(c.rerolls>0){ c.rerolls--; logMsg(`🕳️ ${c.name} sceglie di perdere 1 reroll.`); }
+    else if(CLASSES[c.cls].special && c.charges.special){ c.charges.special=false; logMsg(`🕳️ ${c.name} sceglie di scaricare la propria abilità di classe.`); }
+  }
 }
 function renderGroupPicker(){
   ensureGroups();
@@ -1196,6 +1233,13 @@ function activeChars(){ return groupMembers(currentGroup()); }
 function applyPlaneIntrinsic(plane){
   const acts = activeChars();
   const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
+  if(plane.id==='vuoto' && acts.length){
+    state.currentDraw.phase = 'vuoto-choice';
+    state.currentDraw.vuotoChoices = {};
+    logMsg("🕳️ Il Vuoto costringe ogni presente a scegliere cosa perdere: 1 PV, un oggetto, uno spell o un'abilità. Non è facoltativo.",'warn');
+    render();
+    return;
+  }
   const fn = PLANE_EFFECTS[plane.effectKey];
   if(fn) fn(plane, acts, ctx);
   else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
@@ -1255,7 +1299,6 @@ const PLANE_EFFECTS = {
   logica:(p,acts,ctx)=>{ logMsg('🔢 Nessun reroll utilizzabile qui, da nessuna fonte.'); },
   verita:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); if(!r.success) applyTempDebuff(c,'san'); }); },
   caos:(p,acts,ctx)=>{ logMsg('🌀 Caos: ogni check qui userà una statistica casuale. Il mazzo Piani viene rimescolato ora, incluse le carte Piano Terreno sul fondo.'); reshuffleMazzoPiani(); },
-  vuoto:(p,acts,ctx)=>{ logMsg('🕳️ Ogni personaggio presente sceglie cosa perdere: 1 PV, un oggetto, uno spell o un\'abilità (usa Gestisci).'); },
   sangue:(p,acts,ctx)=>{ logMsg('🩸 Qui ogni check/combattimento fallito costa anche 1 PV extra, e le perdite di PV raddoppiano.'); },
   decadimento:(p,acts,ctx)=>{ acts.forEach(c=>{ if(c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🦴 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Decadimento).`); } }); },
   putrefazione:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=d6(); const stat = r<=3?'for':'des'; applyTempDebuff(c,stat); }); },
@@ -1814,11 +1857,11 @@ function renderRewardPanel(card, acts){
     case 'removePermDebuff': return `<div>${acts.map(c=>`<button class="small" data-rmperm="${c.id}">Rimuovi 1 depotenz. perm. a ${c.name}</button>`).join(' ')}</div>`;
     case 'sanheal': return `<div>${acts.map(c=>`<button class="small" data-sanheal="${c.id}">+1 San a ${c.name}</button>`).join(' ')}</div>`;
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
-    case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item">Perdi oggetto</button></span>`).join('')}`;
+    case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button></span>`).join('')}</div>`;
     case 'choice3': return `<button class="primary" id="btnApplyReward">Applica: Resistenza gruppo + guarda 2 carte, scegline 1 in cima + o rimescola (scegli quale al tavolo)</button>`;
     case 'itemPlusCheck': return `<button class="primary" id="btnApplyReward">Pesca oggetto (check San a parte, manuale)</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
-    case 'resourceForSacrifice': return `<div>${acts.map(c=>`<button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button><button class="small" data-sacrifice="${c.id}-item">sacrifica oggetto → +1 risorsa</button>`).join('')}</div>`;
+    case 'resourceForSacrifice': return `<div>${acts.map(c=>`<button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button><button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button>`).join('')}</div>`;
     default: return `<button class="primary" id="btnApplyReward">Applica e continua</button>`;
   }
 }
@@ -1844,7 +1887,15 @@ function bindRewardPanel(card, acts){
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
   document.querySelectorAll('[data-lose]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.lose.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length){ c.inventory.pop(); } done(); });
-  document.querySelectorAll('[data-sacrifice]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.sacrifice.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length) c.inventory.pop(); c.resources+=1; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); done(); });
+  document.querySelectorAll('[data-sacrifice]').forEach(b=>b.onclick=()=>{
+    const [id,what]=b.dataset.sacrifice.split('-'); const c=acts.find(x=>x.id===id);
+    let sacrificed=false;
+    if(what==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); sacrificed=true; }
+    else if(c.inventory.length){ c.inventory.pop(); sacrificed=true; }
+    if(sacrificed){ c.resources+=1; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); }
+    else logMsg(`⚠️ ${c.name} non ha nulla da sacrificare.`,'warn');
+    done();
+  });
 }
 function showPeekModal(r){
   const n = r.n||1;
@@ -2481,6 +2532,20 @@ function bindGame(){
   document.querySelectorAll('[data-quickinfo-item]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); showOggettoInfoModal(b.dataset.quickinfoItem); });
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.groupjump; startJump(); });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
+  document.querySelectorAll('[data-vuoto]').forEach(b=>b.onclick=()=>{
+    const [cid,what] = b.dataset.vuoto.split(':');
+    const c = state.players.find(p=>p.id===cid);
+    applyVuotoLoss(c, what);
+    state.currentDraw.vuotoChoices = state.currentDraw.vuotoChoices||{};
+    state.currentDraw.vuotoChoices[cid]=true;
+    render();
+  });
+  const vuotoContinue = document.getElementById('btnVuotoContinue');
+  if(vuotoContinue) vuotoContinue.onclick=()=>{
+    const plane = currentPlane();
+    state.currentDraw.phase = 'plane';
+    drawIncontroForPlane(plane, null);
+  };
   setTimeout(renderIncontroAction,0);
 }
 function openSplitGroupModal(gid){
