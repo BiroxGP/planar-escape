@@ -1903,7 +1903,7 @@ function bindRewardPanel(card, acts){
     done();
   });
 }
-function showPeekModal(r){
+function showPeekModal(r, usedRedraw){
   const n = r.n||1;
   const top = state.mazzoPiani.slice(-n).reverse(); // deck stored with next-draw at index0 via shift, so top = index0.. wait we shift from front
   render(); // no-op, just ensure state consistent
@@ -1914,7 +1914,7 @@ function showPeekModal(r){
   if(stasi){
     actionsHtml = `<p class="hint">⏳ Qui a Stasi il mazzo Piani non è manipolabile: puoi solo guardare, non riordinare né scartare.</p>`;
   } else {
-    if(r.discard){ actionsHtml += `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-discardpeek="${i}">Scarta in fondo #${i+1} e pesca un'altra</button>`).join('')}</div>`; }
+    if(r.discard && !usedRedraw){ actionsHtml += `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-discardpeek="${i}">Scarta in fondo #${i+1} e pesca un'altra</button>`).join('')}</div>`; }
     if(r.chooseBottom){ actionsHtml += `<div class="row mt1">${cards.map((id,i)=>`<button class="small" data-sendbottom="${i}">Manda in fondo #${i+1}, lascia le altre in cima</button>`).join('')}</div>`; }
     if(r.type==='peekBottom'){ actionsHtml += `<div class="row mt1"><button class="primary" id="btnMoveBottomTop">Porta questa carta in cima</button></div>`; }
   }
@@ -1933,7 +1933,7 @@ function showPeekModal(r){
       closeModal(); finishIncontro();
     } else {
       logMsg('🔮 Carta scartata in fondo al mazzo, se ne pesca una nuova al posto suo.');
-      closeModal(); showPeekModal(r);
+      closeModal(); showPeekModal(r, true);
     }
   });
   document.querySelectorAll('[data-sendbottom]').forEach(b=>b.onclick=()=>{
