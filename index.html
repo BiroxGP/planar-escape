@@ -445,7 +445,7 @@ const OGGETTI = [
   O("o_spadafiamm","Spada Fiammeggiante","arma","+1 Forza, +1 danno. Nel piano Fuoco il primo danno è sempre parato.",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:1,dmgBonus:1}),
   O("o_asciatitani","Ascia dei Titani","arma","+1 Forza, +1 danno. Contro un boss, ulteriore +1 Forza.",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:1,dmgBonus:1}),
   O("o_pugnaleombra","Pugnale dell'Ombra","arma","+1 Destrezza, +1 danno.",{slot:"weapon",tier:"leggera",statKey:"des",statBonus:1,dmgBonus:1}),
-  O("o_arcolungo","Arco Lungo Planare","arma","+1 Destrezza, +1 danno. Permette Furtività combattendo a distanza.",{slot:"weapon",tier:"leggera",statKey:"des",statBonus:1,dmgBonus:1}),
+  O("o_arcolungo","Arco Lungo Planare","arma","+1 Destrezza, +1 danno. Permette Furtività combattendo a distanza.",{slot:"weapon",tier:"leggera",statKey:"des",statBonus:1,dmgBonus:1,rangedStealth:true}),
   O("o_martello","Martello del Giudizio","arma","+1 Forza, +1 danno. Contro non-morti/demoni, danno raddoppiato.",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:1,dmgBonus:1}),
   O("o_bacchetta","Bacchetta Runica da Combattimento","arma","+1 Intelletto, +1 danno nelle Contese di Intelletto.",{slot:"weapon",tier:"leggera",statKey:"int",statBonus:1,dmgBonus:1}),
   O("o_spadatitano","Spada del Titano Decaduto","arma","+2 Forza, +2 danno (rara).",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:2,dmgBonus:2}),
@@ -485,7 +485,7 @@ const OGGETTI = [
   O("o_auraassorbente","Aura Assorbente","protezione","In ogni Contesa, il primo danno subito dal team è sempre parato (illimitato).",{blockFirstHitCombatAlways:true}),
   O("o_reliquiafredda","Reliquia Fredda","protezione","Annulla il malus d'ingresso di Tenebre o Luce (permanente).",{blockPlane:["tenebre","luce"]}),
   O("o_bacchettafulmine","Bacchetta del Fulmine","oneshot","One-shot: 1 danno diretto a tutte le entità presenti, senza tirare.",{oneUse:true,combatDamageAll:1}),
-  O("o_bacchettarinvio","Bacchetta del Rinvio","oneshot","Annulla un Incontro ostile, come la Furtività.",{oneUse:true,manualUse:true}),
+  O("o_bacchettarinvio","Bacchetta del Rinvio","oneshot","Annulla un Incontro ostile, come la Furtività.",{oneUse:true,stealthLikeItem:true}),
   O("o_vergascambio","Verga dello Scambio","oneshot","One-shot (Caos): scambia i risultati di un giro già tirato.",{oneUse:true,manualUse:true}),
   O("o_bastonerifugio","Bastone del Rifugio","oneshot","Trasforma il piano corrente in Recupero per un turno, solo per chi lo usa.",{oneUse:true,selfRecupero:true}),
   O("o_scettrocongelamento","Scettro di Congelamento","oneshot","Un'entità persistente non mette a segno colpi in quel giro.",{oneUse:true,manualUse:true}),
@@ -509,7 +509,7 @@ const SPELLS = {
     S("sp_analisi","Analisi Planare","Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare.",{reward:{type:"peek",n:1,discard:true},cost:1}),
     S("sp_convulsione","Convulsione Planare","Raro: rimescola per intero il mazzo Piani.",{reward:{type:"reshuffle"},cost:1}),
     S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",{combatHelper:2}),
-    S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{manualUse:true}),
+    S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{stealthLikeSpell:true}),
     S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{manualUse:true}),
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{manualUse:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{manualUse:true}),
@@ -517,7 +517,7 @@ const SPELLS = {
     S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{blockNextHit:true}),
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{manualUse:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{manualUse:true}),
-    S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{skipIncontro:true}),
+    S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
     S("sp_ecofondo","Eco dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},cost:1,daTestare:true}),
   ],
   flusso:[
@@ -1155,6 +1155,18 @@ function resolveAttack(c, stat){
   }
   return {roll:r.roll, hit, dmg};
 }
+function passthroughTargets(acts){
+  // Arco Lungo Planare: chi lo impugna e supera un check di Destrezza combatte a distanza
+  // restando nascosto, quindi non subisce il danno passante del team in quel giro.
+  const eligible = acts.filter(c=>{
+    const w = c.equipped.weapon && OGGETTI_BY_ID[c.equipped.weapon];
+    if(!w || !w.rangedStealth) return true;
+    const r = checkRoll(c,'des');
+    if(r.success){ logMsg(`🏹 ${c.name} (${w.name}) combatte a distanza restando nascosto: non subisce danno passante in questo giro.`); return false; }
+    return true;
+  });
+  return eligible.length ? eligible : acts;
+}
 function demonContribution(acts){
   const user = acts.find(c=>c.demonReady);
   if(!user) return null;
@@ -1445,6 +1457,25 @@ function nativeStatFor(plane){
 }
 
 /* ---------- furtività (Ladro, Saltimbanco) ---------- */
+function grantHidden(c, sourceName, opts){
+  opts = opts||{};
+  const card = currentIncontro();
+  if(!state.currentDraw || state.currentDraw.phase!=='incontro' || !card || card.type!=='incontro'){
+    logMsg(`⚠️ ${sourceName}: si usa solo di fronte a un Incontro ostile in corso.`,'warn');
+    return false;
+  }
+  const plane = currentPlane();
+  if(plane && (plane.family==='demoniaco'||plane.family==='nonmorti') && !opts.bypassDemonRestriction){
+    logMsg(`⚠️ ${sourceName}: qui la presenza di un vivente è sempre sentita, nemmeno questo basta a restare nascosti.`,'warn');
+    return false;
+  }
+  state.currentDraw.stealthDecided = state.currentDraw.stealthDecided||{};
+  state.currentDraw.stealthDecided[c.id]=true;
+  state.currentDraw.hidden = state.currentDraw.hidden||[];
+  if(!state.currentDraw.hidden.includes(c.id)) state.currentDraw.hidden.push(c.id);
+  logMsg(`🥷 ${c.name} evita l'Incontro grazie a ${sourceName}.`);
+  return true;
+}
 function renderStealthPanel(chars){
   return `<div class="manual-box"><h4>🥷 Furtività</h4>
     <p style="font-size:.85rem;">Chi ha Furtività vede l'Incontro e decide se tentare di restare nascosto (check di Destrezza) prima che si affronti lo scontro: chi la usa vede solo se stesso, non tutto il gruppo.</p>
@@ -1572,9 +1603,10 @@ function fightRound(plane, card, acts, cb){
   });
   if(passThrough>0){
     let dmgStat = card.damageStat||'pv';
+    const targets = passthroughTargets(acts);
     let idx=0;
     for(let i=0;i<passThrough;i++){
-      const target = acts[idx%acts.length];
+      const target = targets[idx%targets.length];
       applyDamage(target, dmgStat, 1, {family:plane.family, planeId:plane.id, combat:true});
       idx++;
     }
@@ -1952,7 +1984,7 @@ function fightRoundGeneric(cb, acts, plane, opts){
   cb.entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
   const passThrough=Math.max(0,entityDmg-teamDmg);
   logMsg(`⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`);
-  if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ const t=acts[idx%acts.length]; applyDamage(t, opts.damageStat||'pv', 1, {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
+  if(passThrough>0){ const targets=passthroughTargets(acts); let idx=0; for(let i=0;i<passThrough;i++){ const t=targets[idx%targets.length]; applyDamage(t, opts.damageStat||'pv', 1, {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
 }
 
 /* ---------- Character management modal (Gestisci) ---------- */
@@ -2099,6 +2131,10 @@ function useItem(c, idx){
     c.inventory.splice(idx,1);
     return;
   }
+  if(it.stealthLikeItem){
+    if(grantHidden(c, it.name)) c.inventory.splice(idx,1);
+    return;
+  }
   if(it.cat==='protezione' && !it.slot){
     logMsg(`ℹ️ ${it.name} è un oggetto passivo: protegge automaticamente restando nell'inventario, non serve equipaggiarlo o usarlo.`);
     return;
@@ -2109,6 +2145,10 @@ function useItem(c, idx){
 function useSpell(c, idx){
   const id=c.spells[idx]; const sp=SPELLS_BY_ID[id];
   if(!sp) return;
+  if(sp.stealthLikeSpell){
+    if(grantHidden(c, sp.name, {bypassDemonRestriction: sp.bypassDemonRestriction})) c.spells.splice(idx,1);
+    return;
+  }
   const cost = sp.cost||0;
   if(cost>0){
     if(c.resources<cost){ logMsg(`⚠️ ${c.name} non ha abbastanza risorse planari per lanciare ${sp.name} (serve ${cost}).`,'warn'); return; }
