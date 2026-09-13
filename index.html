@@ -1184,6 +1184,10 @@ function applyPlaneIntrinsic(plane){
   const fn = PLANE_EFFECTS[plane.effectKey];
   if(fn) fn(plane, acts, ctx);
   else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
+  if(RECUPERO_PLANES.has(plane.id) && acts.length){
+    logMsg(`🛌 ${plane.name} è un piano di Recupero: il gruppo presente riposa automaticamente.`,'good');
+    acts.forEach(c=>recuperoFor(c));
+  }
   // draw incontro after intrinsic (unless plane fully occupies the turn, none do per rules: "si pesca comunque, come sempre")
   const forcedFamily = (plane.family==='demoniaco'||plane.family==='nonmorti') ? plane.deck : null;
   drawIncontroForPlane(plane, forcedFamily);
@@ -1886,14 +1890,23 @@ function finishIncontro(){
 
 /* ---------- Recupero ---------- */
 function recuperoFor(c){
+  const parts = [];
+  const beforePv = c.stats.pv;
   healStat(c,'pv',1);
-  activeTempDebuffs(c).forEach(s=>cureOneDebuff(c,s));
+  if(c.stats.pv>beforePv) parts.push(`+1 PV (${beforePv}→${c.stats.pv})`);
+  const debuffed = activeTempDebuffs(c);
+  debuffed.forEach(s=>cureOneDebuff(c,s));
+  if(debuffed.length) parts.push(`guarisce ${debuffed.map(s=>STAT_LABEL[s]).join(', ')}`);
+  const spellsGained = [];
   Object.entries(CLASSES[c.cls].affinity||{}).forEach(([school,base])=>{
     const have = c.spells.filter(id=>SPELLS_BY_ID[id] && SPELLS[school].some(s=>s.id===id)).length;
-    if(have<base){ const s=drawSpell(school); if(s) c.spells.push(s); }
+    if(have<base){ const s=drawSpell(school); if(s){ c.spells.push(s); spellsGained.push(SPELLS_BY_ID[s]?.name||school); } }
   });
+  if(spellsGained.length) parts.push(`pesca ${spellsGained.join(', ')}`);
+  const chargeRefreshed = CLASSES[c.cls].special && !c.charges.special;
   c.charges.special = true;
-  logMsg(`🛌 ${c.name} riposa e recupera (Recupero).`);
+  if(chargeRefreshed) parts.push('ricarica l\'abilità di classe');
+  logMsg(parts.length ? `🛌 ${c.name} recupera: ${parts.join('; ')}.` : `🛌 ${c.name} riposa, ma non aveva nulla da recuperare.`);
 }
 
 /* ---------- Piano Terreno ---------- */
@@ -2113,9 +2126,9 @@ function openCharManageModal(id){
       ${STATS.map(s=>`<span class="badge">${STAT_LABEL[s]}: ${c.stats[s]}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`).join('')}
     </div>
     <p class="hint">${cls.desc}</p>
+    ${inRecuperoPlane?`<p class="hint">🛌 Piano di Recupero: il riposo è automatico all'ingresso.</p>`:''}
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
-      <button class="small" id="mgrRecupero" ${inRecuperoPlane?'':'disabled'}>🛌 Applica Recupero${inRecuperoPlane?'':' (non sei in un piano di Recupero)'}</button>
       ${cls.special ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
     </div>
@@ -2124,15 +2137,10 @@ function openCharManageModal(id){
     <h4 class="mt1">Spell (${c.spells.length})</h4>
     <div>${c.spells.map((id,i)=>`<span class="item-chip">${escapeHtml(SPELLS_BY_ID[id]?.name)} <button class="small" data-infospell="${id}" title="Cosa fa?">ℹ️</button> <button class="small" data-usespell="${i}">Usa</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
     <h4 class="mt1">Depotenziamenti temporanei attivi</h4>
-    <div>${activeTempDebuffs(c).map(s=>`<button class="small" data-cure="${s}">Guarisci ${STAT_LABEL[s]} (Recupero)</button>`).join('')||'<span class="hint">Nessuno</span>'}</div>
+    <div>${activeTempDebuffs(c).map(s=>`<span class="badge">${STAT_LABEL[s]}</span>`).join('')||'<span class="hint">Nessuno</span>'}<p class="hint">Guariscono solo a Recupero (automatico) o con spell/oggetti specifici.</p></div>
     <div class="row mt1"><button id="mgrClose" class="primary">Chiudi</button></div>
   `;
   openModal(body);
-  document.getElementById('mgrRecupero').onclick=()=>{
-    const plane = currentPlane();
-    if(!plane || !RECUPERO_PLANES.has(plane.id)){ toast('Non sei in un piano di Recupero al momento.'); return; }
-    recuperoFor(c); render(); openCharManageModal(id);
-  };
   const specialBtn=document.getElementById('mgrSpecial');
   if(specialBtn) specialBtn.onclick=()=>{ useClassSpecial(c); render(); openCharManageModal(id); };
   const rerollBtn=document.getElementById('mgrReroll');
@@ -2140,7 +2148,6 @@ function openCharManageModal(id){
   document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ useItem(c, +b.dataset.useitem); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{ useSpell(c, +b.dataset.usespell); render(); openCharManageModal(id); });
-  document.querySelectorAll('[data-cure]').forEach(b=>b.onclick=()=>{ cureOneDebuff(c,b.dataset.cure); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-infoitem]').forEach(b=>b.onclick=()=>showOggettoInfoModal(b.dataset.infoitem));
   document.querySelectorAll('[data-infospell]').forEach(b=>b.onclick=()=>showSpellInfoModal(b.dataset.infospell));
   document.getElementById('mgrClose').onclick=closeModal;
@@ -2339,6 +2346,7 @@ function openTeleportModal(caster, idx){
       arrivers.forEach(x=>resetResistanceForPlane(x, plane.family));
       const fn = PLANE_EFFECTS[plane.effectKey];
       if(fn) fn(plane, arrivers, ctx);
+      if(RECUPERO_PLANES.has(plane.id)) arrivers.forEach(x=>recuperoFor(x));
       logMsg(`(Gli effetti intrinseci di ${plane.name} si attivano subito per chi arriva, come per chiunque vi entri normalmente.)`);
     }
     closeModal(); render();
