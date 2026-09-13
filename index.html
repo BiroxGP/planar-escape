@@ -1440,7 +1440,7 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
   const cardId = state.subdecks[deckKey].shift();
   state.subdecksDiscard[deckKey].push(cardId);
   const card = INCONTRI[deckKey].find(c=>c.id===cardId);
-  state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[] };
+  state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[], manualUsed:{} };
   logMsg(`🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`);
   render();
 }
@@ -1889,32 +1889,40 @@ function showPeekModal(r){
 }
 
 /* ---------- manual panel ---------- */
+const MANUAL_ACTIONS = [
+  {key:'dmg', attr:'data-m-dmg', label:'-1 PV'},
+  {key:'tdebuff', attr:'data-m-tdebuff', label:'Depot. temp.'},
+  {key:'pdebuff', attr:'data-m-pdebuff', label:'Depot. perm.'},
+  {key:'itemlose', attr:'data-m-item-lose', label:'Perdi oggetto'},
+  {key:'itemgain', attr:'data-m-item-gain', label:'Ottieni oggetto'},
+  {key:'res', attr:'data-m-res', label:'+1 risorsa'},
+  {key:'heal', attr:'data-m-heal', label:'+1 PV'},
+];
 function renderManualPanel(card, acts){
+  const used = (state.currentDraw && state.currentDraw.manualUsed) || {};
   return `<div class="manual-box">
     <h4>Effetto narrativo — risolvi manualmente</h4>
-    <p style="font-size:.85rem;">Applica l'effetto descritto sopra come il gruppo concorda, poi usa i pulsanti generici se serve aggiustare le statistiche:</p>
+    <p style="font-size:.85rem;">Applica l'effetto descritto sopra come il gruppo concorda (un pulsante per tipo, una sola volta a testa), poi usa i pulsanti generici se serve aggiustare le statistiche:</p>
     ${acts.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${c.name}</span>
-      <button class="small" data-m-dmg="${c.id}">-1 PV</button>
-      <button class="small" data-m-tdebuff="${c.id}">Depot. temp.</button>
-      <button class="small" data-m-pdebuff="${c.id}">Depot. perm.</button>
-      <button class="small" data-m-item-lose="${c.id}">Perdi oggetto</button>
-      <button class="small" data-m-item-gain="${c.id}">Ottieni oggetto</button>
-      <button class="small" data-m-res="${c.id}">+1 risorsa</button>
-      <button class="small" data-m-heal="${c.id}">+1 PV</button>
+      ${MANUAL_ACTIONS.map(a=>`<button class="small" ${a.attr}="${c.id}" ${used[c.id+':'+a.key]?'disabled':''}>${a.label}</button>`).join('\n      ')}
     </div>`).join('')}
     <div class="row mt1"><select id="manualStat">${STATS.map(s=>`<option value="${s}">${STAT_LABEL[s]}</option>`).join('')}</select><span class="hint">(statistica usata da Depot./​−1 PV usa sempre PV)</span></div>
     <button class="primary mt1" id="btnManualDone">Fatto, continua</button>
   </div>`;
 }
+function markManualUsed(c, key){
+  state.currentDraw.manualUsed = state.currentDraw.manualUsed||{};
+  state.currentDraw.manualUsed[c.id+':'+key]=true;
+}
 function bindManualPanel(card, acts){
   const statSel=()=>document.getElementById('manualStat').value;
-  document.querySelectorAll('[data-m-dmg]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mDmg); applyDamage(c,'pv',1,{ignoreResistance:true}); render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-tdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mTdebuff); applyTempDebuff(c,statSel()); render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-pdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mPdebuff); applyPermDebuff(c,statSel()); render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-item-lose]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemLose); if(c.inventory.length){ const n=c.inventory.pop(); logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[n]?.name}.`);} render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-item-gain]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemGain); const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} ottiene ${OGGETTI_BY_ID[it].name}.`);} render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-res]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mRes); c.resources++; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mHeal); healStat(c,'pv',1); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-dmg]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mDmg); applyDamage(c,'pv',1,{ignoreResistance:true}); markManualUsed(c,'dmg'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-tdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mTdebuff); applyTempDebuff(c,statSel()); markManualUsed(c,'tdebuff'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-pdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mPdebuff); applyPermDebuff(c,statSel()); markManualUsed(c,'pdebuff'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-item-lose]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemLose); if(c.inventory.length){ const n=c.inventory.pop(); logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[n]?.name}.`);} markManualUsed(c,'itemlose'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-item-gain]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemGain); const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} ottiene ${OGGETTI_BY_ID[it].name}.`);} markManualUsed(c,'itemgain'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-res]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mRes); c.resources++; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); markManualUsed(c,'res'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mHeal); healStat(c,'pv',1); markManualUsed(c,'heal'); render(); setTimeout(renderIncontroAction,0); });
   document.getElementById('btnManualDone').onclick=finishIncontro;
 }
 
