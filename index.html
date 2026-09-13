@@ -468,7 +468,7 @@ const OGGETTI = [
   O("o_anellomente","Anello della Chiara Mente","anello","+2 Intelletto mentre indossato.",{slot:"ring",statKey:"int",statBonus:2}),
   O("o_anellopasso","Anello del Passo Leggero","anello","+2 Destrezza mentre indossato.",{slot:"ring",statKey:"des",statBonus:2}),
   O("o_anelloanima","Anello dell'Anima Salda","anello","+2 Anima mentre indossato.",{slot:"ring",statKey:"anima",statBonus:2}),
-  O("o_anellolegame","Anello del Legame","anello","One-shot: al prossimo salto, si atterra comunque insieme al gruppo.",{oneUse:true,manualUse:true}),
+  O("o_anellolegame","Anello del Legame","anello","One-shot: al prossimo salto, si atterra comunque insieme al gruppo.",{oneUse:true,personalReunionItem:true}),
   O("o_anellocolpo","Anello del Colpo Pesante","anello","+2 danno su qualsiasi colpo a segno.",{slot:"ring",dmgBonusAny:2}),
   O("o_pozionecura1","Pozione di Cura +1","pozione","Consumabile: recupera 1 PV in qualsiasi momento.",{consumable:true,heal:{pv:1}}),
   O("o_elisir","Elisir di Ripristino","pozione","Consumabile: rimuove un depotenziamento temporaneo a caso.",{consumable:true,cureDebuff:true}),
@@ -511,7 +511,7 @@ const SPELLS = {
     S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",{combatHelper:2}),
     S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{stealthLikeSpell:true}),
     S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{manualUse:true}),
-    S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{manualUse:true}),
+    S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{manualUse:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
     S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{blockNextHit:true}),
@@ -593,6 +593,7 @@ function newGame(){
     turnConsecutive:{}, // per Piano Negativo tracking: {planeId: n}
     groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
+    pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
   };
   render();
 }
@@ -663,6 +664,7 @@ function makeChar(name, clsKey, bonus){
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
+    pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -977,14 +979,13 @@ function renderGroupPicker(){
   const isSplit = groups.length>1;
   return `<div class="panel center">
     <h2>${isSplit?'Il portale attende — il gruppo è separato':'Il gruppo è davanti al portale'}</h2>
-    <p class="hint">${isSplit?'Ogni gruppo separato pesca e salta per conto proprio: scegli quale gruppo gioca il prossimo turno.':'Nessuno sa dove porti. Premi per saltare.'}</p>
+    <p class="hint">${isSplit?'Ogni gruppo separato pesca e salta per conto proprio: scegli quale gruppo gioca il prossimo turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
     ${groups.map(({g,members})=>`
       <div class="player-setup" style="text-align:left;">
         <strong>${members.map(c=>escapeHtml(c.name)).join(', ')}</strong>
         <div class="row mt1">
           <button class="primary small" data-groupjump="${g.id}">🌀 Salta</button>
           ${members.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
-          ${groups.length>1?`<button class="small" data-groupmerge="${g.id}">🤝 Riunisci con...</button>`:''}
         </div>
       </div>`).join('')}
   </div>`;
@@ -1006,6 +1007,22 @@ function reinsertPianoCard(id){
   state.mazzoPiani.splice(pos,0,id);
 }
 function doJump(){
+  if(state.pendingReunion && state.groups.length>1){
+    mergeAllGroups();
+    state.pendingReunion=false;
+    logMsg('🔗 Il segnale di richiamo funziona: tutti i separati si ritrovano, il gruppo si riunisce prima di saltare.','good');
+  }
+  activeChars().forEach(c=>{
+    if(c.pendingPersonalReunion){
+      c.pendingPersonalReunion=false;
+      const myGroup = groupOf(c);
+      const other = myGroup && largestOtherGroup(myGroup);
+      if(other){
+        logMsg(`💍 L'Anello del Legame di ${c.name} funziona: il suo gruppo si riunisce con il resto.`,'good');
+        mergeGroups(other.id, myGroup.id);
+      }
+    }
+  });
   applyPendingMadnessActions();
   activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
   state.jumps++;
@@ -1143,6 +1160,18 @@ function mergeGroups(idA, idB){
   a.memberIds = a.memberIds.concat(b.memberIds);
   state.groups = state.groups.filter(g=>g!==b);
   if(state.currentGroupId===b.id) state.currentGroupId=a.id;
+}
+function mergeAllGroups(){
+  ensureGroups();
+  if(state.groups.length<=1) return;
+  const survivor = state.groups[0];
+  for(let i=1;i<state.groups.length;i++) survivor.memberIds = survivor.memberIds.concat(state.groups[i].memberIds);
+  state.groups = [survivor];
+  state.currentGroupId = survivor.id;
+}
+function largestOtherGroup(g){
+  ensureGroups();
+  return state.groups.filter(x=>x!==g).sort((a,b)=>groupMembers(b).length-groupMembers(a).length)[0] || null;
 }
 function activeChars(){ return groupMembers(currentGroup()); }
 
@@ -1757,7 +1786,7 @@ function bindRewardPanel(card, acts){
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); if(acts[0]){ const d=activeTempDebuffs(acts[0])[0]; if(d) cureOneDebuff(acts[0],d);} }
     if(r.type==='choice3'){ logMsg('🎁 Beneficio del viaggiatore applicato a scelta del tavolo.'); }
     if(r.type==='itemPlusCheck'){ const it=drawOggetto(); if(it&&acts[0]) acts[0].inventory.push(it); }
-    if(r.type==='syncJump'){ logMsg('🔗 Prossimo salto sincronizzato per tutti i separati.'); }
+    if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     done();
   };
   document.querySelectorAll('[data-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.heal); healStat(c,'pv',r.n); done(); });
@@ -2210,6 +2239,14 @@ function useItem(c, idx){
     if(grantHidden(c, it.name)) c.inventory.splice(idx,1);
     return;
   }
+  if(it.personalReunionItem){
+    const myGroup = groupOf(c);
+    if(!myGroup || !largestOtherGroup(myGroup)){ logMsg(`⚠️ ${it.name}: il gruppo non è separato in questo momento, non serve.`,'warn'); return; }
+    c.pendingPersonalReunion = true;
+    logMsg(`💍 ${c.name} usa ${it.name}: al prossimo salto il suo gruppo si riunirà con il resto.`);
+    c.inventory.splice(idx,1);
+    return;
+  }
   if(it.cat==='protezione' && !it.slot){
     logMsg(`ℹ️ ${it.name} è un oggetto passivo: protegge automaticamente restando nell'inventario, non serve equipaggiarlo o usarlo.`);
     return;
@@ -2222,6 +2259,10 @@ function useSpell(c, idx){
   if(!sp) return;
   if(sp.stealthLikeSpell){
     if(grantHidden(c, sp.name, {bypassDemonRestriction: sp.bypassDemonRestriction})) c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.teleportReunionSpell){
+    openTeleportModal(c, idx);
     return;
   }
   const cost = sp.cost||0;
@@ -2259,6 +2300,36 @@ function useSpell(c, idx){
   c.spells.splice(idx,1);
 }
 
+function openTeleportModal(caster, idx){
+  ensureGroups();
+  const myGroup = groupOf(caster);
+  const options = state.groups.filter(g=>g!==myGroup).flatMap(g=>groupMembers(g).map(m=>({m,g})));
+  if(options.length===0){
+    logMsg('⚠️ Teletrasporto Planare: nessun altro gruppo separato da raggiungere in questo momento.','warn');
+    return;
+  }
+  openModal(`<h3>🌀 Teletrasporto Planare</h3><p>${escapeHtml(caster.name)}${myGroup.memberIds.length>1?' (e tutto il suo gruppo, ancora uniti)':''} raggiunge chi?</p>
+    <div class="row">${options.map((o,i)=>`<button class="small" data-teleport="${i}">${escapeHtml(o.m.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-teleport]').forEach(b=>b.onclick=()=>{
+    const o = options[+b.dataset.teleport];
+    const targetGroupId = o.g.id;
+    const wasMidTurn = state.currentDraw && state.currentDraw.phase==='plane' && state.currentGroupId===targetGroupId;
+    const plane = wasMidTurn ? currentPlane() : null;
+    const arriverIds = myGroup.memberIds.slice();
+    mergeGroups(targetGroupId, myGroup.id);
+    caster.spells.splice(idx,1);
+    logMsg(`🌀 ${caster.name}${arriverIds.length>1?' e il suo gruppo':''} si teletrasporta${arriverIds.length>1?'no':''} da ${o.m.name}.`,'good');
+    if(plane){
+      const arrivers = arriverIds.map(id=>state.players.find(p=>p.id===id)).filter(isConscious);
+      const ctx = {family:plane.family, type:plane.type||FAMILIES[plane.family]?.type, planeId:plane.id};
+      arrivers.forEach(x=>resetResistanceForPlane(x, plane.family));
+      const fn = PLANE_EFFECTS[plane.effectKey];
+      if(fn) fn(plane, arrivers, ctx);
+      logMsg(`(Gli effetti intrinseci di ${plane.name} si attivano subito per chi arriva, come per chiunque vi entri normalmente.)`);
+    }
+    closeModal(); render();
+  });
+}
 function openHealOtherModal(caster, sp, r, mult){
   mult = mult||1;
   const stat = r.stat||'pv';
@@ -2287,7 +2358,6 @@ function bindGame(){
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.groupjump; startJump(); });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
-  document.querySelectorAll('[data-groupmerge]').forEach(b=>b.onclick=()=>openMergeGroupModal(b.dataset.groupmerge));
   setTimeout(renderIncontroAction,0);
 }
 function openSplitGroupModal(gid){
@@ -2305,20 +2375,6 @@ function openSplitGroupModal(gid){
     closeModal(); render();
   };
   document.getElementById('btnCancelSplit').onclick=closeModal;
-}
-function openMergeGroupModal(gid){
-  ensureGroups();
-  const others = state.groups.filter(g=>g.id!==gid && groupMembers(g).length>0);
-  if(others.length===0){ closeModal(); return; }
-  openModal(`<h3>🤝 Riunisci il gruppo</h3><p>Con quale altro gruppo si riunisce?</p>
-    <div class="row">${others.map(g=>`<button class="small" data-mergewith="${g.id}">${groupMembers(g).map(c=>c.name).join(', ')}</button>`).join('')}</div>
-    <div class="row mt1"><button id="btnCancelMerge">Annulla</button></div>`);
-  document.querySelectorAll('[data-mergewith]').forEach(b=>b.onclick=()=>{
-    mergeGroups(gid, b.dataset.mergewith);
-    logMsg('🤝 I due gruppi si riuniscono.','good');
-    closeModal(); render();
-  });
-  document.getElementById('btnCancelMerge').onclick=closeModal;
 }
 
 /* ---------------- BOOT ---------------- */
