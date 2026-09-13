@@ -501,17 +501,17 @@ const OGGETTI = [
   O("o_bacchettarinvio","Bacchetta del Rinvio","oneshot","Annulla un Incontro ostile, come la Furtività.",{oneUse:true,stealthLikeItem:true}),
   O("o_vergascambio","Verga dello Scambio","oneshot","One-shot (Caos): scambia i risultati di un giro già tirato.",{oneUse:true,manualUse:true}),
   O("o_bastonerifugio","Bastone del Rifugio","oneshot","Trasforma il piano corrente in Recupero per un turno, solo per chi lo usa.",{oneUse:true,selfRecupero:true}),
-  O("o_scettrocongelamento","Scettro di Congelamento","oneshot","Un'entità persistente non mette a segno colpi in quel giro.",{oneUse:true,manualUse:true}),
+  O("o_scettrocongelamento","Scettro di Congelamento","oneshot","Un'entità persistente non mette a segno colpi in quel giro.",{oneUse:true,freezeEntityItem:true}),
   O("o_dadorunico","Dado Runico","oneshot","Garantisce un successo automatico nella prossima Contesa.",{oneUse:true,autoSuccessNext:true}),
   O("o_specchioinfranto","Specchio Infranto","particolare","+2 contro un'entità di Ombra/Specchi/riflesso, appena riconosciuta.",{manualUse:true}),
   O("o_frammentocristallo","Frammento di Cristallo","particolare","Amplifica il prossimo incantesimo lanciato, +100% una tantum.",{spellBoostItem:true}),
   O("o_chiaveplanare","Chiave Planare","particolare","Guarda le prime 2 carte in cima al mazzo Piani, senza scartare.",{peek:2}),
   O("o_medaglionegirone","Medaglione del Girone","particolare","Appena si arriva in un girone infernale, lo abbassa di 1 (mai sotto il 1°).",{manualUse:true}),
-  O("o_acquasanta","Acqua Santa","particolare","One-shot: annichilisce del tutto un qualsiasi non-morto.",{oneUse:true,manualUse:true}),
-  O("o_cimeliodelviandante","Cimelio del Viandante","particolare","Resistenza per il prossimo piano di destinazione del gruppo.",{manualUse:true}),
+  O("o_acquasanta","Acqua Santa","particolare","One-shot: annichilisce del tutto un qualsiasi non-morto.",{oneUse:true,smiteUndeadItem:true}),
+  O("o_cimeliodelviandante","Cimelio del Viandante","particolare","Resistenza per il prossimo piano di destinazione del gruppo.",{oneUse:true,wildcardResistanceItem:true}),
   O("o_grimoriodelfurore","Grimorio del Furore","particolare","+1 danno su qualsiasi colpo a segno (si cumula).",{dmgBonusAny:1}),
   O("o_cuoreabisso","Cuore dell'Abisso","particolare","Oggetto unico: +2 danno su qualsiasi colpo a segno.",{unique:true,dmgBonusAny:2}),
-  O("o_ancoracasa","Ancora di Casa","particolare","Raro one-shot: aggiunge una carta Piano Terreno mescolata nel mazzo Piani.",{oneUse:true,manualUse:true}),
+  O("o_ancoracasa","Ancora di Casa","particolare","Raro one-shot: aggiunge una carta Piano Terreno mescolata nel mazzo Piani.",{oneUse:true,addPianoTerrenoItem:true}),
 ];
 const OGGETTI_BY_ID = Object.fromEntries(OGGETTI.map(o=>[o.id,o]));
 
@@ -525,33 +525,33 @@ const SPELLS = {
     S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{stealthLikeSpell:true}),
     S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{manualUse:true}),
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
-    S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{manualUse:true}),
+    S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{drenaggioSpell:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
     S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{blockNextHit:true}),
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
-    S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{manualUse:true}),
+    S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{trasmutazioneSpell:true}),
     S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
     S("sp_ecofondo","Eco dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},cost:1,daTestare:true}),
   ],
   flusso:[
     S("sp_manirisan","Mani Risananti","Cura 1 PV a un compagno (2 se lanciato dal Chierico).",{reward:{type:"healOther",n:1}}),
     S("sp_tempra","Tempra","Il primo danno subito dal bersaglio nella prossima Contesa è sempre parato.",{blockNextHit:true}),
-    S("sp_benedizione","Benedizione","Un personaggio a scelta infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza.",{manualUse:true}),
+    S("sp_benedizione","Benedizione","Un personaggio a scelta infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza.",{benedizioneSpell:true}),
     S("sp_paroladiconforto","Parola di Conforto","Ripristina 1 Sanità Mentale a un compagno.",{reward:{type:"healOther",n:1,stat:"san"}}),
     S("sp_assoluzione","Assoluzione","Ripristina 1 Anima a un compagno.",{reward:{type:"healOther",n:1,stat:"anima"}}),
     S("sp_manobenedetta","Mano Benedetta","Trascina via un compagno non consenziente senza Contesa di Forza.",{manualUse:true}),
-    S("sp_cerchio","Cerchio di Protezione","Il gruppo para il primo danno subito in questo piano, per un turno.",{manualUse:true}),
+    S("sp_cerchio","Cerchio di Protezione","Il gruppo para il primo danno subito in questo piano, per un turno.",{cerchioSpell:true}),
     S("sp_fiammapurif","Fiamma Purificatrice","2 danni diretti a tutte le entità non-morte/demoniache in una Contesa.",{combatDamageAll:2,filterUndeadDemon:true}),
     S("sp_ristoro","Ristoro","Trasforma il piano corrente in Recupero per un turno, solo per chi lo lancia.",{selfRecupero:true}),
-    S("sp_sigillo","Sigillo","Impedisce a un compagno di agire ostilmente contro il gruppo, finché si resta nel piano.",{manualUse:true}),
-    S("sp_rinascita","Rinascita","Una volta per partita: se un compagno sviene a 0 PV, lo rimette in piedi con 1 PV.",{manualUse:true,oncePerGame:true}),
-    S("sp_egida","Egida","Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",{manualUse:true}),
+    S("sp_sigillo","Sigillo","Impedisce a un compagno di agire ostilmente contro il gruppo, finché si resta nel piano.",{sigilloSpell:true}),
+    S("sp_rinascita","Rinascita","Una volta per partita: se un compagno sviene a 0 PV, lo rimette in piedi con 1 PV.",{rinascitaSpell:true,oncePerGame:true}),
+    S("sp_egida","Egida","Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",{egidaSpell:true}),
   ],
   divinazione:[
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
-    S("sp_vaticinio","Vaticinio","Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",{manualUse:true,oncePerGame:true}),
+    S("sp_vaticinio","Vaticinio","Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",{vaticinioSpell:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
     S("sp_richiamofondo","Richiamo dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Gratuito. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},daTestare:true}),
   ],
@@ -607,6 +607,7 @@ function newGame(){
     groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
+    pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
   };
   render();
 }
@@ -678,6 +679,11 @@ function makeChar(name, clsKey, bonus){
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
+    egidaReady:false, // Egida: para il prossimo danno Fisico, fino al prossimo salto
+    sigilloActive:false, // Sigillo: non può agire ostilmente per Corruzione, finché resta nel piano
+    dmgBonusPlane:0, // Benedizione: +2 danno per tutta la permanenza nel piano
+    wildcardResistance:false, // Cimelio del Viandante/Vaticinio: para il primo danno d'ingresso del prossimo piano, qualunque famiglia
+    contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
@@ -708,12 +714,27 @@ function applyDamage(c, stat, n, ctx){
     logMsg(`🧘 ${c.name} annulla del tutto il danno a ${STAT_LABEL[stat]} con la Resistenza universale.`);
     return;
   }
+  if(n>0 && c.egidaReady && ctx.type==='fisico'){
+    c.egidaReady=false;
+    logMsg(`🛡️ ${c.name} para il colpo grazie a Egida.`);
+    return;
+  }
   // resistenza: block first hit of the plane-entry if applicable and physical/type match
   if(!ctx.ignoreResistance && n>0 && checkResistanceBlocks(c, ctx)){
     logMsg(`🛡️ ${c.name} para il colpo grazie alla Resistenza.`);
     return;
   }
   if(!ctx.ignoreResistance && n>0 && checkItemEntryBlock(c, ctx)) return;
+  if(!ctx.ignoreResistance && n>0 && c.wildcardResistance){
+    c.wildcardResistance=false;
+    logMsg(`🍀 ${c.name} para il colpo: Resistenza garantita per questo piano.`);
+    return;
+  }
+  if(n>0 && state.currentDraw && state.currentDraw.cerchioActive){
+    state.currentDraw.cerchioActive=false;
+    logMsg(`🛡️ Il gruppo para il colpo grazie al Cerchio di Protezione.`);
+    return;
+  }
   if(n>0 && c.equipped.shield){
     const sh = OGGETTI_BY_ID[c.equipped.shield];
     if(sh && (sh.blockFirstHitAnyType || (sh.blockFirstHitPhysical && ctx.type==='fisico'))){
@@ -789,7 +810,16 @@ function handlePvThreshold(c){
   const cls=CLASSES[c.cls];
   if(c.stats.pv<=0 && c.stats.pv>-1 && c.status==='active'){
     if(cls.special==='furia' ){ /* Barbaro: 0 non sviene */ }
-    else { c.status='unconscious'; logMsg(`😵 ${c.name} sviene a 0 Punti Vita.`,'bad'); }
+    else {
+      const savior = state.players.find(p=>isConscious(p) && p.spells.includes('sp_rinascita'));
+      if(savior){
+        savior.spells.splice(savior.spells.indexOf('sp_rinascita'),1);
+        c.stats.pv=1;
+        logMsg(`✨ Rinascita (in mano a ${savior.name}) scatta: ${c.name} torna in piedi con 1 PV invece di svenire.`,'good');
+      } else {
+        c.status='unconscious'; logMsg(`😵 ${c.name} sviene a 0 Punti Vita.`,'bad');
+      }
+    }
   }
   if(c.stats.pv<0){
     if(cls.special==='resurrezione' && !c.negromanteUsed){
@@ -854,6 +884,7 @@ function effectiveStat(c, stat){
     const it=OGGETTI_BY_ID[id]; if(!it) return;
     if(it.statKey===stat) v+=it.statBonus||0;
   });
+  if(c.contesaBonusPlane) v += c.contesaBonusPlane; // Vaticinio: +1 in qualsiasi Contesa per la permanenza
   return Math.min(6,v);
 }
 function damageBonusFor(c, stat){
@@ -1081,7 +1112,7 @@ function doJump(){
     }
   });
   applyPendingMadnessActions();
-  activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
+  activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
   state.jumps++;
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
@@ -1098,6 +1129,15 @@ function doJump(){
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
   jumpers.forEach(c=> resetResistanceForPlane(c, plane.family));
+  if(state.pendingVaticinio && state.pendingVaticinio.groupId===state.currentGroupId){
+    const guess = state.pendingVaticinio; state.pendingVaticinio = null;
+    if(guess.family===plane.family){
+      jumpers.forEach(c=>{ c.wildcardResistance=true; c.contesaBonusPlane=(c.contesaBonusPlane||0)+1; });
+      logMsg(`🔮 Vaticinio si avvera: il gruppo ottiene Resistenza e +1 in qualsiasi Contesa per tutta la permanenza in ${plane.name}.`,'good');
+    } else {
+      logMsg(`🔮 Vaticinio non si avvera: ${plane.name} non è di Famiglia ${FAMILIES[guess.family]?.name}.`,'warn');
+    }
+  }
   // track consecutive turns in same girone plane for Piano Negativo
   if(plane.family==='nonmorti'){
     state.turnConsecutive[drawnId] = (state.turnConsecutive[drawnId]||0)+1;
@@ -1322,6 +1362,7 @@ function resolveAttack(c, stat){
   if(hit){
     const cls=CLASSES[c.cls];
     dmg = (cls.special==='furia' && (stat==='for'||isCrit)) ? 2 : (1+damageBonusFor(c,stat));
+    if(c.dmgBonusPlane) dmg += c.dmgBonusPlane; // Benedizione: +2 danno per tutta la permanenza nel piano
   }
   return {roll:r.roll, hit, dmg};
 }
@@ -1411,6 +1452,7 @@ function triggerCorruzione(c){
   const r=d6();
   if(r<=2){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
   if(r<=4){ c.pendingCorruzione='contrario'; logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno farà il contrario del resto del gruppo.`, 'warn'); return; }
+  if(c.sigilloActive){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): agirebbe contro il team, ma il Sigillo lo impedisce.`, 'good'); return; }
   c.pendingCorruzione='ostile';
   logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno agirà contro il team.`, 'warn');
 }
@@ -1425,7 +1467,7 @@ function resolveForceContest(a,b){
   return a;
 }
 function soloForcedJump(group, reason){
-  group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
+  group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
   splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
@@ -1780,12 +1822,17 @@ function fightRound(plane, card, acts, cb){
   }
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
-  cb.entities.forEach(e=>{
-    if(e.hp<=0) return;
-    const r=d6(); const hit = r<=e.value; // nat6 always fails for entities
-    if(hit) entityDmg+=e.value;
-    log.push({who:e.name, roll:r, stat:e.statKey, hit, dmg:hit?e.value:0, isEntity:true});
-  });
+  if(cb.freezeNextRound){
+    cb.freezeNextRound=false;
+    log.push({who:'(Scettro di Congelamento)', roll:null, stat:null, hit:false, dmg:0, isEntity:true, frozen:true});
+  } else {
+    cb.entities.forEach(e=>{
+      if(e.hp<=0) return;
+      const r=d6(); const hit = r<=e.value; // nat6 always fails for entities
+      if(hit) entityDmg+=e.value;
+      log.push({who:e.name, roll:r, stat:e.statKey, hit, dmg:hit?e.value:0, isEntity:true});
+    });
+  }
   // apply team damage to entities (focus fire lowest hp first)
   let remaining=teamDmg;
   cb.entities.sort((a,b)=>(a.hp||a.value)-(b.hp||b.value));
@@ -1797,6 +1844,7 @@ function fightRound(plane, card, acts, cb){
   const passThrough = Math.max(0, entityDmg - teamDmg);
   logMsg(`⚔️ Giro ${cb.rounds}: team infligge ${teamDmg} danni; entità infliggono ${entityDmg} (passano ${passThrough}).`);
   log.forEach(l=>{
+    if(l.frozen){ logMsg(`　 ❄️ Le entità non mettono a segno colpi questo giro (Scettro di Congelamento).`); return; }
     logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: tiro ${l.roll} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
   });
   if(passThrough>0){
@@ -1828,6 +1876,10 @@ function persistCombat(plane, cb){
   state.pendingPersistent[plane.id] = cb;
 }
 function grantCombatReward(plane, card, acts, cb){
+  if(state.currentDraw && state.currentDraw.drenaggioActive && acts.length){
+    acts[0].resources += 1;
+    logMsg(`🔮 Drenaggio d'Essenza: ${acts[0].name} ottiene anche 1 risorsa planare extra.`,'good');
+  }
   const type = plane.type || FAMILIES[plane.family]?.type;
   if(type==='fisico'){
     const it = drawOggetto();
@@ -2350,6 +2402,13 @@ function revertPlaneDebuffs(c){
   });
   c.planeDebuff={};
 }
+function revertPerPlaneBuffs(c){
+  // Sigillo, Benedizione, Vaticinio: durano "finché si resta nel piano" / "per tutta la
+  // permanenza" — finiscono al salto successivo, a prescindere da come è andata.
+  if(c.sigilloActive){ c.sigilloActive=false; }
+  if(c.dmgBonusPlane){ c.dmgBonusPlane=0; }
+  if(c.contesaBonusPlane){ c.contesaBonusPlane=0; }
+}
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
   if(!it) return;
@@ -2401,6 +2460,35 @@ function useItem(c, idx){
     logMsg(`ℹ️ ${it.name} è un oggetto passivo: protegge automaticamente restando nell'inventario, non serve equipaggiarlo o usarlo.`);
     return;
   }
+  if(it.freezeEntityItem){
+    const cb = state.currentDraw && state.currentDraw.combat;
+    if(!cb || !cb.entities.some(e=>e.hp>0)){ logMsg(`⚠️ ${it.name}: nessuno scontro in corso da congelare.`,'warn'); return; }
+    cb.freezeNextRound = true;
+    logMsg(`❄️ ${c.name} usa ${it.name}: le entità non metteranno a segno colpi nel prossimo giro.`,'good');
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.smiteUndeadItem){
+    const cb = state.currentDraw && state.currentDraw.combat;
+    const target = cb && cb.entities.find(e=>e.hp>0 && e.undead);
+    if(!target){ logMsg(`⚠️ ${it.name}: nessun non-morto presente da annientare in questo momento.`,'warn'); return; }
+    target.hp = 0;
+    logMsg(`✨ ${c.name} usa ${it.name}: ${target.name} viene annientato all'istante.`,'good');
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.wildcardResistanceItem){
+    c.wildcardResistance = true;
+    logMsg(`🍀 ${c.name} usa ${it.name}: para il primo danno subito nel prossimo piano, qualunque esso sia.`,'good');
+    c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.addPianoTerrenoItem){
+    reinsertPianoCard('__PT__');
+    logMsg(`🗺️ ${c.name} usa ${it.name}: una carta Piano Terreno extra viene mescolata nel mazzo Piani.`,'good');
+    c.inventory.splice(idx,1);
+    return;
+  }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
   if(it.oneUse) c.inventory.splice(idx,1);
 }
@@ -2417,6 +2505,44 @@ function useSpell(c, idx){
   }
   if(sp.charmSpell){
     if(dismissEncounterForGroup(sp.name)) c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.cerchioSpell){
+    if(!state.currentDraw || state.currentDraw.phase==='vuoto-choice'){ logMsg(`⚠️ ${sp.name}: si usa mentre si è in un piano.`,'warn'); return; }
+    state.currentDraw.cerchioActive = true;
+    logMsg(`🛡️ ${c.name} lancia ${sp.name}: il gruppo para il primo danno subito in questo piano.`,'good');
+    c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.sigilloSpell){
+    openSigilloTargetModal(c, idx);
+    return;
+  }
+  if(sp.egidaSpell){
+    openEgidaTargetModal(c, idx);
+    return;
+  }
+  if(sp.drenaggioSpell){
+    if(!state.currentDraw){ logMsg(`⚠️ ${sp.name}: si usa mentre si è in un piano.`,'warn'); return; }
+    state.currentDraw.drenaggioActive = true;
+    logMsg(`🔮 ${c.name} lancia ${sp.name}: ogni entità sconfitta in questo piano fruttera' anche 1 risorsa planare extra, fino al prossimo salto.`,'good');
+    c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.benedizioneSpell){
+    openBenedizioneTargetModal(c, idx);
+    return;
+  }
+  if(sp.trasmutazioneSpell){
+    openTrasmutazioneModal(c, idx);
+    return;
+  }
+  if(sp.rinascitaSpell){
+    logMsg(`✨ ${sp.name} è un incantesimo passivo: resta pronto nella mano e scatta da solo se un compagno sviene a 0 PV.`);
+    return;
+  }
+  if(sp.vaticinioSpell){
+    openVaticinioModal(c, idx);
     return;
   }
   const cost = sp.cost||0;
@@ -2454,6 +2580,69 @@ function useSpell(c, idx){
   c.spells.splice(idx,1);
 }
 
+function openSigilloTargetModal(caster, idx){
+  const targets = activeChars();
+  openModal(`<h3>🔒 Sigillo</h3><p>Scegli chi proteggere dalla Corruzione ostile, finché resta nel piano:</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-sigillo="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-sigillo]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.sigillo);
+    t.sigilloActive = true;
+    logMsg(`🔒 ${caster.name} lancia Sigillo su ${t.name}: non potrà agire ostilmente contro il gruppo finché resta nel piano.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+}
+function openEgidaTargetModal(caster, idx){
+  const targets = activeChars();
+  openModal(`<h3>🛡️ Egida</h3><p>Scegli il bersaglio: parerà sempre il primo danno di Tipo Fisico subito, fino al prossimo salto.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-egida="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-egida]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.egida);
+    t.egidaReady = true;
+    logMsg(`🛡️ ${caster.name} lancia Egida su ${t.name}.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+}
+function openBenedizioneTargetModal(caster, idx){
+  const targets = activeChars();
+  openModal(`<h3>✨ Benedizione</h3><p>Chi infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza in questo piano?</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-benedizione="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-benedizione]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.benedizione);
+    t.dmgBonusPlane = (t.dmgBonusPlane||0) + 2;
+    logMsg(`✨ ${caster.name} lancia Benedizione su ${t.name}: +2 danno su ogni colpo a segno per tutta la permanenza.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+}
+function openTrasmutazioneModal(caster, idx){
+  if(caster.inventory.length===0){ logMsg(`⚠️ ${caster.name} non ha oggetti da trasformare.`,'warn'); return; }
+  openModal(`<h3>🔮 Trasmutazione Minore</h3><p>Seleziona quali oggetti trasformare in altrettante risorse planari:</p>
+    <div>${caster.inventory.map((id,i)=>`<label style="display:block;margin-bottom:.3rem;"><input type="checkbox" data-trasitem="${i}"> ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</label>`).join('')}</div>
+    <div class="row mt1"><button class="primary" id="btnConfirmTrasmutazione">Trasforma</button></div>`);
+  document.getElementById('btnConfirmTrasmutazione').onclick=()=>{
+    const chosen = Array.from(document.querySelectorAll('[data-trasitem]:checked')).map(el=>+el.dataset.trasitem).sort((a,b)=>b-a);
+    if(chosen.length===0){ closeModal(); return; }
+    chosen.forEach(i=>{ caster.inventory.splice(i,1); caster.resources++; });
+    logMsg(`🔮 ${caster.name} lancia Trasmutazione Minore: ${chosen.length} oggetto/i trasformato/i in altrettante risorse planari.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  };
+}
+function openVaticinioModal(caster, idx){
+  const families = Object.keys(FAMILIES).filter(f=>f!=='generico');
+  openModal(`<h3>🔮 Vaticinio</h3><p>Indovina la Famiglia del prossimo salto prima di saltare (una volta per partita):</p>
+    <div class="row">${families.map(f=>`<button class="small" data-vaticinio="${f}">${FAMILIES[f].icon} ${FAMILIES[f].name}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-vaticinio]').forEach(b=>b.onclick=()=>{
+    const fam = b.dataset.vaticinio;
+    const g = groupOf(caster);
+    state.pendingVaticinio = { groupId: g?g.id:null, family: fam };
+    logMsg(`🔮 ${caster.name} lancia Vaticinio: il gruppo scommette che il prossimo salto sarà di Famiglia ${FAMILIES[fam].name}.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+}
 function openTeleportModal(caster, idx){
   ensureGroups();
   const myGroup = groupOf(caster);
