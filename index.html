@@ -103,6 +103,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .die.pv{color:var(--bad);} .die.san{color:var(--arcane);} .die.anima{color:var(--portal);}
 .die.debuff-t::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--ember);}
 .die.debuff-p::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--bad);}
+.die.boost-t::after{content:"▲"; position:absolute; top:2px; left:3px; font-size:.5rem; color:var(--good);}
 .char-meta{font-size:.78rem; color:var(--ink-soft); display:flex; gap:.7rem; flex-wrap:wrap; margin-bottom:.4rem;}
 .char-meta span{white-space:nowrap;}
 .char-inv{font-size:.76rem; color:var(--ink-faint); max-height:3.4em; overflow:hidden;}
@@ -677,6 +678,7 @@ function makeChar(name, clsKey, bonus){
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
+    tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -959,7 +961,7 @@ function renderCharCard(c){
     <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''} ${groupIdx>=0?`<span class="badge">Gruppo ${groupIdx+1}</span>`:''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} salti personali</div>
     <div class="stat-dice">
-      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''}" ${c.planeDebuff?.[s]?'title="Depotenziato per tutta la permanenza nel piano"':''}><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
+      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?'Depotenziato per tutta la permanenza nel piano':(c.tempBonus?.[s]?'Bonus temporaneo, dura fino al prossimo Recupero':'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
     </div>
     <div class="char-meta">
       <span>🔁 ${c.rerolls} reroll</span>
@@ -1837,7 +1839,11 @@ function grantCombatReward(plane, card, acts, cb){
     const minVal = Math.min(...acts.map(c=>c.stats[stat]));
     acts.filter(c=>c.stats[stat]===minVal).forEach(c=>{
       if(permanent){ c.stats[stat]=Math.min(6,c.stats[stat]+1); c.start[stat]=Math.max(c.start[stat],c.stats[stat]); logMsg(`🎁 ${c.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (boss sconfitto).`); }
-      else { c.stats[stat]=Math.min(6,c.stats[stat]+1); logMsg(`🎁 ${c.name} ottiene +1 temporaneo a ${STAT_LABEL[stat]}.`); }
+      else {
+        const before=c.stats[stat]; c.stats[stat]=Math.min(6,c.stats[stat]+1);
+        c.tempBonus[stat]=(c.tempBonus[stat]||0)+(c.stats[stat]-before);
+        logMsg(`🎁 ${c.name} ottiene +1 temporaneo a ${STAT_LABEL[stat]} (dura fino al prossimo Recupero).`);
+      }
     });
   }
 }
@@ -2002,6 +2008,12 @@ function recuperoFor(c){
   const chargeRefreshed = CLASSES[c.cls].special && !c.charges.special;
   c.charges.special = true;
   if(chargeRefreshed) parts.push('ricarica l\'abilità di classe');
+  const boosted = Object.keys(c.tempBonus||{}).filter(s=>c.tempBonus[s]);
+  if(boosted.length){
+    boosted.forEach(s=>{ c.stats[s]=Math.max(1,c.stats[s]-c.tempBonus[s]); });
+    c.tempBonus={};
+    parts.push(`perde il bonus temporaneo a ${boosted.map(s=>STAT_LABEL[s]).join(', ')}`);
+  }
   logMsg(parts.length ? `🛌 ${c.name} recupera: ${parts.join('; ')}.` : `🛌 ${c.name} riposa, ma non aveva nulla da recuperare.`);
 }
 
