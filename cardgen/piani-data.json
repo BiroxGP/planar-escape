@@ -5,7 +5,7 @@
     "family": "elementare",
     "check": "for",
     "recupero": false,
-    "text": "Danno immediato a tutti all'ingresso (salvo protezione), più 1 danno a ogni turno di permanenza.",
+    "text": "Danno a tutti all'ingresso (parato da eventuale protezione), più 1 danno a ogni turno in cui si resta.",
     "effectKey": "fuoco",
     "deck": "elementare"
   },
@@ -15,7 +15,7 @@
     "family": "elementare",
     "check": "pv",
     "recupero": false,
-    "text": "Danno a tutti alla fine di ogni turno, quasi inevitabile.",
+    "text": "Danno a tutto il gruppo presente a fine turno (salvo protezioni) — l'unico modo per evitarlo è saltare via prima che il turno finisca.",
     "effectKey": "veleno",
     "deck": "elementare"
   },
@@ -25,7 +25,7 @@
     "family": "elementare",
     "check": "for",
     "recupero": false,
-    "text": "Corrente che trascina (check di gruppo) e necessità di respirare dal 2° turno.",
+    "text": "Corrente di gruppo: check di Forza (vale il valore più alto presente) — se fallisce, chi ha la Forza più bassa è trascinato via da solo in un portale a caso. Dal 2° turno, chi non trattiene il respiro rifà il check ogni turno o sviene.",
     "effectKey": "acqua",
     "deck": "elementare"
   },
@@ -35,7 +35,7 @@
     "family": "elementare",
     "check": "for",
     "recupero": false,
-    "text": "Si resta interrati: check d'impatto, poi si scava (max 3 turni o si muore tutti).",
+    "text": "Si resta interrati: check di Forza all'impatto (fallito = danno). Poi si scava, un check di Forza a turno — il gruppo può aiutare. Non liberi entro 3 turni: si muore tutti.",
     "effectKey": "terra",
     "deck": "elementare"
   },
@@ -45,7 +45,7 @@
     "family": "elementare",
     "check": "des",
     "recupero": false,
-    "text": "Venti che disorientano: chi fallisce affronta un Incontro extra da solo.",
+    "text": "Venti che disorientano: chi fallisce un check di Destrezza è sbalzato via e affronta da solo un Incontro in più. Poi tutto il gruppo riunito ne affronta un secondo insieme.",
     "effectKey": "aria",
     "deck": "elementare"
   },
@@ -55,7 +55,7 @@
     "family": "elementare",
     "check": "des",
     "recupero": false,
-    "text": "Fulmini improvvisi: 1 danno diretto a un membro a caso a fine turno.",
+    "text": "Fulmini improvvisi: a fine turno, 1 danno diretto a un membro a caso del gruppo presente.",
     "effectKey": "tempesta",
     "deck": "elementare"
   },
@@ -65,7 +65,7 @@
     "family": "elementare",
     "check": "san",
     "recupero": false,
-    "text": "Amplifica incantesimi (+100%) ma anche i danni fisici subiti (+100%).",
+    "text": "Amplifica tutto: incantesimi e danni fisici subiti qui valgono il doppio (+100% entrambi).",
     "effectKey": "cristallo",
     "deck": "elementare"
   },
@@ -75,7 +75,7 @@
     "family": "eterei",
     "check": "int",
     "recupero": false,
-    "text": "Accecante: fallire = -1 a Forza/Destrezza/Intelletto per la permanenza.",
+    "text": "Accecante: chi fallisce un check di Intelletto subisce -1 a Forza, Destrezza e Intelletto per tutta la permanenza (nessuna perdita del turno).",
     "effectKey": "luce",
     "deck": "eterei"
   },
@@ -85,7 +85,7 @@
     "family": "eterei",
     "check": null,
     "recupero": false,
-    "text": "Buio totale: automatico -1 a Forza/Destrezza/Intelletto per la permanenza.",
+    "text": "Buio totale: appena si entra, -1 automatico a Forza, Destrezza e Intelletto per tutta la permanenza. Nessun check da tirare.",
     "effectKey": "tenebre",
     "deck": "eterei"
   },
@@ -95,7 +95,7 @@
     "family": "eterei",
     "check": "int",
     "recupero": false,
-    "text": "Illusioni persistenti: check ripetuto ogni turno o si perde il turno.",
+    "text": "Illusioni: chi fallisce un check di Intelletto perde il turno e ripete il check a ogni turno finché non lo supera. Si salta insieme solo quando nessuno è più sotto illusione.",
     "effectKey": "sogno",
     "deck": "eterei"
   },
@@ -105,7 +105,7 @@
     "family": "eterei",
     "check": "choice",
     "recupero": false,
-    "text": "Contesa contro il proprio riflesso, su una caratteristica a scelta.",
+    "text": "Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla (Forza, Intelletto o Destrezza) — chi perde subisce un depotenziamento temporaneo su quella stessa caratteristica.",
     "effectKey": "specchi",
     "deck": "eterei"
   },
@@ -115,7 +115,7 @@
     "family": "eterei",
     "check": null,
     "recupero": true,
-    "text": "Piano calmo per eccellenza: nessun danno attivo, ottimo per il Recupero.",
+    "text": "Nessun pericolo attivo: solo quiete, e un tempo che scorre in modo incerto.",
     "effectKey": "astrale",
     "deck": "eterei"
   },
@@ -125,7 +125,7 @@
     "family": "armonia",
     "check": "pv",
     "recupero": true,
-    "text": "Si può riportare una caratteristica al valore di partenza di 1° livello.",
+    "text": "Si può riportare una qualsiasi propria caratteristica al valore di partenza di 1° livello, cancellando ogni effetto accumulato su di essa, nel bene e nel male.",
     "effectKey": "ordine",
     "deck": "armonia"
   },
@@ -135,7 +135,7 @@
     "family": "armonia",
     "check": "anima",
     "recupero": false,
-    "text": "Ogni oggetto preso richiede un pegno in cambio (baratto forzato).",
+    "text": "Ogni oggetto preso qui richiede un pegno in cambio: un baratto forzato, deciso al tavolo, mai gratuito.",
     "effectKey": "legge",
     "deck": "armonia"
   },
@@ -145,7 +145,7 @@
     "family": "armonia",
     "check": "san",
     "recupero": true,
-    "text": "Piano protetto: non-morti/demoni subiscono danno passivo; si recupera anche 1 San.",
+    "text": "Piano protetto: non-morti e demoni che entrano subiscono danno passivo; i vivi recuperano anche 1 Sanità Mentale in più del normale.",
     "effectKey": "sacro",
     "deck": "armonia"
   },
@@ -155,7 +155,7 @@
     "family": "armonia",
     "check": "pv",
     "recupero": false,
-    "text": "Nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.",
+    "text": "Niente può cambiare qui: cure, potenziamenti e danni non hanno effetto. Anche il mazzo Piani è bloccato: nessuna visione o manipolazione funziona.",
     "effectKey": "stasi",
     "deck": "armonia"
   },
@@ -165,7 +165,7 @@
     "family": "armonia",
     "check": "anima",
     "recupero": false,
-    "text": "Non-morti/demoni subiscono danno passivo; chi ha Corruzione affronta un check extra di Anima.",
+    "text": "Luce di giudizio: non-morti e demoni subiscono danno passivo. Chi porta Corruzione affronta anche un check extra di Anima, pena un depotenziamento temporaneo a caso.",
     "effectKey": "sole",
     "deck": "armonia"
   },
@@ -175,7 +175,7 @@
     "family": "armonia",
     "check": "des",
     "recupero": false,
-    "text": "Chi fallisce resta incastrato: perde il turno e subisce 1 danno.",
+    "text": "Chi fallisce un check di Destrezza resta incastrato negli ingranaggi: perde il turno e subisce 1 danno.",
     "effectKey": "metallo",
     "deck": "armonia"
   },
@@ -185,7 +185,7 @@
     "family": "armonia",
     "check": "int",
     "recupero": false,
-    "text": "Nessun reroll utilizzabile da nessuna fonte mentre si è qui.",
+    "text": "Nessun reroll è utilizzabile qui, da nessuna fonte. Un 6 naturale resta comunque un successo automatico.",
     "effectKey": "logica",
     "deck": "armonia"
   },
@@ -195,7 +195,7 @@
     "family": "armonia",
     "check": "int",
     "recupero": false,
-    "text": "Chi fallisce subisce un depotenziamento temporaneo a Sanità Mentale.",
+    "text": "Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo a Sanità Mentale, travolto dalla perdita di ogni illusione.",
     "effectKey": "verita",
     "deck": "armonia"
   },
@@ -205,7 +205,7 @@
     "family": "armonia",
     "check": null,
     "recupero": true,
-    "text": "Archivio cosmico: nessun danno attivo, il tempo non consuma nulla.",
+    "text": "Nessun danno attivo: qui nulla viene mai consumato né dimenticato.",
     "effectKey": "eternita",
     "deck": "armonia"
   },
@@ -215,7 +215,7 @@
     "family": "entropia",
     "check": "random",
     "recupero": false,
-    "text": "Ogni check usa una statistica casuale; il mazzo Piani viene rimescolato all'ingresso.",
+    "text": "Ogni check usa una statistica casuale, estratta di nuovo a ogni tiro. Appena si entra, l'intero mazzo Piani viene rimescolato.",
     "effectKey": "caos",
     "deck": "entropia"
   },
@@ -225,7 +225,7 @@
     "family": "entropia",
     "check": null,
     "recupero": false,
-    "text": "A ogni turno si sceglie cosa perdere fra 1 PV, un oggetto, uno spell o un'abilità.",
+    "text": "Nessun check: a ogni turno si sceglie cosa perdere fra 1 Punto Vita, un oggetto, uno spell o un'abilità.",
     "effectKey": "vuoto",
     "deck": "entropia"
   },
@@ -235,7 +235,7 @@
     "family": "entropia",
     "check": "anima",
     "recupero": false,
-    "text": "Ogni check/combattimento fallito costa anche 1 PV; le perdite di PV raddoppiano.",
+    "text": "Ogni check o combattimento fallito costa anche 1 Punto Vita. Qualsiasi altra perdita di Punti Vita qui raddoppia.",
     "effectKey": "sangue",
     "deck": "entropia"
   },
@@ -245,7 +245,7 @@
     "family": "entropia",
     "check": null,
     "recupero": false,
-    "text": "Si perde un oggetto a ogni turno di permanenza (automatico), salvo protezioni.",
+    "text": "Automatico, nessun check: si perde un oggetto a ogni turno di permanenza, salvo protezioni.",
     "effectKey": "decadimento",
     "deck": "entropia",
     "type": "fisico"
@@ -256,7 +256,7 @@
     "family": "entropia",
     "check": null,
     "recupero": false,
-    "text": "A ogni turno -1 temporaneo a Forza o Destrezza (d6, automatico).",
+    "text": "Automatico, nessun check: a ogni turno un d6 decide se Forza (1-2-3) o Destrezza (4-5-6) subisce -1 temporaneo.",
     "effectKey": "putrefazione",
     "deck": "entropia",
     "type": "fisico"
@@ -267,7 +267,7 @@
     "family": "entropia",
     "check": "int",
     "recupero": false,
-    "text": "Chi fallisce subisce un depotenziamento temporaneo casuale (d6 fra le 6 statistiche).",
+    "text": "Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo casuale: un d6 decide su quale delle sei caratteristiche.",
     "effectKey": "tempo",
     "deck": "entropia"
   },
@@ -277,7 +277,7 @@
     "family": "entropia",
     "check": "for",
     "recupero": false,
-    "text": "Chi fallisce perde un oggetto, sbriciolato dal vento.",
+    "text": "Chi fallisce un check di Forza perde un oggetto, sbriciolato dal vento.",
     "effectKey": "cenere",
     "deck": "entropia"
   },
@@ -287,7 +287,7 @@
     "family": "entropia",
     "check": "int",
     "recupero": false,
-    "text": "Chi fallisce dimentica temporaneamente uno spell o un'abilità (o 1 Intelletto).",
+    "text": "Chi fallisce un check di Intelletto dimentica di colpo uno spell o un'abilità — un depotenziamento temporaneo come gli altri, guarisce solo in un piano di Recupero.",
     "effectKey": "oblio",
     "deck": "entropia"
   },
@@ -297,7 +297,7 @@
     "family": "entropia",
     "check": "des",
     "recupero": false,
-    "text": "Combattimento one-shot con la propria ombra (Contesa di Destrezza).",
+    "text": "Nessun danno diretto: un combattimento one-shot (Contesa di Destrezza) contro la propria stessa ombra. Risolto quello, si pesca comunque il normale Incontro del turno.",
     "effectKey": "ombra",
     "deck": "entropia"
   },
@@ -307,7 +307,7 @@
     "family": "demoniaco",
     "check": "for_or_int",
     "recupero": false,
-    "text": "1° girone infernale, di fuoco. Nessuna Corruzione qui. Incontro obbligatorio ogni turno.",
+    "text": "Nessuna Corruzione qui. Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",
     "effectKey": "porte_di_brace",
     "deck": "demoni",
     "girone": 1
@@ -318,7 +318,7 @@
     "family": "demoniaco",
     "check": "for_or_int",
     "recupero": false,
-    "text": "2° girone infernale, fuoco più intenso. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",
+    "text": "Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",
     "effectKey": "baratro_in_fiamme",
     "deck": "demoni",
     "girone": 2
@@ -329,7 +329,7 @@
     "family": "demoniaco",
     "check": "for_or_int",
     "recupero": false,
-    "text": "3° girone infernale, ghiaccio. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",
+    "text": "Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",
     "effectKey": "gelo_dellabisso",
     "deck": "demoni",
     "girone": 3
@@ -340,7 +340,7 @@
     "family": "nonmorti",
     "check": "for_or_int",
     "recupero": false,
-    "text": "1° livello dei non-morti. Incontro obbligatorio ogni turno.",
+    "text": "Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",
     "effectKey": "palude_sconsacrata",
     "deck": "nonmorti",
     "girone": 1
@@ -351,7 +351,7 @@
     "family": "nonmorti",
     "check": "for_or_int",
     "recupero": false,
-    "text": "2° livello. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",
+    "text": "Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",
     "effectKey": "velo_dei_sussurri",
     "deck": "nonmorti",
     "girone": 2
@@ -362,7 +362,7 @@
     "family": "nonmorti",
     "check": "for_or_int",
     "recupero": false,
-    "text": "3° livello, il più profondo. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",
+    "text": "Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",
     "effectKey": "voragine_della_negativita",
     "deck": "nonmorti",
     "girone": 3

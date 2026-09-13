@@ -1039,7 +1039,7 @@ function renderVuotoChoice(){
   const allDone = acts.every(c=>choices[c.id]);
   return `<div class="panel">
     ${planeHeroArt(plane, '🕳️')}
-    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
     <p class="hint">Ogni presente deve scegliere cosa perdere — obbligatorio, una sola volta a testa.</p>
     ${acts.map(c=>{
       const done = !!choices[c.id];
@@ -1071,7 +1071,7 @@ function renderSpecchiChoice(){
   const allDone = acts.every(c=>choices[c.id]);
   return `<div class="panel">
     ${planeHeroArt(plane, '🪞')}
-    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
     <p class="hint">Ogni presente affronta il proprio riflesso in una Contesa, prima dell'Incontro del turno.</p>
     ${acts.map(c=>{
       const done = choices[c.id];
@@ -1127,15 +1127,22 @@ function cardThumb(id, icon, famClass){
     <div class="ic">${icon||'🃏'}</div>
   </div>`;
 }
+// Piani la cui immagine in assets/cards/ è già la carta composta da cardgen (nome, testo di
+// atmosfera e regole incollati nei pixel): per questi l'app non deve riscrivere nome/testo
+// sopra, altrimenti duplica quello che la carta mostra già da sé. Aggiornare mano a mano che
+// altri piani vengono rigenerati con cardgen/render.js e la nuova immagine sostituisce quella
+// grezza in assets/cards/<id>.png.
+const COMPOSED_CARD_PLANES = new Set(['acqua','ombra','stasi','velo_dei_sussurri']);
 function planeHeroArt(plane, iconOverride){
   // l'immagine del piano è una scena panoramica (16:9), pensata per essere l'illustrazione
   // grande e immersiva della pagina d'ingresso — non la miniatura in formato carta.
   const famClass = 'fam-'+plane.family;
   const icon = iconOverride || FAMILIES[plane.family]?.icon || '🌀';
+  const composed = COMPOSED_CARD_PLANES.has(plane.id);
   return `<div class="plane-hero ${famClass}">
     <img src="assets/cards/${plane.id}.png" alt="${escapeHtml(plane.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
     <div class="plane-hero-fallback" style="display:none;"><div class="ic">${icon}</div></div>
-    <div class="plane-hero-caption"><h2>${icon} ${escapeHtml(plane.name)}</h2></div>
+    ${composed ? '' : `<div class="plane-hero-caption"><h2>${icon} ${escapeHtml(plane.name)}</h2></div>`}
   </div>`;
 }
 
@@ -1617,7 +1624,7 @@ function renderDrawFlow(){
   const card = currentIncontro();
   let html = `<div class="panel">
     ${planeHeroArt(plane)}
-    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
   </div>`;
   if(card){
     html += renderIncontroCard(plane, card);
