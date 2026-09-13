@@ -591,8 +591,15 @@ function newGame(){
     pendingPersistent:null, // {planeId, entities:[...]}
     gameOver:false,
     turnConsecutive:{}, // per Piano Negativo tracking: {planeId: n}
+    groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
+    currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
   };
   render();
+}
+function initGroups(){
+  const gid = 'g_main';
+  state.groups = [{ id:gid, memberIds: state.players.map(c=>c.id) }];
+  state.currentGroupId = gid;
 }
 
 function logMsg(msg, kind){
@@ -899,6 +906,7 @@ function bindSetup(){
       const bonus = bonusAmount>0 && p.bonusStat ? {stat:p.bonusStat, amount:bonusAmount} : null;
       state.players.push(makeChar(p.name||('Eroe'), p.cls, bonus));
     });
+    initGroups();
     logMsg('🌀 Il party fugge attraverso il portale. Inizia l\'avventura!');
     render();
   };
@@ -911,7 +919,7 @@ function renderGame(){
   return `
   ${renderPartyBar()}
   <div class="flex-between mb1">
-    <div class="jump-counter">Salti compiuti dal gruppo: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}</div>
+    <div class="jump-counter">Salti totali: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · Turno di: <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
   </div>
   ${!anyoneCanAct ? `<div class="panel center"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>` : renderTurnArea()}
   <div class="panel">
@@ -931,8 +939,10 @@ function renderCharCard(c){
   const dead = c.status==='dead';
   const out = c.status==='unconscious';
   const won = c.status==='won';
+  ensureGroups();
+  const groupIdx = state.groups.length>1 ? state.groups.findIndex(g=>g.memberIds.includes(c.id)) : -1;
   return `<div class="char-card ${dead?'dead':''} ${out?'out':''}">
-    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''}</div>
+    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''} ${groupIdx>=0?`<span class="badge">Gruppo ${groupIdx+1}</span>`:''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} salti personali</div>
     <div class="stat-dice">
       ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''}" ${c.planeDebuff?.[s]?'title="Depotenziato per tutta la permanenza nel piano"':''}><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
@@ -953,16 +963,31 @@ function escapeHtml(s){ return (s+'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&l
 
 function renderTurnArea(){
   if(!state.currentDraw){
-    return `<div class="panel center">
-      <h2>Il gruppo è davanti al portale</h2>
-      <p class="hint">Nessuno sa dove porti. Premi per saltare.</p>
-      <button class="primary" id="btnJump" style="font-size:1.05rem;padding:.8rem 1.6rem;">🌀 Salta nel portale</button>
-    </div>`;
+    return renderGroupPicker();
   }
   if(state.currentDraw.phase==='boss'){
     return `<div class="panel center"><h2>⚔️ Scontro contro un boss in corso</h2><p class="hint">Risolvilo dalla finestra di dialogo.</p></div>`;
   }
   return renderDrawFlow();
+}
+function renderGroupPicker(){
+  ensureGroups();
+  const groups = state.groups.map(g=>({g, members:groupMembers(g)})).filter(x=>x.members.length>0);
+  if(groups.length===0) return '';
+  const isSplit = groups.length>1;
+  return `<div class="panel center">
+    <h2>${isSplit?'Il portale attende — il gruppo è separato':'Il gruppo è davanti al portale'}</h2>
+    <p class="hint">${isSplit?'Ogni gruppo separato pesca e salta per conto proprio: scegli quale gruppo gioca il prossimo turno.':'Nessuno sa dove porti. Premi per saltare.'}</p>
+    ${groups.map(({g,members})=>`
+      <div class="player-setup" style="text-align:left;">
+        <strong>${members.map(c=>escapeHtml(c.name)).join(', ')}</strong>
+        <div class="row mt1">
+          <button class="primary small" data-groupjump="${g.id}">🌀 Salta</button>
+          ${members.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
+          ${groups.length>1?`<button class="small" data-groupmerge="${g.id}">🤝 Riunisci con...</button>`:''}
+        </div>
+      </div>`).join('')}
+  </div>`;
 }
 
 /* ---------------- CARD ART ---------------- */
@@ -988,7 +1013,8 @@ function doJump(){
   state.mazzoPiani.push('__PT__');
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
-  state.players.forEach(c=>{ if(c.status==='active'||c.status==='undead') c.jumps++; checkLevelUp(c); });
+  const jumpers = activeChars();
+  jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
     resolvePianoTerreno();
     return;
@@ -996,8 +1022,8 @@ function doJump(){
   const plane = PIANI_BY_ID[drawnId];
   reinsertPianoCard(drawnId);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
-  // reset resistance charge for this family for everyone
-  state.players.forEach(c=> resetResistanceForPlane(c, plane.family));
+  // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
+  jumpers.forEach(c=> resetResistanceForPlane(c, plane.family));
   // track consecutive turns in same girone plane for Piano Negativo
   if(plane.family==='nonmorti'){
     state.turnConsecutive[drawnId] = (state.turnConsecutive[drawnId]||0)+1;
@@ -1009,8 +1035,12 @@ function doJump(){
   render();
 }
 function startJump(){
-  // "Party al completo, tutti per la manina": l'unità del gruppo rivela la carta Piano
-  // in cima al mazzo prima di saltare. Non è una scelta: resta quella la destinazione.
+  // "Party al completo, tutti per la manina": SOLO se il gruppo che salta comprende
+  // tutti i personaggi attivi, l'unità del gruppo rivela la carta Piano in cima al
+  // mazzo prima di saltare. Un sottogruppo o un solitario saltano alla cieca (a meno
+  // che non abbiano un Veggente, la cui abilità di classe funziona comunque a parte).
+  const isFullParty = activeChars().length>0 && activeChars().length===allActiveChars().length;
+  if(!isFullParty){ doJump(); return; }
   const nextId = state.mazzoPiani[0];
   const label = nextId==='__PT__' ? 'Una destinazione leggendaria del Piano Terreno' : (PIANI_BY_ID[nextId]?.name || '?');
   openModal(`<h3>🤝 Il gruppo si tiene per mano</h3>
@@ -1070,7 +1100,51 @@ function applyClassProgress(c){
 }
 
 /* -------- plane intrinsic effects -------- */
-function activeChars(){ return state.players.filter(p=>p.status==='active'||p.status==='undead'); }
+function isConscious(p){ return p && (p.status==='active'||p.status==='undead'); }
+function allActiveChars(){ return state.players.filter(isConscious); }
+function ensureGroups(){
+  // compatibilità con salvataggi vecchi senza gruppi, o con personaggi non ancora assegnati
+  if(!state.groups) state.groups=[];
+  const assigned = new Set(state.groups.flatMap(g=>g.memberIds));
+  const orphans = state.players.filter(p=>!assigned.has(p.id)).map(p=>p.id);
+  if(orphans.length){
+    if(state.groups.length===0) state.groups.push({id:'g_main', memberIds:[]});
+    state.groups[0].memberIds.push(...orphans);
+  }
+  state.groups = state.groups.filter(g=>g.memberIds.length>0);
+  if(!state.currentGroupId || !state.groups.some(g=>g.id===state.currentGroupId)){
+    state.currentGroupId = state.groups[0] ? state.groups[0].id : null;
+  }
+}
+function currentGroup(){
+  ensureGroups();
+  return state.groups.find(g=>g.id===state.currentGroupId) || null;
+}
+function groupOf(c){
+  ensureGroups();
+  return state.groups.find(g=>g.memberIds.includes(c.id)) || null;
+}
+function groupMembers(g){
+  if(!g) return [];
+  return g.memberIds.map(id=>state.players.find(p=>p.id===id)).filter(isConscious);
+}
+function splitIntoNewGroup(memberIds){
+  ensureGroups();
+  state.groups.forEach(g=>{ g.memberIds = g.memberIds.filter(id=>!memberIds.includes(id)); });
+  state.groups = state.groups.filter(g=>g.memberIds.length>0);
+  const newG = { id:'g'+Math.random().toString(36).slice(2,9), memberIds: memberIds.slice() };
+  state.groups.push(newG);
+  return newG;
+}
+function mergeGroups(idA, idB){
+  ensureGroups();
+  const a = state.groups.find(g=>g.id===idA), b = state.groups.find(g=>g.id===idB);
+  if(!a||!b||a===b) return;
+  a.memberIds = a.memberIds.concat(b.memberIds);
+  state.groups = state.groups.filter(g=>g!==b);
+  if(state.currentGroupId===b.id) state.currentGroupId=a.id;
+}
+function activeChars(){ return groupMembers(currentGroup()); }
 
 function applyPlaneIntrinsic(plane){
   const acts = activeChars();
@@ -1256,6 +1330,7 @@ function resolveForceContest(a,b){
 }
 function soloForcedJump(group, reason){
   group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); });
+  splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
@@ -1271,7 +1346,7 @@ function soloForcedJump(group, reason){
   const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
   const fn = PLANE_EFFECTS[plane.effectKey];
   if(fn) fn(plane, group, ctx);
-  logMsg(`(Turno solitario: applicato solo l'effetto intrinseco del piano. L'eventuale Incontro va gestito manualmente dal tavolo per ${names}, dato che il resto del gruppo prosegue nel frattempo con il proprio salto.)`);
+  logMsg(`(${names} ${group.length>1?'formano':'forma'} ora un gruppo separato: da qui in poi ${group.length>1?'salteranno':'salterà'} per conto proprio. Applicato solo l'effetto intrinseco del piano di questo primo salto forzato — l'eventuale Incontro va gestito manualmente dal tavolo.)`);
 }
 function applyPendingMadnessActions(){
   activeChars().forEach(c=>{
@@ -2208,10 +2283,42 @@ function closeModal(){ document.getElementById('modalRoot').close(); }
 
 /* ---------- bind game-level events ---------- */
 function bindGame(){
-  const jb=document.getElementById('btnJump'); if(jb) jb.onclick=startJump;
   const ap=document.getElementById('btnAfterPlane'); if(ap) ap.onclick=finishIncontro;
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
+  document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.groupjump; startJump(); });
+  document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
+  document.querySelectorAll('[data-groupmerge]').forEach(b=>b.onclick=()=>openMergeGroupModal(b.dataset.groupmerge));
   setTimeout(renderIncontroAction,0);
+}
+function openSplitGroupModal(gid){
+  const g = state.groups.find(x=>x.id===gid); if(!g) return;
+  const members = groupMembers(g);
+  openModal(`<h3>✂️ Dividi il gruppo</h3><p>Seleziona chi si stacca per formare un nuovo gruppo a sé (chi va da solo non divide il bottino):</p>
+    <div>${members.map(c=>`<label style="display:block;margin-bottom:.4rem;"><input type="checkbox" data-splitmember="${c.id}"> ${escapeHtml(c.name)}</label>`).join('')}</div>
+    <div class="row mt1"><button class="primary" id="btnConfirmSplit">Dividi</button><button id="btnCancelSplit">Annulla</button></div>`);
+  document.getElementById('btnConfirmSplit').onclick=()=>{
+    const chosen = Array.from(document.querySelectorAll('[data-splitmember]:checked')).map(el=>el.dataset.splitmember);
+    if(chosen.length===0 || chosen.length===members.length){ closeModal(); return; }
+    const newG = splitIntoNewGroup(chosen);
+    const names = groupMembers(newG).map(c=>c.name).join(', ');
+    logMsg(`✂️ ${names} si stacca dal gruppo, formando un nuovo gruppo a sé.`,'warn');
+    closeModal(); render();
+  };
+  document.getElementById('btnCancelSplit').onclick=closeModal;
+}
+function openMergeGroupModal(gid){
+  ensureGroups();
+  const others = state.groups.filter(g=>g.id!==gid && groupMembers(g).length>0);
+  if(others.length===0){ closeModal(); return; }
+  openModal(`<h3>🤝 Riunisci il gruppo</h3><p>Con quale altro gruppo si riunisce?</p>
+    <div class="row">${others.map(g=>`<button class="small" data-mergewith="${g.id}">${groupMembers(g).map(c=>c.name).join(', ')}</button>`).join('')}</div>
+    <div class="row mt1"><button id="btnCancelMerge">Annulla</button></div>`);
+  document.querySelectorAll('[data-mergewith]').forEach(b=>b.onclick=()=>{
+    mergeGroups(gid, b.dataset.mergewith);
+    logMsg('🤝 I due gruppi si riuniscono.','good');
+    closeModal(); render();
+  });
+  document.getElementById('btnCancelMerge').onclick=closeModal;
 }
 
 /* ---------------- BOOT ---------------- */
