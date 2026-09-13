@@ -651,6 +651,11 @@ function makeChar(name, clsKey, bonus){
     stealthedThisEncounter:false,
     pendingFollia:null, // 'salto' | 'trascina' — azione dovuta al prossimo turno
     pendingCorruzione:null, // 'contrario' | 'ostile' — azione dovuta al prossimo turno
+    dardoReady:false, // Mago: prossima Contesa infligge 2 danni sicuri
+    demonReady:false, // Warlock: demone minore al fianco nel prossimo scontro
+    monkShieldReady:false, // Monaco: annulla il prossimo danno subito
+    formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
+    mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     log:[],
   };
   if(bonus && bonus.stat){ c.stats[bonus.stat]=Math.min(6,c.stats[bonus.stat]+bonus.amount); c.start[bonus.stat]=c.stats[bonus.stat]; }
@@ -674,6 +679,11 @@ function statFloor(stat){ return stat==='pv' ? 0 : 1; }
 function applyDamage(c, stat, n, ctx){
   if(c.status==='dead') return;
   ctx = ctx||{};
+  if(n>0 && c.monkShieldReady){
+    c.monkShieldReady=false;
+    logMsg(`🧘 ${c.name} annulla del tutto il danno a ${STAT_LABEL[stat]} con la Resistenza universale.`);
+    return;
+  }
   // resistenza: block first hit of the plane-entry if applicable and physical/type match
   if(!ctx.ignoreResistance && n>0 && checkResistanceBlocks(c, ctx)){
     logMsg(`🛡️ ${c.name} para il colpo grazie alla Resistenza.`);
@@ -924,6 +934,7 @@ function reinsertPianoCard(id){
 }
 function doJump(){
   applyPendingMadnessActions();
+  activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); });
   state.jumps++;
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
@@ -1023,6 +1034,14 @@ function applyPlaneIntrinsic(plane){
   const forcedFamily = (plane.family==='demoniaco'||plane.family==='nonmorti') ? plane.deck : null;
   drawIncontroForPlane(plane, forcedFamily);
 }
+function annihilateUndead(acts, planeName){
+  acts.forEach(c=>{
+    if(c.status==='undead'){
+      c.status='dead';
+      logMsg(`☀️ ${c.name}, ormai non-morto, viene annientato da ${planeName} senza possibilità di salvezza.`,'bad');
+    }
+  });
+}
 const PLANE_EFFECTS = {
   fuoco:(p,acts,ctx)=>{ acts.forEach(c=>applyDamage(c,'pv',1,ctx)); logMsg('🔥 Danno d\'ingresso a tutti (+1 PV danno per ogni turno di permanenza, da applicare manualmente se si resta).'); },
   veleno:(p,acts,ctx)=>{ logMsg('☠️ Veleno: danno a fine turno (quasi inevitabile) — applicalo manualmente a fine turno se il gruppo non è saltato via.'); },
@@ -1056,9 +1075,9 @@ const PLANE_EFFECTS = {
   specchi:(p,acts,ctx)=>{ logMsg('🪞 Ogni personaggio sceglie una statistica e affronta il proprio riflesso (usa Gestisci → Contesa singola).'); },
   ordine:(p,acts,ctx)=>{ logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello (usa Gestisci).'); },
   legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio (baratto forzato, applica manualmente).'); },
-  sacro:(p,acts,ctx)=>{ logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
+  sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
   stasi:(p,acts,ctx)=>{ logMsg('⏳ Qui nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.'); },
-  sole:(p,acts,ctx)=>{ acts.forEach(c=>{ if(c.stats.anima<c.start.anima){ const r=checkRoll(c,'anima'); if(!r.success){ applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]); logMsg(`☀️ ${c.name} porta Corruzione e fallisce il check extra di Anima: depotenziamento casuale.`);} } }); },
+  sole:(p,acts,ctx)=>{ annihilateUndead(acts,'Sole'); acts.forEach(c=>{ if(c.status==='undead') return; if(c.stats.anima<c.start.anima){ const r=checkRoll(c,'anima'); if(!r.success){ applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]); logMsg(`☀️ ${c.name} porta Corruzione e fallisce il check extra di Anima: depotenziamento casuale.`);} } }); },
   metallo:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'des'); if(!r.success){ applyDamage(c,'pv',1,ctx); logMsg(`⚙️ ${c.name} resta incastrato: perde il turno e 1 danno.`);} }); },
   logica:(p,acts,ctx)=>{ logMsg('🔢 Nessun reroll utilizzabile qui, da nessuna fonte.'); },
   verita:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); if(!r.success) applyTempDebuff(c,'san'); }); },
@@ -1073,6 +1092,27 @@ const PLANE_EFFECTS = {
   ombra:(p,acts,ctx)=>{ acts.forEach(c=>{ resolveAutoCombat([c],[{name:'La tua Ombra (Ombra)', statKey:'des', value:2}], ctx); }); },
   none:()=>{},
 };
+function resolveAttack(c, stat){
+  if(c.dardoReady && ['for','int','des'].includes(stat)){
+    c.dardoReady=false;
+    return {roll:null, hit:true, dmg:2, dardo:true};
+  }
+  const r=checkRoll(c,stat);
+  const isCrit = r.roll===6;
+  const hit = r.roll<=r.val || isCrit;
+  let dmg=0;
+  if(hit){
+    const cls=CLASSES[c.cls];
+    dmg = (cls.special==='furia' && (stat==='for'||isCrit)) ? 2 : (1+damageBonusFor(c,stat));
+  }
+  return {roll:r.roll, hit, dmg};
+}
+function demonContribution(acts){
+  const user = acts.find(c=>c.demonReady);
+  if(!user) return null;
+  const r=d6(); const hit = r<=1||r===6;
+  return {user, roll:r, hit, dmg:hit?1:0};
+}
 function resolveAutoCombat(acts, entityDefs, ctx){
   // Combattimento one-shot risolto automaticamente giro dopo giro (usato per effetti intrinseci di piano, es. Ombra),
   // senza passare dall'interfaccia interattiva del normale Incontro del turno.
@@ -1083,11 +1123,10 @@ function resolveAutoCombat(acts, entityDefs, ctx){
     let teamDmg=0, entityDmg=0;
     acts.forEach(c=>{
       const stat = entities[0].statKey;
-      const r=checkRoll(c,stat);
-      const hit = r.roll<=r.val || r.roll===6;
-      const dmg = hit ? (1+damageBonusFor(c,stat)) : 0;
-      teamDmg+=dmg;
+      const a=resolveAttack(c,stat);
+      teamDmg+=a.dmg;
     });
+    const demon=demonContribution(acts); if(demon){ teamDmg+=demon.dmg; }
     entities.forEach(e=>{ if(e.hp<=0) return; const r=d6(); if(r<=e.value) entityDmg+=e.value; });
     let remaining=teamDmg;
     entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
@@ -1444,20 +1483,16 @@ function fightRound(plane, card, acts, cb){
   acts.forEach(c=>{
     let stat = cb.checkStat;
     if(cb.randomEach) stat = STATS[Math.floor(Math.random()*6)];
-    if(cb.choiceEach) stat = 'for'; // simplification: default to Forza if not chosen elsewhere
-    const r=checkRoll(c,stat);
-    const isCrit = r.roll===6;
-    const hit = r.roll<=r.val || isCrit;
-    let dmg=0;
-    if(hit){
-      const cls=CLASSES[c.cls];
-      dmg = 1 + damageBonusFor(c,stat);
-      if(cls.special==='furia' && stat==='for') dmg+=1;
-      if(isCrit && cls.special==='furia') dmg = Math.max(dmg,2);
-    }
-    teamDmg+=dmg;
-    log.push({who:c.name, roll:r.roll, stat, hit, dmg});
+    if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
+    const a=resolveAttack(c,stat);
+    teamDmg+=a.dmg;
+    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo});
   });
+  const demon=demonContribution(acts);
+  if(demon){
+    teamDmg+=demon.dmg;
+    log.push({who:`Demone minore di ${demon.user.name}`, roll:demon.roll, stat:'for', hit:demon.hit, dmg:demon.dmg});
+  }
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
   cb.entities.forEach(e=>{
@@ -1642,6 +1677,8 @@ function bindManualPanel(card, acts){
 }
 
 function finishIncontro(){
+  // il demone evocato dal Warlock combatte "in quella Contesa": finita, si scioglie.
+  state.players.forEach(c=>{ c.demonReady=false; });
   state.currentDraw = null;
   render();
 }
@@ -1663,7 +1700,13 @@ function recuperoFor(c){
 function resolvePianoTerreno(){
   if(state.pianoTerrenoDeck.length===0){ logMsg('Il mazzetto Piano Terreno è già esaurito: si tratta come una carta normale, nessun effetto speciale.'); state.currentDraw=null; render(); return; }
   const id = state.pianoTerrenoDeck.shift();
-  state.pianoTerrenoUsed.push(id);
+  if(id==='finale_c'){
+    // "resta nel mazzetto, non va tolta": a differenza delle altre 11, non si consuma.
+    const pos = Math.floor(Math.random()*(state.pianoTerrenoDeck.length+1));
+    state.pianoTerrenoDeck.splice(pos,0,id);
+  } else {
+    state.pianoTerrenoUsed.push(id);
+  }
   const dest = PIANO_TERRENO.find(p=>p.id===id);
   logMsg(`🏔️ Il gruppo raggiunge una destinazione del Piano Terreno: <strong>${dest.name}</strong>!`,'warn');
   openPianoTerrenoModal(dest);
@@ -1694,7 +1737,21 @@ function bindPianoTerrenoModal(dest){
     const c=state.players.find(x=>x.id===b.dataset.win); c.status='won'; c.winType=dest.name;
     logMsg(`🏆 ${c.name} VINCE! (${dest.name})`,'good'); closeModal(); state.currentDraw=null; render();
   });
-  const closeBtn=document.getElementById('btnPTClose'); if(closeBtn) closeBtn.onclick=()=>{ closeModal(); state.currentDraw=null; render(); };
+  const closeBtn=document.getElementById('btnPTClose');
+  if(closeBtn) closeBtn.onclick=()=>{
+    if(dest.kind==='terrestre'){
+      const acts = activeChars();
+      acts.forEach(c=>resetResistanceForPlane(c,'terrestre'));
+      if(dest.id==='eta_terra_antica'){
+        acts.forEach(c=>applyDamage(c,'pv',1,{family:'terrestre', type:'fisico'}));
+        logMsg("🌋 Età della Terra Antica: pericoloso dal primo all'ultimo istante, 1 danno a tutti i presenti (chi ha Resistenza Terrestre lo para).");
+      } else if(dest.id==='flora_aliena'){
+        acts.forEach(c=>recuperoFor(c));
+        logMsg('🌿 Flora Aliena: tranquillo e di Recupero per chiunque, il gruppo riposa.');
+      }
+    }
+    closeModal(); state.currentDraw=null; render();
+  };
   const bossBtn=document.getElementById('btnStartBoss');
   if(bossBtn) bossBtn.onclick=()=>{
     closeModal();
@@ -1715,14 +1772,35 @@ function bindPianoTerrenoModal(dest){
     const c=state.players.find(x=>x.id===b.dataset.ptcheck);
     const r=checkRoll(c,'int');
     document.getElementById('ptCheckResult').innerHTML += `<div class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${c.name}: ${r.success?'Successo':'Fallito'}</div>`;
-    if(dest.id==='labirinto_specchi' && r.success){ ['for','des','int'].forEach(s=>{ c.stats[s]=Math.min(6,c.stats[s]+1); }); logMsg(`🎁 ${c.name}: +1 For/Des/Int per il prossimo piano.`); }
-    if(dest.id==='biblioteca_infinita'){ if(r.success){ const schools=['flusso','essenza','divinazione']; const school=schools[Math.floor(Math.random()*3)]; const s=drawSpell(school); if(s){ c.spells.push(s); logMsg(`📖 ${c.name} trova uno spell di ${school}.`);} } else logMsg(`📚 ${c.name} si perde fra gli scaffali: salta i prossimi 2 turni.`); }
+    if(dest.id==='labirinto_specchi' && r.success){
+      c.mirrorBoost=c.mirrorBoost||{};
+      ['for','des','int'].forEach(s=>{ const before=c.stats[s]; c.stats[s]=Math.min(6,c.stats[s]+1); c.mirrorBoost[s]=(c.mirrorBoost[s]||0)+(c.stats[s]-before); });
+      logMsg(`🎁 ${c.name}: +1 For/Des/Int solo per il prossimo piano in cui entra.`);
+    }
+    if(dest.id==='biblioteca_infinita'){
+      if(r.success){
+        document.getElementById('ptCheckResult').innerHTML += `<div class="row mt1">Scegli il mazzetto: ${['flusso','essenza','divinazione'].map(sc=>`<button class="small" data-ptschool="${sc}">${sc}</button>`).join('')}</div>`;
+        document.querySelectorAll('[data-ptschool]').forEach(sb=>sb.onclick=()=>{
+          const school=sb.dataset.ptschool; const s=drawSpell(school);
+          if(s){ c.spells.push(s); logMsg(`📖 ${c.name} sceglie liberamente e trova uno spell di ${school}.`); }
+          document.getElementById('ptCheckResult').innerHTML='';
+        });
+      } else logMsg(`📚 ${c.name} si perde fra gli scaffali (salta-turni non ancora tracciato: gestitelo al tavolo).`);
+    }
   });
   document.querySelectorAll('[data-ptcontesa]').forEach(b=>b.onclick=()=>{
     const c=state.players.find(x=>x.id===b.dataset.ptcontesa);
     const r=checkRoll(c,'anima'); const eco=d6(); const ecoHit = eco<=3;
     const win = r.success && !ecoHit;
-    if(win){ const s=STATS[Math.floor(Math.random()*6)]; c.stats[s]=Math.min(6,c.stats[s]+1); c.start[s]=Math.max(c.start[s],c.stats[s]); logMsg(`👑 ${c.name} vince la Contesa del Trono Vuoto: +1 permanente a ${STAT_LABEL[s]}.`); }
+    if(win){
+      logMsg(`👑 ${c.name} vince la Contesa del Trono Vuoto: scegli su quale caratteristica applicare +1 permanente.`);
+      document.getElementById('ptCheckResult').innerHTML = `<div class="row mt1">${STATS.map(s=>`<button class="small" data-ptthrone="${s}">${STAT_LABEL[s]} (${c.stats[s]})</button>`).join('')}</div>`;
+      document.querySelectorAll('[data-ptthrone]').forEach(sb=>sb.onclick=()=>{
+        const s=sb.dataset.ptthrone; c.stats[s]=Math.min(6,c.stats[s]+1); c.start[s]=Math.max(c.start[s],c.stats[s]);
+        logMsg(`👑 ${c.name}: +1 permanente a ${STAT_LABEL[s]}.`);
+        document.getElementById('ptCheckResult').innerHTML='';
+      });
+    }
     else { applyDamage(c,'anima',1,{ignoreResistance:true}); logMsg(`👑 ${c.name} perde la Contesa: 1 danno diretto ad Anima.`); }
   });
 }
@@ -1750,13 +1828,12 @@ function fightRoundGeneric(cb, acts, plane, opts){
   cb.rounds++;
   let teamDmg=0, entityDmg=0;
   acts.forEach(c=>{
-    const r=checkRoll(c,cb.checkStat);
-    const hit = r.roll<=r.val || r.roll===6;
-    let dmg=0;
-    if(hit){ dmg=1+damageBonusFor(c,cb.checkStat); if(CLASSES[c.cls].special==='furia'&&cb.checkStat==='for') dmg+=1; }
-    teamDmg+=dmg;
-    logMsg(`　 🙂 ${c.name}: tiro ${r.roll} ${hit?'✔':'✘'}${dmg?` (${dmg} dmg)`:''}`);
+    const a=resolveAttack(c,cb.checkStat);
+    teamDmg+=a.dmg;
+    logMsg(`　 🙂 ${c.name}: ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''}`);
   });
+  const demon=demonContribution(acts);
+  if(demon){ teamDmg+=demon.dmg; logMsg(`　 👹 Demone minore di ${demon.user.name}: tiro ${demon.roll} ${demon.hit?'✔':'✘'}${demon.dmg?` (${demon.dmg} dmg)`:''}`); }
   cb.entities.forEach(e=>{
     if(e.hp<=0) return;
     const r=d6(); const hit=r<=e.value;
@@ -1809,15 +1886,55 @@ function openCharManageModal(id){
 function useClassSpecial(c){
   const cls=CLASSES[c.cls];
   if(!c.charges.special){ logMsg(`${c.name}: abilità già scarica, serve un Recupero.`); return; }
-  c.charges.special=false;
   switch(cls.special){
-    case 'dardo': logMsg(`🪄 ${c.name} scaglia Dardo Incantato: 2 danni sicuri nella prossima Contesa (applica manualmente al round).`); break;
-    case 'forma_selvatica': logMsg(`🌿 ${c.name} usa Forma Selvatica: scambia temporaneamente due caratteristiche a scelta (applica manualmente).`); break;
-    case 'evocazione': logMsg(`👹 ${c.name} evoca un demone minore (valore 1) al proprio fianco per la prossima Contesa.`); break;
-    case 'resistenza_universale': logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito su una caratteristica a scelta.`); break;
+    case 'dardo':
+      c.charges.special=false; c.dardoReady=true;
+      logMsg(`🪄 ${c.name} carica Dardo Incantato: nella prossima Contesa di Forza/Intelletto/Destrezza infliggerà 2 danni sicuri, senza bisogno di tirare.`);
+      break;
+    case 'forma_selvatica':
+      c.charges.special=false;
+      openFormaSelvaticaModal(c);
+      break;
+    case 'evocazione':
+      c.charges.special=false; c.demonReady=true;
+      logMsg(`👹 ${c.name} evoca un demone minore (valore 1) che combatterà al suo fianco nel prossimo scontro.`);
+      break;
+    case 'resistenza_universale':
+      c.charges.special=false; c.monkShieldReady=true;
+      logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito, su qualunque caratteristica.`);
+      break;
     case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}); break;
-    default: logMsg(`✳️ ${c.name} usa la propria abilità di classe.`);
+    default: c.charges.special=false; logMsg(`✳️ ${c.name} usa la propria abilità di classe.`);
   }
+}
+function openFormaSelvaticaModal(c){
+  openModal(`<h3>🌿 Forma Selvatica</h3><p>Scegli due caratteristiche da scambiare temporaneamente (tornano come prima al prossimo salto):</p>
+    <div class="row">${STATS.filter(s=>s!=='pv').map(s=>`<button class="small" data-fsstat="${s}">${STAT_LABEL[s]} (${c.stats[s]})</button>`).join('')}</div>
+    <p class="hint" id="fsHint">Scegli la prima caratteristica.</p>`);
+  let first=null;
+  document.querySelectorAll('[data-fsstat]').forEach(b=>b.onclick=()=>{
+    const s=b.dataset.fsstat;
+    if(!first){ first=s; document.getElementById('fsHint').textContent=`Prima: ${STAT_LABEL[s]}. Ora scegli la seconda.`; return; }
+    if(first===s){ return; }
+    const a=first, bStat=s;
+    const tmp=c.stats[a]; c.stats[a]=c.stats[bStat]; c.stats[bStat]=tmp;
+    c.formaSelvaticaSwap = [a,bStat];
+    logMsg(`🌿 ${c.name} usa Forma Selvatica: scambia ${STAT_LABEL[a]} e ${STAT_LABEL[bStat]} fino al prossimo salto.`);
+    closeModal(); render();
+  });
+}
+function revertFormaSelvatica(c){
+  if(!c.formaSelvaticaSwap) return;
+  const [a,b]=c.formaSelvaticaSwap;
+  const tmp=c.stats[a]; c.stats[a]=c.stats[b]; c.stats[b]=tmp;
+  logMsg(`🌿 ${c.name}: Forma Selvatica finisce, ${STAT_LABEL[a]} e ${STAT_LABEL[b]} tornano come prima.`);
+  c.formaSelvaticaSwap=null;
+}
+function revertMirrorBoost(c){
+  if(!c.mirrorBoost) return;
+  Object.entries(c.mirrorBoost).forEach(([s,delta])=>{ c.stats[s]=Math.max(1,c.stats[s]-delta); });
+  logMsg(`🪞 ${c.name}: il potenziamento del Labirinto degli Specchi finisce.`);
+  c.mirrorBoost=null;
 }
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
@@ -1850,7 +1967,7 @@ function useSpell(c, idx){
     const r=sp.reward;
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); }
     else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
-    else if(r.type==='healOther'){ logMsg(`✨ ${c.name} lancia ${sp.name}: scegli il bersaglio dal pannello Gestisci del compagno e applica +${r.n} ${STAT_LABEL[r.stat||'pv']}.`); }
+    else if(r.type==='healOther'){ openHealOtherModal(c, sp, r); }
     else if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
@@ -1858,6 +1975,19 @@ function useSpell(c, idx){
   c.spells.splice(idx,1);
 }
 
+function openHealOtherModal(caster, sp, r){
+  const stat = r.stat||'pv';
+  const bonus = (caster.cls==='chierico' && stat==='pv') ? 1 : 0;
+  const amount = (r.n||1) + bonus;
+  const targets = activeChars();
+  openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}${bonus?' (incluso il bonus di classe del Chierico)':''}.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-healtarget="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-healtarget]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.healtarget);
+    healStat(t, stat, amount);
+    closeModal(); render();
+  });
+}
 /* ---------- modal ---------- */
 function openModal(html){
   document.getElementById('modalInner').innerHTML = html;
