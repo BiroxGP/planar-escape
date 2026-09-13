@@ -184,6 +184,15 @@ select.stat-sel{width:auto;}
   border-radius:6px; padding:.15rem .5rem; font-size:.78rem; margin:.1rem .2rem .1rem 0;
 }
 .jump-counter{font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--ink-faint);}
+.card-row{display:flex; gap:.7rem; align-items:flex-start; padding:.6rem 0; border-bottom:1px dotted var(--line);}
+.card-row:last-child{border-bottom:none;}
+.card-row .thumb{width:46px; height:64px; flex:none; border-radius:6px; overflow:hidden; position:relative; border:1px solid var(--line);}
+.card-row .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.card-row .thumb .ic{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:1.3rem; background:linear-gradient(160deg,var(--fam-soft,var(--surface-2)),var(--surface-2)); color:var(--fam,var(--ink-faint));}
+.card-row .info{flex:1 1 auto; min-width:0;}
+.card-row .info .title{font-weight:600; display:flex; gap:.4rem; align-items:center; flex-wrap:wrap;}
+.card-row .info .desc{font-size:.82rem; color:var(--ink-soft); margin:.2rem 0 0;}
+.card-row .actions{display:flex; gap:.3rem; flex-wrap:wrap; margin-top:.4rem;}
 dialog#modalRoot{border:none; border-radius:12px; padding:0; background:transparent; max-width:560px; width:92vw;}
 dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
 #modalInner{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.5rem; max-height:80vh; overflow-y:auto;}
@@ -518,7 +527,7 @@ const SPELLS = {
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{manualUse:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
     S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{blockNextHit:true}),
-    S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{manualUse:true}),
+    S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{manualUse:true}),
     S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
     S("sp_ecofondo","Eco dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},cost:1,daTestare:true}),
@@ -999,6 +1008,12 @@ function cardArt(id, icon, name, famClass){
   return `<div class="card-art-wrap ${famClass||''}">
     <img src="assets/cards/${id}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
     <div class="card-art-fallback" style="display:none;"><div class="ic">${icon||'🃏'}</div><div class="nm">${escapeHtml(name)}</div></div>
+  </div>`;
+}
+function cardThumb(id, icon, famClass){
+  return `<div class="thumb ${famClass||''}">
+    <img src="assets/cards/${id}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="ic">${icon||'🃏'}</div>
   </div>`;
 }
 
@@ -1592,6 +1607,28 @@ function grantHidden(c, sourceName, opts){
   logMsg(`🥷 ${c.name} evita l'Incontro grazie a ${sourceName}.`);
   return true;
 }
+function dismissEncounterForGroup(sourceName){
+  const card = currentIncontro();
+  if(!state.currentDraw || state.currentDraw.phase!=='incontro' || !card || card.type!=='incontro'){
+    logMsg(`⚠️ ${sourceName}: si usa solo di fronte a un Incontro ostile in corso.`,'warn');
+    return false;
+  }
+  const deckKey = state.currentDraw.incontroDeck;
+  const combatEntities = state.currentDraw.combat && state.currentDraw.combat.entities || [];
+  const isUndeadOrDemon = deckKey==='demoni' || deckKey==='nonmorti' || combatEntities.some(e=>e.undead||e.demon);
+  if(isUndeadOrDemon){
+    logMsg(`⚠️ ${sourceName}: non funziona su non-morti o demoni.`,'warn');
+    return false;
+  }
+  state.currentDraw.stealthDecided = state.currentDraw.stealthDecided||{};
+  state.currentDraw.hidden = state.currentDraw.hidden||[];
+  activeChars().forEach(m=>{
+    state.currentDraw.stealthDecided[m.id]=true;
+    if(!state.currentDraw.hidden.includes(m.id)) state.currentDraw.hidden.push(m.id);
+  });
+  logMsg(`💬 ${sourceName}: l'entità desiste dallo scontro, per tutto il gruppo presente — nessun rischio né ricompensa.`,'good');
+  return true;
+}
 function renderStealthPanel(chars){
   return `<div class="manual-box"><h4>🥷 Furtività</h4>
     <p style="font-size:.85rem;">Chi ha Furtività vede l'Incontro e decide se tentare di restare nascosto (check di Destrezza) prima che si affronti lo scontro: chi la usa vede solo se stesso, non tutto il gruppo.</p>
@@ -2133,9 +2170,30 @@ function openCharManageModal(id){
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
     </div>
     <h4>Oggetti (${c.inventory.length})</h4>
-    <div>${c.inventory.map((id,i)=>`<span class="item-chip">${escapeHtml(OGGETTI_BY_ID[id]?.name)} <button class="small" data-infoitem="${id}" title="Cos'è?">ℹ️</button> <button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-dropitem="${i}">Scarta</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
+    <div>${c.inventory.map((id,i)=>{
+      const it=OGGETTI_BY_ID[id]; if(!it) return '';
+      return `<div class="card-row">
+        ${cardThumb(it.id, OGGETTO_CAT_ICON[it.cat]||'🃏','fam-oggetto')}
+        <div class="info">
+          <div class="title">${escapeHtml(it.name)} <span class="badge">${escapeHtml(it.cat||'')}</span></div>
+          <p class="desc">${escapeHtml(it.text||'')}</p>
+          <div class="actions"><button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-dropitem="${i}">Scarta</button></div>
+        </div>
+      </div>`;
+    }).join('')||'<span class="hint">Nessuno</span>'}</div>
     <h4 class="mt1">Spell (${c.spells.length})</h4>
-    <div>${c.spells.map((id,i)=>`<span class="item-chip">${escapeHtml(SPELLS_BY_ID[id]?.name)} <button class="small" data-infospell="${id}" title="Cosa fa?">ℹ️</button> <button class="small" data-usespell="${i}">Usa</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
+    <div>${c.spells.map((id,i)=>{
+      const sp=SPELLS_BY_ID[id]; if(!sp) return '';
+      const school=spellSchoolOf(id);
+      return `<div class="card-row">
+        ${cardThumb(sp.id, SPELL_SCHOOL_ICON[school]||'📖','fam-spell')}
+        <div class="info">
+          <div class="title">${escapeHtml(sp.name)} <span class="badge">${escapeHtml(school||'')}</span>${sp.cost?`<span class="badge">costo ${sp.cost}</span>`:''}</div>
+          <p class="desc">${escapeHtml(sp.text||'')}</p>
+          <div class="actions"><button class="small" data-usespell="${i}">Usa</button></div>
+        </div>
+      </div>`;
+    }).join('')||'<span class="hint">Nessuno</span>'}</div>
     <h4 class="mt1">Depotenziamenti temporanei attivi</h4>
     <div>${activeTempDebuffs(c).map(s=>`<span class="badge">${STAT_LABEL[s]}</span>`).join('')||'<span class="hint">Nessuno</span>'}<p class="hint">Guariscono solo a Recupero (automatico) o con spell/oggetti specifici.</p></div>
     <div class="row mt1"><button id="mgrClose" class="primary">Chiudi</button></div>
@@ -2148,8 +2206,6 @@ function openCharManageModal(id){
   document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ useItem(c, +b.dataset.useitem); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{ useSpell(c, +b.dataset.usespell); render(); openCharManageModal(id); });
-  document.querySelectorAll('[data-infoitem]').forEach(b=>b.onclick=()=>showOggettoInfoModal(b.dataset.infoitem));
-  document.querySelectorAll('[data-infospell]').forEach(b=>b.onclick=()=>showSpellInfoModal(b.dataset.infospell));
   document.getElementById('mgrClose').onclick=closeModal;
 }
 function useClassSpecial(c){
@@ -2284,6 +2340,10 @@ function useSpell(c, idx){
   }
   if(sp.teleportReunionSpell){
     openTeleportModal(c, idx);
+    return;
+  }
+  if(sp.charmSpell){
+    if(dismissEncounterForGroup(sp.name)) c.spells.splice(idx,1);
     return;
   }
   const cost = sp.cost||0;
