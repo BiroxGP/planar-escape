@@ -138,6 +138,9 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .fam-armonia{--fam:#b89323; --fam-soft:#f6edd2;}
 .fam-entropia{--fam:#5f3f92; --fam-soft:#ece2f7;}
 .fam-generico{--fam:#5f564a; --fam-soft:#e9e4da;}
+.fam-oggetto{--fam:#a94f1e; --fam-soft:#f4e0cd;}
+.fam-spell{--fam:#5f3f92; --fam-soft:#ece2f7;}
+.fam-piano{--fam:#146b67; --fam-soft:#dcefec;}
 .card-art-fallback{background:linear-gradient(160deg,var(--fam-soft),var(--surface-2)); color:var(--fam);}
 
 /* ---- log ---- */
@@ -955,7 +958,7 @@ function renderCharCard(c){
       <span>🎒 ${c.inventory.length} oggetti</span>
       <span>📖 ${c.spells.length} spell</span>
     </div>
-    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
+    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
     <div class="char-actions">
       ${c.status==='active'||c.status==='undead' ? `<button class="small" data-open-char="${c.id}">Gestisci</button>` : ''}
     </div>
@@ -1431,8 +1434,13 @@ function renderDrawFlow(){
   const plane = currentPlane();
   const card = currentIncontro();
   let html = `<div class="panel">
-    <h2>${FAMILIES[plane.family]?.icon||'🌀'} ${plane.name}</h2>
-    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+    <div class="card-display">
+      ${cardArt(plane.id, FAMILIES[plane.family]?.icon||'🌀', plane.name, 'fam-'+plane.family)}
+      <div class="card-body">
+        <h2>${FAMILIES[plane.family]?.icon||'🌀'} ${plane.name}</h2>
+        <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+      </div>
+    </div>
   </div>`;
   if(card){
     html += renderIncontroCard(plane, card);
@@ -1904,7 +1912,10 @@ function resolvePianoTerreno(){
   openPianoTerrenoModal(dest);
 }
 function openPianoTerrenoModal(dest){
-  let body = `<h3>🏔️ ${dest.name}</h3><p>${dest.text}</p>`;
+  let body = `<div class="card-display">
+    ${cardArt(dest.id, '🏔️', dest.name, 'fam-piano')}
+    <div class="card-body"><h3>🏔️ ${dest.name}</h3><p>${dest.text}</p></div>
+  </div>`;
   if(dest.kind==='finaleA'){
     body += `<div class="row mt1">${activeChars().map(c=>`<button class="primary small" data-win="${c.id}">${c.name} torna a casa (vittoria)</button>`).join('')}<button id="btnPTClose">Nessuno per ora</button></div>`;
   } else if(dest.kind==='boss'){
@@ -2096,6 +2107,7 @@ function openCharManageModal(id){
   const c = state.players.find(p=>p.id===id);
   if(!c) return;
   const cls = CLASSES[c.cls];
+  const inRecuperoPlane = (()=>{ const p=currentPlane(); return p && RECUPERO_PLANES.has(p.id); })();
   let body = `<h3>${cls.icon} ${escapeHtml(c.name)} — Gestisci</h3>
     <div class="row mb1">
       ${STATS.map(s=>`<span class="badge">${STAT_LABEL[s]}: ${c.stats[s]}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`).join('')}
@@ -2103,14 +2115,14 @@ function openCharManageModal(id){
     <p class="hint">${cls.desc}</p>
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
-      <button class="small" id="mgrRecupero">🛌 Applica Recupero (se in piano di Recupero)</button>
+      <button class="small" id="mgrRecupero" ${inRecuperoPlane?'':'disabled'}>🛌 Applica Recupero${inRecuperoPlane?'':' (non sei in un piano di Recupero)'}</button>
       ${cls.special ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
     </div>
     <h4>Oggetti (${c.inventory.length})</h4>
-    <div>${c.inventory.map((id,i)=>`<span class="item-chip">${escapeHtml(OGGETTI_BY_ID[id]?.name)} <button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-dropitem="${i}">Scarta</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
+    <div>${c.inventory.map((id,i)=>`<span class="item-chip">${escapeHtml(OGGETTI_BY_ID[id]?.name)} <button class="small" data-infoitem="${id}" title="Cos'è?">ℹ️</button> <button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-dropitem="${i}">Scarta</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
     <h4 class="mt1">Spell (${c.spells.length})</h4>
-    <div>${c.spells.map((id,i)=>`<span class="item-chip">${escapeHtml(SPELLS_BY_ID[id]?.name)} <button class="small" data-usespell="${i}">Usa</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
+    <div>${c.spells.map((id,i)=>`<span class="item-chip">${escapeHtml(SPELLS_BY_ID[id]?.name)} <button class="small" data-infospell="${id}" title="Cosa fa?">ℹ️</button> <button class="small" data-usespell="${i}">Usa</button></span>`).join('')||'<span class="hint">Nessuno</span>'}</div>
     <h4 class="mt1">Depotenziamenti temporanei attivi</h4>
     <div>${activeTempDebuffs(c).map(s=>`<button class="small" data-cure="${s}">Guarisci ${STAT_LABEL[s]} (Recupero)</button>`).join('')||'<span class="hint">Nessuno</span>'}</div>
     <div class="row mt1"><button id="mgrClose" class="primary">Chiudi</button></div>
@@ -2129,6 +2141,8 @@ function openCharManageModal(id){
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{ useSpell(c, +b.dataset.usespell); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-cure]').forEach(b=>b.onclick=()=>{ cureOneDebuff(c,b.dataset.cure); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-infoitem]').forEach(b=>b.onclick=()=>showOggettoInfoModal(b.dataset.infoitem));
+  document.querySelectorAll('[data-infospell]').forEach(b=>b.onclick=()=>showSpellInfoModal(b.dataset.infospell));
   document.getElementById('mgrClose').onclick=closeModal;
 }
 function useClassSpecial(c){
@@ -2330,6 +2344,38 @@ function openTeleportModal(caster, idx){
     closeModal(); render();
   });
 }
+const OGGETTO_CAT_ICON = {arma:'⚔️',armatura:'🛡️',anello:'💍',pozione:'🧪',protezione:'🧿',oneshot:'✨',particolare:'🔮'};
+const SPELL_SCHOOL_ICON = {essenza:'🪄',flusso:'✨',divinazione:'🔮'};
+function spellSchoolOf(id){ return Object.entries(SPELLS).find(([,list])=>list.some(s=>s.id===id))?.[0]; }
+function showOggettoInfoModal(id){
+  const it = OGGETTI_BY_ID[id]; if(!it) return;
+  const icon = OGGETTO_CAT_ICON[it.cat]||'🃏';
+  openModal(`<div class="card-display">
+      ${cardArt(it.id, icon, it.name, 'fam-oggetto')}
+      <div class="card-body">
+        <h3>${escapeHtml(it.name)}</h3>
+        <div class="tags"><span class="badge">${escapeHtml(it.cat||'')}</span></div>
+        <p>${escapeHtml(it.text||'')}</p>
+      </div>
+    </div>
+    <div class="row mt1"><button class="primary" id="btnInfoClose">Chiudi</button></div>`);
+  document.getElementById('btnInfoClose').onclick=closeModal;
+}
+function showSpellInfoModal(id){
+  const sp = SPELLS_BY_ID[id]; if(!sp) return;
+  const school = spellSchoolOf(id);
+  const icon = SPELL_SCHOOL_ICON[school]||'📖';
+  openModal(`<div class="card-display">
+      ${cardArt(sp.id, icon, sp.name, 'fam-spell')}
+      <div class="card-body">
+        <h3>${escapeHtml(sp.name)}</h3>
+        <div class="tags"><span class="badge">${escapeHtml(school||'')}</span>${sp.cost?`<span class="badge">costo ${sp.cost} risorsa/e</span>`:''}</div>
+        <p>${escapeHtml(sp.text||'')}</p>
+      </div>
+    </div>
+    <div class="row mt1"><button class="primary" id="btnInfoClose">Chiudi</button></div>`);
+  document.getElementById('btnInfoClose').onclick=closeModal;
+}
 function openHealOtherModal(caster, sp, r, mult){
   mult = mult||1;
   const stat = r.stat||'pv';
@@ -2356,6 +2402,7 @@ function closeModal(){ document.getElementById('modalRoot').close(); }
 function bindGame(){
   const ap=document.getElementById('btnAfterPlane'); if(ap) ap.onclick=finishIncontro;
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
+  document.querySelectorAll('[data-quickinfo-item]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); showOggettoInfoModal(b.dataset.quickinfoItem); });
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.groupjump; startJump(); });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
   setTimeout(renderIncontroAction,0);
