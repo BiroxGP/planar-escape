@@ -130,6 +130,14 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .card-body .tags{margin-bottom:.5rem;}
 .card-body p{margin:0 0 .5rem; font-size:.92rem; color:var(--ink-soft); max-width:62ch;}
 
+/* piano d'ingresso: immagine grande in formato scena panoramica (16:9), non la miniatura da carta */
+.plane-hero{position:relative; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; box-shadow:0 8px 26px var(--shadow); border:1px solid var(--line); margin-bottom:.9rem;}
+.plane-hero img{width:100%; height:100%; object-fit:cover; display:block;}
+.plane-hero-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,var(--fam-soft),var(--surface-2)); color:var(--fam);}
+.plane-hero-fallback .ic{font-size:4.5rem; filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));}
+.plane-hero-caption{position:absolute; left:0; right:0; bottom:0; padding:1rem 1.2rem; background:linear-gradient(to top, rgba(10,8,7,.82), rgba(10,8,7,0) 85%);}
+.plane-hero-caption h2{margin:0; font-family:'Cinzel',serif; font-size:1.4rem; color:#f4ede0; text-shadow:0 2px 10px rgba(0,0,0,.5);}
+
 /* family color coding */
 .fam-elementare{--fam:#c1531f; --fam-soft:#f7e2d2;}
 .fam-terrestre{--fam:#7a5a2e; --fam-soft:#ece1cc;}
@@ -283,42 +291,42 @@ function P(id,name,family,check,recupero,text,effectKey,extra){
   return Object.assign({id,name,family,check,recupero:!!recupero,text,effectKey:effectKey||id,deck:family==="demoniaco"?"demoni":(family==="nonmorti"?"nonmorti":family)},extra||{});
 }
 const PIANI = [
-  P("fuoco","Fuoco","elementare","for",false,"Danno immediato a tutti all'ingresso (salvo protezione), più 1 danno a ogni turno di permanenza."),
-  P("veleno","Veleno","elementare","pv",false,"Danno a tutti alla fine di ogni turno, quasi inevitabile."),
-  P("acqua","Acqua","elementare","for",false,"Corrente che trascina (check di gruppo) e necessità di respirare dal 2° turno."),
-  P("terra","Terra","elementare","for",false,"Si resta interrati: check d'impatto, poi si scava (max 3 turni o si muore tutti)."),
-  P("aria","Aria","elementare","des",false,"Venti che disorientano: chi fallisce affronta un Incontro extra da solo."),
-  P("tempesta","Tempesta","elementare","des",false,"Fulmini improvvisi: 1 danno diretto a un membro a caso a fine turno."),
-  P("cristallo","Cristallo","elementare","san",false,"Amplifica incantesimi (+100%) ma anche i danni fisici subiti (+100%)."),
-  P("luce","Luce","eterei","int",false,"Accecante: fallire = -1 a Forza/Destrezza/Intelletto per la permanenza."),
-  P("tenebre","Tenebre","eterei",null,false,"Buio totale: automatico -1 a Forza/Destrezza/Intelletto per la permanenza."),
-  P("sogno","Sogno","eterei","int",false,"Illusioni persistenti: check ripetuto ogni turno o si perde il turno."),
-  P("specchi","Specchi","eterei","choice",false,"Contesa contro il proprio riflesso, su una caratteristica a scelta."),
-  P("astrale","Astrale","eterei",null,true,"Piano calmo per eccellenza: nessun danno attivo, ottimo per il Recupero."),
-  P("ordine","Ordine","armonia","pv",true,"Si può riportare una caratteristica al valore di partenza di 1° livello."),
-  P("legge","Legge","armonia","anima",false,"Ogni oggetto preso richiede un pegno in cambio (baratto forzato)."),
-  P("sacro","Sacro","armonia","san",true,"Piano protetto: non-morti/demoni subiscono danno passivo; si recupera anche 1 San."),
-  P("stasi","Stasi","armonia","pv",false,"Nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile."),
-  P("sole","Sole","armonia","anima",false,"Non-morti/demoni subiscono danno passivo; chi ha Corruzione affronta un check extra di Anima."),
-  P("metallo","Metallo","armonia","des",false,"Chi fallisce resta incastrato: perde il turno e subisce 1 danno."),
-  P("logica","Logica","armonia","int",false,"Nessun reroll utilizzabile da nessuna fonte mentre si è qui."),
-  P("verita","Verità","armonia","int",false,"Chi fallisce subisce un depotenziamento temporaneo a Sanità Mentale."),
-  P("eternita","Eternità","armonia",null,true,"Archivio cosmico: nessun danno attivo, il tempo non consuma nulla."),
-  P("caos","Caos","entropia","random",false,"Ogni check usa una statistica casuale; il mazzo Piani viene rimescolato all'ingresso."),
-  P("vuoto","Vuoto","entropia",null,false,"A ogni turno si sceglie cosa perdere fra 1 PV, un oggetto, uno spell o un'abilità."),
-  P("sangue","Sangue","entropia","anima",false,"Ogni check/combattimento fallito costa anche 1 PV; le perdite di PV raddoppiano."),
-  P("decadimento","Decadimento","entropia",null,false,"Si perde un oggetto a ogni turno di permanenza (automatico), salvo protezioni.",null,{type:"fisico"}),
-  P("putrefazione","Putrefazione","entropia",null,false,"A ogni turno -1 temporaneo a Forza o Destrezza (d6, automatico).",null,{type:"fisico"}),
-  P("tempo","Tempo","entropia","int",false,"Chi fallisce subisce un depotenziamento temporaneo casuale (d6 fra le 6 statistiche)."),
-  P("cenere","Cenere","entropia","for",false,"Chi fallisce perde un oggetto, sbriciolato dal vento."),
-  P("oblio","Oblio","entropia","int",false,"Chi fallisce dimentica temporaneamente uno spell o un'abilità (o 1 Intelletto)."),
-  P("ombra","Ombra","entropia","des",false,"Combattimento one-shot con la propria ombra (Contesa di Destrezza)."),
-  P("porte_di_brace","Le Porte di Brace (Demoniaco, 1° girone)","demoniaco","for_or_int",false,"1° girone infernale, di fuoco. Nessuna Corruzione qui. Incontro obbligatorio ogni turno.",null,{girone:1}),
-  P("baratro_in_fiamme","Il Baratro in Fiamme (Demoniaco, 2° girone)","demoniaco","for_or_int",false,"2° girone infernale, fuoco più intenso. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",null,{girone:2}),
-  P("gelo_dellabisso","Il Gelo dell'Abisso (Demoniaco, 3° girone)","demoniaco","for_or_int",false,"3° girone infernale, ghiaccio. Corruzione: -1 Anima passivo. Incontro obbligatorio ogni turno.",null,{girone:3}),
-  P("palude_sconsacrata","La Palude Sconsacrata (Piano Negativo, 1°)","nonmorti","for_or_int",false,"1° livello dei non-morti. Incontro obbligatorio ogni turno.",null,{girone:1}),
-  P("velo_dei_sussurri","Il Velo dei Sussurri (Piano Negativo, 2°)","nonmorti","for_or_int",false,"2° livello. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",null,{girone:2}),
-  P("voragine_della_negativita","La Voragine della Negatività (Piano Negativo, 3°)","nonmorti","for_or_int",false,"3° livello, il più profondo. Dal 2° turno consecutivo: check di Sanità Mentale o -1 San. Incontro obbligatorio ogni turno.",null,{girone:3}),
+  P("fuoco","Fuoco","elementare","for",false,"Danno a tutti all'ingresso (parato da eventuale protezione), più 1 danno a ogni turno in cui si resta."),
+  P("veleno","Veleno","elementare","pv",false,"Danno a tutto il gruppo presente a fine turno (salvo protezioni) — l'unico modo per evitarlo è saltare via prima che il turno finisca."),
+  P("acqua","Acqua","elementare","for",false,"Corrente di gruppo: check di Forza (vale il valore più alto presente) — se fallisce, chi ha la Forza più bassa è trascinato via da solo in un portale a caso. Dal 2° turno, chi non trattiene il respiro rifà il check ogni turno o sviene."),
+  P("terra","Terra","elementare","for",false,"Si resta interrati: check di Forza all'impatto (fallito = danno). Poi si scava, un check di Forza a turno — il gruppo può aiutare. Non liberi entro 3 turni: si muore tutti."),
+  P("aria","Aria","elementare","des",false,"Venti che disorientano: chi fallisce un check di Destrezza è sbalzato via e affronta da solo un Incontro in più. Poi tutto il gruppo riunito ne affronta un secondo insieme."),
+  P("tempesta","Tempesta","elementare","des",false,"Fulmini improvvisi: a fine turno, 1 danno diretto a un membro a caso del gruppo presente."),
+  P("cristallo","Cristallo","elementare","san",false,"Amplifica tutto: incantesimi e danni fisici subiti qui valgono il doppio (+100% entrambi)."),
+  P("luce","Luce","eterei","int",false,"Accecante: chi fallisce un check di Intelletto subisce -1 a Forza, Destrezza e Intelletto per tutta la permanenza (nessuna perdita del turno)."),
+  P("tenebre","Tenebre","eterei",null,false,"Buio totale: appena si entra, -1 automatico a Forza, Destrezza e Intelletto per tutta la permanenza. Nessun check da tirare."),
+  P("sogno","Sogno","eterei","int",false,"Illusioni: chi fallisce un check di Intelletto perde il turno e ripete il check a ogni turno finché non lo supera. Si salta insieme solo quando nessuno è più sotto illusione."),
+  P("specchi","Specchi","eterei","choice",false,"Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla (Forza, Intelletto o Destrezza) — chi perde subisce un depotenziamento temporaneo su quella stessa caratteristica."),
+  P("astrale","Astrale","eterei",null,true,"Nessun pericolo attivo: solo quiete, e un tempo che scorre in modo incerto."),
+  P("ordine","Ordine","armonia","pv",true,"Si può riportare una qualsiasi propria caratteristica al valore di partenza di 1° livello, cancellando ogni effetto accumulato su di essa, nel bene e nel male."),
+  P("legge","Legge","armonia","anima",false,"Ogni oggetto preso qui richiede un pegno in cambio: un baratto forzato, deciso al tavolo, mai gratuito."),
+  P("sacro","Sacro","armonia","san",true,"Piano protetto: non-morti e demoni che entrano subiscono danno passivo; i vivi recuperano anche 1 Sanità Mentale in più del normale."),
+  P("stasi","Stasi","armonia","pv",false,"Niente può cambiare qui: cure, potenziamenti e danni non hanno effetto. Anche il mazzo Piani è bloccato: nessuna visione o manipolazione funziona."),
+  P("sole","Sole","armonia","anima",false,"Luce di giudizio: non-morti e demoni subiscono danno passivo. Chi porta Corruzione affronta anche un check extra di Anima, pena un depotenziamento temporaneo a caso."),
+  P("metallo","Metallo","armonia","des",false,"Chi fallisce un check di Destrezza resta incastrato negli ingranaggi: perde il turno e subisce 1 danno."),
+  P("logica","Logica","armonia","int",false,"Nessun reroll è utilizzabile qui, da nessuna fonte. Un 6 naturale resta comunque un successo automatico."),
+  P("verita","Verità","armonia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo a Sanità Mentale, travolto dalla perdita di ogni illusione."),
+  P("eternita","Eternità","armonia",null,true,"Nessun danno attivo: qui nulla viene mai consumato né dimenticato."),
+  P("caos","Caos","entropia","random",false,"Ogni check usa una statistica casuale, estratta di nuovo a ogni tiro. Appena si entra, l'intero mazzo Piani viene rimescolato."),
+  P("vuoto","Vuoto","entropia",null,false,"Nessun check: a ogni turno si sceglie cosa perdere fra 1 Punto Vita, un oggetto, uno spell o un'abilità."),
+  P("sangue","Sangue","entropia","anima",false,"Ogni check o combattimento fallito costa anche 1 Punto Vita. Qualsiasi altra perdita di Punti Vita qui raddoppia."),
+  P("decadimento","Decadimento","entropia",null,false,"Automatico, nessun check: si perde un oggetto a ogni turno di permanenza, salvo protezioni.",null,{type:"fisico"}),
+  P("putrefazione","Putrefazione","entropia",null,false,"Automatico, nessun check: a ogni turno un d6 decide se Forza (1-2-3) o Destrezza (4-5-6) subisce -1 temporaneo.",null,{type:"fisico"}),
+  P("tempo","Tempo","entropia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo casuale: un d6 decide su quale delle sei caratteristiche."),
+  P("cenere","Cenere","entropia","for",false,"Chi fallisce un check di Forza perde un oggetto, sbriciolato dal vento."),
+  P("oblio","Oblio","entropia","int",false,"Chi fallisce un check di Intelletto dimentica di colpo uno spell o un'abilità — un depotenziamento temporaneo come gli altri, guarisce solo in un piano di Recupero."),
+  P("ombra","Ombra","entropia","des",false,"Nessun danno diretto: un combattimento one-shot (Contesa di Destrezza) contro la propria stessa ombra. Risolto quello, si pesca comunque il normale Incontro del turno."),
+  P("porte_di_brace","Le Porte di Brace (Demoniaco, 1° girone)","demoniaco","for_or_int",false,"Nessuna Corruzione qui. Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",null,{girone:1}),
+  P("baratro_in_fiamme","Il Baratro in Fiamme (Demoniaco, 2° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:2}),
+  P("gelo_dellabisso","Il Gelo dell'Abisso (Demoniaco, 3° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:3}),
+  P("palude_sconsacrata","La Palude Sconsacrata (Piano Negativo, 1°)","nonmorti","for_or_int",false,"Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",null,{girone:1}),
+  P("velo_dei_sussurri","Il Velo dei Sussurri (Piano Negativo, 2°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",null,{girone:2}),
+  P("voragine_della_negativita","La Voragine della Negatività (Piano Negativo, 3°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",null,{girone:3}),
 ];
 const PIANI_BY_ID = Object.fromEntries(PIANI.map(p=>[p.id,p]));
 const RECUPERO_PLANES = new Set(PIANI.filter(p=>p.recupero).map(p=>p.id));
@@ -608,6 +616,7 @@ function newGame(){
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
+    jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
   };
   render();
 }
@@ -1018,6 +1027,9 @@ function renderTurnArea(){
   if(state.currentDraw.phase==='vuoto-choice'){
     return renderVuotoChoice();
   }
+  if(state.currentDraw.phase==='specchi-choice'){
+    return renderSpecchiChoice();
+  }
   return renderDrawFlow();
 }
 function renderVuotoChoice(){
@@ -1026,10 +1038,8 @@ function renderVuotoChoice(){
   const choices = state.currentDraw.vuotoChoices||{};
   const allDone = acts.every(c=>choices[c.id]);
   return `<div class="panel">
-    <div class="card-display">
-      ${cardArt(plane.id, FAMILIES[plane.family]?.icon||'🕳️', plane.name, 'fam-entropia')}
-      <div class="card-body"><h2>🕳️ ${plane.name}</h2><p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p></div>
-    </div>
+    ${planeHeroArt(plane, '🕳️')}
+    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
     <p class="hint">Ogni presente deve scegliere cosa perdere — obbligatorio, una sola volta a testa.</p>
     ${acts.map(c=>{
       const done = !!choices[c.id];
@@ -1054,6 +1064,33 @@ function applyVuotoLoss(c, what){
     else if(CLASSES[c.cls].special && c.charges.special){ c.charges.special=false; logMsg(`🕳️ ${c.name} sceglie di scaricare la propria abilità di classe.`); }
   }
 }
+function renderSpecchiChoice(){
+  const plane = currentPlane();
+  const acts = activeChars();
+  const choices = state.currentDraw.specchiChoices||{};
+  const allDone = acts.every(c=>choices[c.id]);
+  return `<div class="panel">
+    ${planeHeroArt(plane, '🪞')}
+    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
+    <p class="hint">Ogni presente affronta il proprio riflesso in una Contesa, prima dell'Incontro del turno.</p>
+    ${acts.map(c=>{
+      const done = choices[c.id];
+      if(done){
+        return `<div class="row" style="margin-bottom:.5rem; align-items:center;">
+          <span style="min-width:110px;">${escapeHtml(c.name)} ✓</span>
+          <span class="hint">${STAT_LABEL[done.stat]}: tiro ${done.roll} vs ${done.val} → ${done.success?'vince, nessun effetto':'perde, depotenziamento temporaneo'}</span>
+        </div>`;
+      }
+      return `<div class="row" style="margin-bottom:.5rem; align-items:center;">
+        <span style="min-width:110px;">${escapeHtml(c.name)}</span>
+        <button class="small" data-specchio="${c.id}:for">Forza</button>
+        <button class="small" data-specchio="${c.id}:int">Intelletto</button>
+        <button class="small" data-specchio="${c.id}:des">Destrezza</button>
+      </div>`;
+    }).join('')}
+    ${allDone ? `<button class="primary mt1" id="btnSpecchiContinue">Continua</button>` : `<p class="hint">Mancano ancora delle scelte prima di poter continuare.</p>`}
+  </div>`;
+}
 function renderGroupPicker(){
   ensureGroups();
   const groups = state.groups.map(g=>({g, members:groupMembers(g)})).filter(x=>x.members.length>0);
@@ -1061,15 +1098,19 @@ function renderGroupPicker(){
   const isSplit = groups.length>1;
   return `<div class="panel center">
     <h2>${isSplit?'Il portale attende — il gruppo è separato':'Il gruppo è davanti al portale'}</h2>
-    <p class="hint">${isSplit?'Ogni gruppo separato pesca e salta per conto proprio: scegli quale gruppo gioca il prossimo turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
-    ${groups.map(({g,members})=>`
+    <p class="hint">${isSplit?'Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
+    ${groups.map(({g,members})=>{
+      const waiting = isSplit && !!state.jumpedThisRound[g.id];
+      return `
       <div class="player-setup" style="text-align:left;">
         <strong>${members.map(c=>escapeHtml(c.name)).join(', ')}</strong>
         <div class="row mt1">
-          <button class="primary small" data-groupjump="${g.id}">🌀 Salta</button>
+          <button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>🌀 Salta</button>
+          ${waiting?`<span class="hint">In attesa che gli altri gruppi separati saltino…</span>`:''}
           ${members.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -1084,6 +1125,17 @@ function cardThumb(id, icon, famClass){
   return `<div class="thumb ${famClass||''}">
     <img src="assets/cards/${id}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
     <div class="ic">${icon||'🃏'}</div>
+  </div>`;
+}
+function planeHeroArt(plane, iconOverride){
+  // l'immagine del piano è una scena panoramica (16:9), pensata per essere l'illustrazione
+  // grande e immersiva della pagina d'ingresso — non la miniatura in formato carta.
+  const famClass = 'fam-'+plane.family;
+  const icon = iconOverride || FAMILIES[plane.family]?.icon || '🌀';
+  return `<div class="plane-hero ${famClass}">
+    <img src="assets/cards/${plane.id}.png" alt="${escapeHtml(plane.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="plane-hero-fallback" style="display:none;"><div class="ic">${icon}</div></div>
+    <div class="plane-hero-caption"><h2>${icon} ${escapeHtml(plane.name)}</h2></div>
   </div>`;
 }
 
@@ -1113,6 +1165,10 @@ function doJump(){
   });
   applyPendingMadnessActions();
   activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
+  if(state.currentGroupId){
+    state.jumpedThisRound[state.currentGroupId] = true;
+    maybeResetJumpRound();
+  }
   state.jumps++;
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
@@ -1219,6 +1275,7 @@ function allActiveChars(){ return state.players.filter(isConscious); }
 function ensureGroups(){
   // compatibilità con salvataggi vecchi senza gruppi, o con personaggi non ancora assegnati
   if(!state.groups) state.groups=[];
+  if(!state.jumpedThisRound) state.jumpedThisRound={};
   const assigned = new Set(state.groups.flatMap(g=>g.memberIds));
   const orphans = state.players.filter(p=>!assigned.has(p.id)).map(p=>p.id);
   if(orphans.length){
@@ -1244,11 +1301,22 @@ function groupMembers(g){
 }
 function splitIntoNewGroup(memberIds){
   ensureGroups();
+  // chi si stacca da un gruppo che aveva già saltato in questo turno sincronizzato eredita
+  // lo stesso stato: dividersi dopo il salto non deve regalare un salto extra fuori sincrono.
+  const wasJumped = state.groups.some(g=>state.jumpedThisRound[g.id] && g.memberIds.some(id=>memberIds.includes(id)));
   state.groups.forEach(g=>{ g.memberIds = g.memberIds.filter(id=>!memberIds.includes(id)); });
   state.groups = state.groups.filter(g=>g.memberIds.length>0);
   const newG = { id:'g'+Math.random().toString(36).slice(2,9), memberIds: memberIds.slice() };
   state.groups.push(newG);
+  if(wasJumped) state.jumpedThisRound[newG.id]=true;
   return newG;
+}
+function maybeResetJumpRound(){
+  ensureGroups();
+  const groups = state.groups.filter(g=>g.memberIds.length>0);
+  // quando tutti i gruppi attualmente separati hanno saltato, il turno sincronizzato
+  // ricomincia: nessuno resta bloccato in attesa per sempre.
+  if(groups.length>0 && groups.every(g=>state.jumpedThisRound[g.id])) state.jumpedThisRound = {};
 }
 function mergeGroups(idA, idB){
   ensureGroups();
@@ -1279,6 +1347,13 @@ function applyPlaneIntrinsic(plane){
     state.currentDraw.phase = 'vuoto-choice';
     state.currentDraw.vuotoChoices = {};
     logMsg("🕳️ Il Vuoto costringe ogni presente a scegliere cosa perdere: 1 PV, un oggetto, uno spell o un'abilità. Non è facoltativo.",'warn');
+    render();
+    return;
+  }
+  if(plane.id==='specchi' && acts.length){
+    state.currentDraw.phase = 'specchi-choice';
+    state.currentDraw.specchiChoices = {};
+    logMsg("🪞 Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla, prima di affrontare l'Incontro del turno.",'warn');
     render();
     return;
   }
@@ -1331,7 +1406,6 @@ const PLANE_EFFECTS = {
   luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name} fallisce (Luce): -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
   tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
   sogno:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`💭 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'lucido':'perde il turno (persiste finché non supera il check)'}.`); }); },
-  specchi:(p,acts,ctx)=>{ logMsg('🪞 Ogni personaggio sceglie una statistica e affronta il proprio riflesso (usa Gestisci → Contesa singola).'); },
   ordine:(p,acts,ctx)=>{ logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello (usa Gestisci).'); },
   legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio (baratto forzato, applica manualmente).'); },
   sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
@@ -1468,7 +1542,9 @@ function resolveForceContest(a,b){
 }
 function soloForcedJump(group, reason){
   group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
-  splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
+  const newG = splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
+  state.jumpedThisRound[newG.id] = true; // questo salto forzato conta come il salto di questo turno per il nuovo gruppo
+  maybeResetJumpRound();
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
@@ -1540,13 +1616,8 @@ function renderDrawFlow(){
   const plane = currentPlane();
   const card = currentIncontro();
   let html = `<div class="panel">
-    <div class="card-display">
-      ${cardArt(plane.id, FAMILIES[plane.family]?.icon||'🌀', plane.name, 'fam-'+plane.family)}
-      <div class="card-body">
-        <h2>${FAMILIES[plane.family]?.icon||'🌀'} ${plane.name}</h2>
-        <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
-      </div>
-    </div>
+    ${planeHeroArt(plane)}
+    <p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>
   </div>`;
   if(card){
     html += renderIncontroCard(plane, card);
@@ -1573,7 +1644,7 @@ function renderIncontroCard(plane, card){
 
 function renderIncontroAction(){
   const el = document.getElementById('incontroAction');
-  if(!el) return;
+  if(!el || !state.currentDraw) return;
   const plane = currentPlane(); const card = currentIncontro();
   const acts = state.currentDraw.targets.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && (c.status==='active'||c.status==='undead'));
   if(card.type==='nessun'){
@@ -1625,12 +1696,13 @@ function renderIncontroAction(){
       document.getElementById('btnResolveDone').onclick=finishIncontro;
       return;
     }
-    el.innerHTML = acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[card.check]} (${effectiveStat(c,card.check)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
+    const checkStat = card.check==='native' ? nativeStatFor(plane) : card.check;
+    el.innerHTML = acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
     let done=0;
     el.querySelectorAll('[data-checkchar]').forEach(b=>{
       b.onclick=()=>{
         const c = acts.find(x=>x.id===b.dataset.checkchar);
-        const r=checkRoll(c,card.check);
+        const r=checkRoll(c,checkStat);
         document.getElementById('res_'+c.id).innerHTML = `<span class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${r.success?'OK':'Fallito'}</span>`;
         b.disabled=true;
         if(!r.success && card.onFail) applyConsequence(card.onFail, [c], plane);
@@ -2733,7 +2805,11 @@ function bindGame(){
   const ap=document.getElementById('btnAfterPlane'); if(ap) ap.onclick=finishIncontro;
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
   document.querySelectorAll('[data-quickinfo-item]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); showOggettoInfoModal(b.dataset.quickinfoItem); });
-  document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.groupjump; startJump(); });
+  document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{
+    const gid = b.dataset.groupjump;
+    if(state.groups.length>1 && state.jumpedThisRound[gid]) return; // ha già saltato in questo turno sincronizzato
+    state.currentGroupId=gid; startJump();
+  });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
   document.querySelectorAll('[data-vuoto]').forEach(b=>b.onclick=()=>{
     const [cid,what] = b.dataset.vuoto.split(':');
@@ -2745,6 +2821,22 @@ function bindGame(){
   });
   const vuotoContinue = document.getElementById('btnVuotoContinue');
   if(vuotoContinue) vuotoContinue.onclick=()=>{
+    const plane = currentPlane();
+    state.currentDraw.phase = 'plane';
+    drawIncontroForPlane(plane, null);
+  };
+  document.querySelectorAll('[data-specchio]').forEach(b=>b.onclick=()=>{
+    const [cid,stat] = b.dataset.specchio.split(':');
+    const c = state.players.find(p=>p.id===cid);
+    const r = checkRoll(c, stat);
+    state.currentDraw.specchiChoices = state.currentDraw.specchiChoices||{};
+    state.currentDraw.specchiChoices[cid] = {stat, roll:r.roll, val:r.val, success:r.success};
+    logMsg(`🪞 ${c.name} sfida il proprio riflesso su ${STAT_LABEL[stat]} (tiro ${r.roll} vs ${r.val}): ${r.success?'vince, nessun effetto':'perde'}.`, r.success?'good':'warn');
+    if(!r.success) applyTempDebuff(c, stat);
+    render();
+  });
+  const specchiContinue = document.getElementById('btnSpecchiContinue');
+  if(specchiContinue) specchiContinue.onclick=()=>{
     const plane = currentPlane();
     state.currentDraw.phase = 'plane';
     drawIncontroForPlane(plane, null);
