@@ -569,7 +569,7 @@ const SPELLS_BY_ID = Object.fromEntries(Object.values(SPELLS).flat().map(s=>[s.i
 /* ---------------- PIANO TERRENO (12, senza reinserimento) ---------------- */
 const PIANO_TERRENO = [
   {id:"via_di_casa",name:"La Via di Casa",text:"Si torna a casa incolumi — Finale A.",kind:"finaleA"},
-  {id:"antro_creatura",name:"L'Antro della Creatura",text:"Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",kind:"boss",boss:{name:"Drago Antico",statRandom:true,value:5}},
+  {id:"antro_creatura",name:"L'Antro della Creatura",text:"Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",kind:"boss",finale:true,boss:{name:"Drago Antico",statRandom:true,value:5}},
   {id:"finale_c",name:"Finale C",text:"Terzo finale, ancora da scrivere: conta come vittoria automatica.",kind:"finaleA"},
   {id:"cuore_montagna",name:"Il Cuore della Montagna",text:"Ogni presente recupera 1 oggetto e 1 risorsa planare, senza rischi.",kind:"bonus"},
   {id:"fondo_mare",name:"Il Fondo del Mare",text:"Scontro contro il Leviatano Ancestrale (Forza 5) per risalire in superficie.",kind:"boss",boss:{name:"Leviatano Ancestrale",stat:"for",value:5}},
@@ -2398,7 +2398,7 @@ function bindPianoTerrenoModal(dest){
           if(s){ c.spells.push(s); logMsg(`📖 ${c.name} sceglie liberamente e trova uno spell di ${school}.`); }
           document.getElementById('ptCheckResult').innerHTML='';
         });
-      } else logMsg(`📚 ${c.name} si perde fra gli scaffali (salta-turni non ancora tracciato: gestitelo al tavolo).`);
+      } else logMsg(`📚 ${c.name} si perde fra gli scaffali: salta 2 turni.`);
     }
   });
   document.querySelectorAll('[data-ptcontesa]').forEach(b=>b.onclick=()=>{
@@ -2435,9 +2435,16 @@ function openEquipBoostModal(){
   });
 }
 function renderBossFight(dest, boss, stat, onWin){
+  // Solo le destinazioni esplicitamente segnate finale:true (L'Antro della Creatura,
+  // Finale B) portano alla vittoria. Un boss "di passaggio" come il Fondo del Mare
+  // (serve solo a risalire in superficie) non deve mai concludere la partita.
   onWin = onWin || (()=>{
     closeModal(); state.currentDraw=null; render();
-    openPianoTerrenoModal({id:'__win__', name:'Finale B', text:'Il gruppo ha sconfitto '+boss.name+'!', kind:'finaleA'});
+    if(dest.finale){
+      openPianoTerrenoModal({id:'__win__', name:'Finale B', text:'Il gruppo ha sconfitto '+boss.name+'!', kind:'finaleA'});
+    } else {
+      logMsg(`🏆 ${boss.name} è sconfitto: il gruppo può continuare il viaggio.`,'good');
+    }
   });
   openModal(`<h3>⚔️ ${boss.name}</h3><div id="bossArea"></div>`);
   const cb = { entities:[{name:boss.name, statKey:stat, value:boss.value, hp:boss.value}], rounds:0, checkStat:stat, damageStat:'pv' };
