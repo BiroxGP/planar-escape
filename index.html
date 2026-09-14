@@ -570,14 +570,14 @@ const SPELLS_BY_ID = Object.fromEntries(Object.values(SPELLS).flat().map(s=>[s.i
 const PIANO_TERRENO = [
   {id:"via_di_casa",name:"La Via di Casa",text:"Si torna a casa incolumi — Finale A.",kind:"finaleA"},
   {id:"antro_creatura",name:"L'Antro della Creatura",text:"Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",kind:"boss",finale:true,boss:{name:"Drago Antico",statRandom:true,value:5}},
-  {id:"finale_c",name:"Finale C",text:"Terzo finale, ancora da scrivere: conta come vittoria automatica.",kind:"finaleA"},
+  {id:"finale_c",name:"L'Eden Alieno",text:"Un mondo alieno che sembra un paradiso terrestre: cieli tersi, foreste rigogliose, acque pure. Lo abita un popolo dalla tecnologia arretrata ma intelligente e pacifico, che accoglie il gruppo a braccia aperte — Finale C.",kind:"finaleA"},
   {id:"cuore_montagna",name:"Il Cuore della Montagna",text:"Ogni presente recupera 1 oggetto e 1 risorsa planare, senza rischi.",kind:"bonus"},
   {id:"fondo_mare",name:"Il Fondo del Mare",text:"Scontro contro il Leviatano Ancestrale (Forza 5) per risalire in superficie.",kind:"boss",boss:{name:"Leviatano Ancestrale",stat:"for",value:5}},
   {id:"labirinto_specchi",name:"Il Labirinto degli Specchi",text:"Check di Intelletto: se superato, +1 a Forza/Destrezza/Intelletto per il prossimo piano.",kind:"check",check:"int"},
   {id:"trono_vuoto",name:"Il Trono Vuoto",text:"Contesa di Anima contro un'eco (valore 3): se vinta, +1 permanente a scelta; se persa, 1 danno diretto ad Anima.",kind:"contesaProposta",stat:"anima",value:3},
   {id:"biblioteca_infinita",name:"La Biblioteca Infinita",text:"Check di Intelletto: se superato, 1 carta spell gratuita a scelta; se fallito, si saltano 2 turni.",kind:"check",check:"int"},
-  {id:"giardino_pietrificato",name:"Il Giardino Pietrificato",text:"Si risveglia una statua alleata (valore 2 su stat casuale) al prezzo di un depotenziamento permanente casuale.",kind:"specialProposta"},
-  {id:"fucina_dei",name:"La Fucina degli Dei",text:"Sconfiggi il guardiano meccanico (valore 3, For o Des) per potenziare permanentemente un'arma/armatura.",kind:"bossProposta",stat:"choice_for_des",value:3},
+  {id:"giardino_pietrificato",name:"Il Giardino Pietrificato",text:"Si risveglia una statua alleata: dona un compagno personale (valore 3) al prezzo di un depotenziamento permanente casuale.",kind:"specialProposta"},
+  {id:"fucina_dei",name:"La Fucina degli Dei",text:"Sconfiggi il guardiano meccanico (valore 3, For o Des): potenzia permanentemente un'arma equipaggiata, +2 a un bonus a scelta.",kind:"bossProposta",stat:"choice_for_des",value:3},
   {id:"eta_terra_antica",name:"Età della Terra Antica",text:"Pericoloso dal primo all'ultimo istante. Uscita personale dello Sciamano.",kind:"terrestre",exitFor:"sciamano"},
   {id:"flora_aliena",name:"Flora Aliena",text:"Tranquillo, di Recupero per chiunque. Uscita personale del Druido.",kind:"terrestre",exitFor:"druido"},
 ];
@@ -697,6 +697,7 @@ function makeChar(name, clsKey, bonus){
     contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
+    companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -856,6 +857,7 @@ function applyTempDebuff(c, stat){
   }
 }
 function applyPermDebuff(c, stat){
+  if(stat==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); return; } // niente "permDebuffN.pv": il PV non ha quel contatore, è danno diretto
   c.permDebuffN[stat]++;
   c.stats[stat]=Math.max(1,c.stats[stat]-1);
   logMsg(`⬇️⬇️ ${c.name} subisce un depotenziamento PERMANENTE a ${STAT_LABEL[stat]}.`,'bad');
@@ -898,6 +900,7 @@ function effectiveStat(c, stat){
     if(it.statKey===stat) v+=it.statBonus||0;
   });
   if(c.contesaBonusPlane) v += c.contesaBonusPlane; // Vaticinio: +1 in qualsiasi Contesa per la permanenza
+  if(c.companion) v = Math.max(v, c.companion.value); // il compagno aiuta in qualsiasi check: si usa il valore migliore fra i due
   return Math.min(6,v);
 }
 function damageBonusFor(c, stat){
@@ -1012,6 +1015,7 @@ function renderCharCard(c){
       <span>💠 ${c.resources} risorse</span>
       <span>🎒 ${c.inventory.length} oggetti</span>
       <span>📖 ${c.spells.length} spell</span>
+      ${c.companion?`<span>🗿 ${escapeHtml(c.companion.name)} (${c.companion.value})</span>`:''}
     </div>
     <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
     <div class="char-actions">
@@ -1453,6 +1457,27 @@ function resolveAttack(c, stat){
   }
   return {roll:r.roll, hit, dmg};
 }
+function grantCompanion(c, name, value){
+  // solo un compagno alla volta: l'ultimo sostituisce il primo, senza recuperare i punti persi del vecchio
+  if(c.companion) logMsg(`🗿 ${c.companion.name} di ${c.name} viene sostituito da ${name}.`,'warn');
+  c.companion = {name, value};
+  logMsg(`🗿 ${c.name} lega a sé ${name} (valore ${value}).`,'good');
+}
+function applyCombatPassthrough(c, statKey, ctx){
+  // il compagno protegge il personaggio durante uno scontro (come fosse in Furtività):
+  // il danno passante lo assorbe lui, permanentemente, finché non si distrugge.
+  if(c.companion){
+    c.companion.value -= 1;
+    if(c.companion.value<=0){
+      logMsg(`🗿 ${c.companion.name} di ${c.name} si distrugge assorbendo il colpo.`,'bad');
+      c.companion = null;
+    } else {
+      logMsg(`🗿 ${c.companion.name} protegge ${c.name} dal colpo (${c.companion.value} rimasti).`);
+    }
+    return;
+  }
+  applyDamage(c, statKey, 1, ctx);
+}
 function passthroughTargets(acts){
   // Arco Lungo Planare: chi lo impugna e supera un check di Destrezza combatte a distanza
   // restando nascosto, quindi non subisce il danno passante del team in quel giro.
@@ -1490,7 +1515,7 @@ function resolveAutoCombat(acts, entityDefs, ctx){
     let remaining=teamDmg;
     entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
     const passThrough=Math.max(0, entityDmg-teamDmg);
-    if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ applyDamage(acts[idx%acts.length],'pv',1,{...ctx, combat:true}); idx++; } }
+    if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ applyCombatPassthrough(acts[idx%acts.length],'pv',{...ctx, combat:true}); idx++; } }
   }
   logMsg(`⚔️ ${acts.map(c=>c.name).join(', ')} risolve un combattimento automatico contro ${entityDefs[0].name} in ${rounds} giro/i.`);
 }
@@ -1988,7 +2013,7 @@ function fightRound(plane, card, acts, cb){
     let idx=0;
     for(let i=0;i<passThrough;i++){
       const target = targets[idx%targets.length];
-      applyDamage(target, dmgStat, 1, {family:plane.family, planeId:plane.id, combat:true});
+      applyCombatPassthrough(target, dmgStat, {family:plane.family, planeId:plane.id, combat:true});
       idx++;
     }
   }
@@ -2369,11 +2394,10 @@ function bindPianoTerrenoModal(dest){
   };
   document.querySelectorAll('[data-ptstatua]').forEach(b=>b.onclick=()=>{
     const c=state.players.find(x=>x.id===b.dataset.ptstatua);
-    const gain=STATS[Math.floor(Math.random()*6)];
     const lose=STATS[Math.floor(Math.random()*6)];
-    c.stats[gain]=Math.min(6,c.stats[gain]+1); c.start[gain]=Math.max(c.start[gain],c.stats[gain]);
     applyPermDebuff(c, lose);
-    document.getElementById('ptCheckResult').innerHTML = `<p class="hint">🗿 ${c.name}: +1 permanente a ${STAT_LABEL[gain]}, ma depotenziamento permanente a ${STAT_LABEL[lose]} come prezzo.</p>`;
+    grantCompanion(c, 'Statua Risvegliata', 3);
+    document.getElementById('ptCheckResult').innerHTML = `<p class="hint">🗿 ${c.name} lega a sé la Statua Risvegliata (valore 3), ma subisce un depotenziamento permanente a ${STAT_LABEL[lose]} come prezzo.</p>`;
   });
   const cuoreBtn=document.getElementById('btnCuoreBonus');
   if(cuoreBtn) cuoreBtn.onclick=()=>{
@@ -2419,18 +2443,22 @@ function bindPianoTerrenoModal(dest){
 }
 function openEquipBoostModal(){
   const options = [];
-  activeChars().forEach(c=>{
-    if(c.equipped.weapon) options.push({c, id:c.equipped.weapon});
-    if(c.equipped.armor) options.push({c, id:c.equipped.armor});
-  });
-  if(options.length===0){ logMsg("🔨 Nessuno ha un'arma o un'armatura equipaggiata da potenziare: il dono della Fucina va perso."); render(); return; }
-  openModal(`<h3>🔨 Fucina degli Dei</h3><p>Scegli quale arma/armatura potenziare permanentemente (+1 danno su ogni colpo a segno):</p>
-    <div class="row">${options.map((o,i)=>`<button class="small" data-forgeboost="${i}">${escapeHtml(o.c.name)}: ${escapeHtml(OGGETTI_BY_ID[o.id].name)}</button>`).join('')}</div>`);
+  activeChars().forEach(c=>{ if(c.equipped.weapon) options.push({c, id:c.equipped.weapon}); });
+  if(options.length===0){ logMsg("🔨 Nessuno ha un'arma equipaggiata da potenziare: il dono della Fucina va perso."); render(); return; }
+  openModal(`<h3>🔨 Fucina degli Dei</h3><p>Scegli quale arma potenziare permanentemente, e quale bonus aumentare di +2:</p>
+    <div>${options.map((o,i)=>{
+      const it=OGGETTI_BY_ID[o.id];
+      const statLabel=[it.statKey,it.statKey2,it.statKey3].filter(Boolean).map(s=>STAT_LABEL[s]).join('/');
+      return `<div style="margin-bottom:.4rem;">${escapeHtml(o.c.name)}: ${escapeHtml(it.name)}
+        <button class="small" data-forgeboost="${i}:dmg">+2 danno</button>
+        ${statLabel?`<button class="small" data-forgeboost="${i}:stat">+2 ${statLabel}</button>`:''}
+      </div>`;
+    }).join('')}</div>`);
   document.querySelectorAll('[data-forgeboost]').forEach(b=>b.onclick=()=>{
-    const o=options[+b.dataset.forgeboost];
-    const it=OGGETTI_BY_ID[o.id];
-    it.dmgBonusAny=(it.dmgBonusAny||0)+1;
-    logMsg(`🔨 ${it.name} viene potenziato permanentemente: +1 danno su ogni colpo a segno.`,'good');
+    const [i,type]=b.dataset.forgeboost.split(':');
+    const o=options[+i]; const it=OGGETTI_BY_ID[o.id];
+    if(type==='dmg'){ it.dmgBonus=(it.dmgBonus||0)+2; logMsg(`🔨 ${it.name} viene potenziata permanentemente: +2 danno su ogni colpo a segno.`,'good'); }
+    else { it.statBonus=(it.statBonus||0)+2; const statLabel=[it.statKey,it.statKey2,it.statKey3].filter(Boolean).map(s=>STAT_LABEL[s]).join('/'); logMsg(`🔨 ${it.name} viene potenziata permanentemente: +2 a ${statLabel}.`,'good'); }
     closeModal(); render();
   });
 }
@@ -2491,7 +2519,7 @@ function fightRoundGeneric(cb, acts, plane, opts){
   cb.entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
   const passThrough=Math.max(0,entityDmg-teamDmg);
   logMsg(`⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`);
-  if(passThrough>0){ const targets=passthroughTargets(acts); let idx=0; for(let i=0;i<passThrough;i++){ const t=targets[idx%targets.length]; applyDamage(t, opts.damageStat||'pv', 1, {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
+  if(passThrough>0){ const targets=passthroughTargets(acts); let idx=0; for(let i=0;i<passThrough;i++){ const t=targets[idx%targets.length]; applyCombatPassthrough(t, opts.damageStat||'pv', {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
 }
 
 /* ---------- Character management modal (Gestisci) ---------- */
@@ -2502,9 +2530,10 @@ function openCharManageModal(id){
   const inRecuperoPlane = (()=>{ const p=currentPlane(); return p && RECUPERO_PLANES.has(p.id); })();
   let body = `<h3>${cls.icon} ${escapeHtml(c.name)} — Gestisci</h3>
     <div class="row mb1">
-      ${STATS.map(s=>{ const eff=effectiveStat(c,s); const base=c.stats[s]; return `<span class="badge">${STAT_LABEL[s]}: ${base}${eff!==base?` (${eff} con equip)`:''}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`; }).join('')}
+      ${STATS.map(s=>{ const eff=effectiveStat(c,s); const base=c.stats[s]; return `<span class="badge">${STAT_LABEL[s]}: ${base}${eff!==base?` (${eff} effettivo)`:''}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`; }).join('')}
     </div>
     <p class="hint">${cls.desc}</p>
+    ${c.companion?`<p class="hint">🗿 Compagno: <strong>${escapeHtml(c.companion.name)}</strong> (valore ${c.companion.value}) — aiuta in qualsiasi check se il suo valore è più alto, e protegge da un colpo per volta negli scontri finché non si distrugge.</p>`:''}
     ${inRecuperoPlane?`<p class="hint">🛌 Piano di Recupero: il riposo è automatico all'ingresso.</p>`:''}
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
