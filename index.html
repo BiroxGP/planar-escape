@@ -2591,7 +2591,15 @@ function openCharManageModal(id){
   document.querySelectorAll('[data-unequip]').forEach(b=>b.onclick=()=>{ unequipSlot(c, b.dataset.unequip); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-unequipring]').forEach(b=>b.onclick=()=>{ unequipRing(c, +b.dataset.unequipring); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
-  document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{ useSpell(c, +b.dataset.usespell); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{
+    // alcuni spell aprono un modal per scegliere il bersaglio (Sigillo, Egida, Benedizione,
+    // Trasmutazione, Vaticinio, Teletrasporto, cure): riaprire subito il pannello Gestisci
+    // lo chiuderebbe/sovrascriverebbe prima che si possa scegliere — useSpell() segnala con
+    // true quando ha aperto un modal proprio, e in quel caso si salta la riapertura.
+    const openedOwnModal = useSpell(c, +b.dataset.usespell);
+    render();
+    if(!openedOwnModal) openCharManageModal(id);
+  });
   document.getElementById('mgrClose').onclick=closeModal;
 }
 function useClassSpecial(c){
@@ -2783,8 +2791,7 @@ function useSpell(c, idx){
     return;
   }
   if(sp.teleportReunionSpell){
-    openTeleportModal(c, idx);
-    return;
+    return openTeleportModal(c, idx);
   }
   if(sp.charmSpell){
     if(dismissEncounterForGroup(sp.name)) c.spells.splice(idx,1);
@@ -2806,12 +2813,10 @@ function useSpell(c, idx){
     return;
   }
   if(sp.sigilloSpell){
-    openSigilloTargetModal(c, idx);
-    return;
+    return openSigilloTargetModal(c, idx);
   }
   if(sp.egidaSpell){
-    openEgidaTargetModal(c, idx);
-    return;
+    return openEgidaTargetModal(c, idx);
   }
   if(sp.drenaggioSpell){
     if(!state.currentDraw){ logMsg(`⚠️ ${sp.name}: si usa mentre si è in un piano.`,'warn'); return; }
@@ -2821,20 +2826,17 @@ function useSpell(c, idx){
     return;
   }
   if(sp.benedizioneSpell){
-    openBenedizioneTargetModal(c, idx);
-    return;
+    return openBenedizioneTargetModal(c, idx);
   }
   if(sp.trasmutazioneSpell){
-    openTrasmutazioneModal(c, idx);
-    return;
+    return openTrasmutazioneModal(c, idx);
   }
   if(sp.rinascitaSpell){
     logMsg(`✨ ${sp.name} è un incantesimo passivo: resta pronto nella mano e scatta da solo se un compagno sviene a 0 PV.`);
     return;
   }
   if(sp.vaticinioSpell){
-    openVaticinioModal(c, idx);
-    return;
+    return openVaticinioModal(c, idx);
   }
   const cost = sp.cost||0;
   if(cost>0){
@@ -2846,25 +2848,27 @@ function useSpell(c, idx){
   if(boosted){ c.nextSpellBoost=false; logMsg(`✨ ${c.name} lancia ${sp.name} con il potenziamento pronto: effetto raddoppiato (+100%).`); }
   if(sp.reward){
     const r=sp.reward;
-    if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); }
+    if(r.type==='peek'||r.type==='peekBottom'){
+      showPeekModal(r);
+      c.spells.splice(idx,1);
+      return true;
+    }
     else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
-    else if(r.type==='healOther'){ openHealOtherModal(c, sp, r, boosted?2:1); }
+    else if(r.type==='healOther'){ return openHealOtherModal(c, idx, sp, r, boosted?2:1); }
     else if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
   } else if(sp.selfRecupero){
     recuperoFor(c);
     logMsg(`🛌 ${sp.name}: il piano corrente diventa Recupero solo per ${c.name}.`);
   } else if(sp.combatDamageAll){
+    // se il bersaglio richiesto non è presente (nessuno scontro, o nessun non-morto/demone
+    // presente), lo spell non deve consumarsi per niente: si esce prima dello splice finale.
     const cb = state.currentDraw && state.currentDraw.combat;
-    if(!cb || !cb.entities || !cb.entities.some(e=>e.hp>0)){ logMsg(`⚠️ ${sp.name}: nessuna entità presente da colpire in questo momento.`,'warn'); }
-    else {
-      const dmg = sp.combatDamageAll * (boosted?2:1);
-      cb.entities.forEach(e=>{
-        if(e.hp<=0) return;
-        if(sp.filterUndeadDemon && !(e.undead||e.demon)) return;
-        e.hp -= dmg;
-      });
-      logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio.`);
-    }
+    const liveEntities = cb && cb.entities ? cb.entities.filter(e=>e.hp>0) : [];
+    const validTargets = sp.filterUndeadDemon ? liveEntities.filter(e=>e.undead||e.demon) : liveEntities;
+    if(validTargets.length===0){ logMsg(`⚠️ ${sp.name}: nessuna entità bersaglio presente in questo momento.`,'warn'); return; }
+    const dmg = sp.combatDamageAll * (boosted?2:1);
+    validTargets.forEach(e=>{ e.hp -= dmg; });
+    logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio.`);
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
   }
@@ -2882,6 +2886,7 @@ function openSigilloTargetModal(caster, idx){
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
+  return true;
 }
 function openEgidaTargetModal(caster, idx){
   const targets = activeChars();
@@ -2894,6 +2899,7 @@ function openEgidaTargetModal(caster, idx){
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
+  return true;
 }
 function openBenedizioneTargetModal(caster, idx){
   const targets = activeChars();
@@ -2906,9 +2912,10 @@ function openBenedizioneTargetModal(caster, idx){
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
+  return true;
 }
 function openTrasmutazioneModal(caster, idx){
-  if(caster.inventory.length===0){ logMsg(`⚠️ ${caster.name} non ha oggetti da trasformare.`,'warn'); return; }
+  if(caster.inventory.length===0){ logMsg(`⚠️ ${caster.name} non ha oggetti da trasformare.`,'warn'); return false; }
   openModal(`<h3>🔮 Trasmutazione Minore</h3><p>Seleziona quali oggetti trasformare in altrettante risorse planari:</p>
     <div>${caster.inventory.map((id,i)=>`<label style="display:block;margin-bottom:.3rem;"><input type="checkbox" data-trasitem="${i}"> ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</label>`).join('')}</div>
     <div class="row mt1"><button class="primary" id="btnConfirmTrasmutazione">Trasforma</button></div>`);
@@ -2920,6 +2927,7 @@ function openTrasmutazioneModal(caster, idx){
     caster.spells.splice(idx,1);
     closeModal(); render();
   };
+  return true;
 }
 function openVaticinioModal(caster, idx){
   const families = Object.keys(FAMILIES).filter(f=>f!=='generico');
@@ -2933,6 +2941,7 @@ function openVaticinioModal(caster, idx){
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
+  return true;
 }
 function openCorrosioneChoiceModal(c, slots){
   const label = {weapon:'Arma', armor:'Armatura'};
@@ -2951,7 +2960,7 @@ function openTeleportModal(caster, idx){
   const options = state.groups.filter(g=>g!==myGroup).flatMap(g=>groupMembers(g).map(m=>({m,g})));
   if(options.length===0){
     logMsg('⚠️ Teletrasporto Planare: nessun altro gruppo separato da raggiungere in questo momento.','warn');
-    return;
+    return false;
   }
   openModal(`<h3>🌀 Teletrasporto Planare</h3><p>${escapeHtml(caster.name)}${myGroup.memberIds.length>1?' (e tutto il suo gruppo, ancora uniti)':''} raggiunge chi?</p>
     <div class="row">${options.map((o,i)=>`<button class="small" data-teleport="${i}">${escapeHtml(o.m.name)}</button>`).join('')}</div>`);
@@ -2975,6 +2984,7 @@ function openTeleportModal(caster, idx){
     }
     closeModal(); render();
   });
+  return true;
 }
 const OGGETTO_CAT_ICON = {arma:'⚔️',armatura:'🛡️',anello:'💍',pozione:'🧪',protezione:'🧿',oneshot:'✨',particolare:'🔮'};
 const SPELL_SCHOOL_ICON = {essenza:'🪄',flusso:'✨',divinazione:'🔮'};
@@ -3014,7 +3024,7 @@ function showSpellInfoModal(id){
     <div class="row mt1"><button class="primary" id="btnInfoClose">Chiudi</button></div>`);
   document.getElementById('btnInfoClose').onclick=closeModal;
 }
-function openHealOtherModal(caster, sp, r, mult){
+function openHealOtherModal(caster, idx, sp, r, mult){
   mult = mult||1;
   const stat = r.stat||'pv';
   const bonus = (caster.cls==='chierico' && stat==='pv') ? 1 : 0;
@@ -3025,8 +3035,10 @@ function openHealOtherModal(caster, sp, r, mult){
   document.querySelectorAll('[data-healtarget]').forEach(b=>b.onclick=()=>{
     const t=targets.find(x=>x.id===b.dataset.healtarget);
     healStat(t, stat, amount);
+    caster.spells.splice(idx,1);
     closeModal(); render();
   });
+  return true;
 }
 /* ---------- modal ---------- */
 function openModal(html){
