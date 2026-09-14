@@ -531,7 +531,7 @@ const SPELLS = {
     S("sp_convulsione","Convulsione Planare","Raro: rimescola per intero il mazzo Piani.",{reward:{type:"reshuffle"},cost:1}),
     S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",{combatHelper:2}),
     S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{stealthLikeSpell:true}),
-    S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{manualUse:true}),
+    S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{sferaSpell:true}),
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{drenaggioSpell:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
@@ -616,6 +616,7 @@ function newGame(){
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
+    pendingSferaAntiplanare:null, // {groupId}: annulla l'effetto intrinseco del prossimo piano in cui questo gruppo entra
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
     pattoOnoreActive:false, // Patto d'Onore: da quando si prende la ricompensa, ogni vittoria in combattimento nell'Entropia frutta un oggetto
   };
@@ -1189,6 +1190,10 @@ function doJump(){
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
   jumpers.forEach(c=> resetResistanceForPlane(c, plane.family));
+  if(state.pendingSferaAntiplanare && state.pendingSferaAntiplanare.groupId===state.currentGroupId){
+    state.pendingSferaAntiplanare = null;
+    state.currentDraw.sferaSuppressed = true;
+  }
   if(state.pendingVaticinio && state.pendingVaticinio.groupId===state.currentGroupId){
     const guess = state.pendingVaticinio; state.pendingVaticinio = null;
     if(guess.family===plane.family){
@@ -1347,23 +1352,27 @@ function activeChars(){ return groupMembers(currentGroup()); }
 function applyPlaneIntrinsic(plane){
   const acts = activeChars();
   const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
-  if(plane.id==='vuoto' && acts.length){
+  if(state.currentDraw.sferaSuppressed){
+    // Sfera Antiplanare: annulla del tutto l'effetto d'ingresso, incluse le scelte
+    // obbligatorie di Vuoto/Specchi — si pesca comunque il normale Incontro del turno.
+    logMsg(`🔮 Sfera Antiplanare: l'effetto intrinseco di ${plane.name} viene completamente annullato per il gruppo.`,'good');
+  } else if(plane.id==='vuoto' && acts.length){
     state.currentDraw.phase = 'vuoto-choice';
     state.currentDraw.vuotoChoices = {};
     logMsg("🕳️ Il Vuoto costringe ogni presente a scegliere cosa perdere: 1 PV, un oggetto, uno spell o un'abilità. Non è facoltativo.",'warn');
     render();
     return;
-  }
-  if(plane.id==='specchi' && acts.length){
+  } else if(plane.id==='specchi' && acts.length){
     state.currentDraw.phase = 'specchi-choice';
     state.currentDraw.specchiChoices = {};
     logMsg("🪞 Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla, prima di affrontare l'Incontro del turno.",'warn');
     render();
     return;
+  } else {
+    const fn = PLANE_EFFECTS[plane.effectKey];
+    if(fn) fn(plane, acts, ctx);
+    else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
   }
-  const fn = PLANE_EFFECTS[plane.effectKey];
-  if(fn) fn(plane, acts, ctx);
-  else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
   if(RECUPERO_PLANES.has(plane.id) && acts.length){
     logMsg(`🛌 ${plane.name} è un piano di Recupero: il gruppo presente riposa automaticamente.`,'good');
     acts.forEach(c=>recuperoFor(c));
@@ -2739,6 +2748,14 @@ function useSpell(c, idx){
   }
   if(sp.charmSpell){
     if(dismissEncounterForGroup(sp.name)) c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.sferaSpell){
+    if(state.currentDraw && (state.currentDraw.phase==='vuoto-choice'||state.currentDraw.phase==='specchi-choice')){ logMsg(`⚠️ ${sp.name}: aspetta di aver risolto la scelta in corso.`,'warn'); return; }
+    const g = groupOf(c);
+    state.pendingSferaAntiplanare = { groupId: g?g.id:null };
+    logMsg(`🔮 ${c.name} lancia ${sp.name}: l'effetto intrinseco del prossimo piano in cui il gruppo entra sarà completamente annullato.`,'good');
+    c.spells.splice(idx,1);
     return;
   }
   if(sp.cerchioSpell){
