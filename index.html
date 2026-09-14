@@ -415,7 +415,7 @@ const INCONTRI = {
     C("ar_benedizione","Benedizione","ricompensa","Cura o protezione tipica del piano Sacro.",{reward:{type:"groupHealCure"}}),
     C("ar_geometria","Geometria perfetta","incontro","Un'entità di Ordine assoluto punisce ogni imperfezione.",{check:"native",gravity:1,forte:true}),
     C("ar_bagliore","Bagliore del Sole","incontro","Una luce di giudizio rivela ogni colpa.",{check:"anima",gravity:0}),
-    C("ar_pattodonore","Patto d'Onore","ricompensa","Ogni vittoria contro l'Entropia da qui in poi frutta un oggetto al gruppo.",{reward:{type:"item"}}),
+    C("ar_pattodonore","Patto d'Onore","ricompensa","Ogni vittoria contro l'Entropia da qui in poi frutta un oggetto al gruppo.",{reward:{type:"pattoOnore"}}),
     C("ar_paradosso","Paradosso logico","check","Un enigma a struttura rigida, nessun reroll possibile.",{check:"int",onFail:{type:"loseTurn"}}),
     C("ar_ingranaggio","Ingranaggio inceppato","check","Qualcosa si blocca nel meccanismo.",{check:"des",onFail:{type:"loseItem"}}),
     C("ar_illuminazione","Illuminazione improvvisa","ricompensa","Un lampo di lucidità assoluta (rara).",{reward:{type:"healChoiceSanAnima"}}),
@@ -617,6 +617,7 @@ function newGame(){
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
+    pattoOnoreActive:false, // Patto d'Onore: da quando si prende la ricompensa, ogni vittoria in combattimento nell'Entropia frutta un oggetto
   };
   render();
 }
@@ -2023,6 +2024,10 @@ function grantCombatReward(plane, card, acts, cb){
       }
     });
   }
+  if(state.pattoOnoreActive && plane.family==='entropia' && acts.length){
+    const it = drawOggetto();
+    if(it){ const who=acts[Math.floor(Math.random()*acts.length)]; who.inventory.push(it); logMsg(`🤝 Patto d'Onore: vittoria contro l'Entropia, ${who.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); }
+  }
 }
 
 /* ---------- reward cards ---------- */
@@ -2048,6 +2053,7 @@ function renderRewardPanel(card, acts){
     case 'tradeItemForItemOrResource': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradeitem="${c.id}-item" ${c.inventory.length?'':'disabled'}>scambia oggetto → nuovo oggetto</button> <button class="small" data-tradeitem="${c.id}-resource" ${c.inventory.length?'':'disabled'}>scambia oggetto → risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta il baratto</button></div>`;
     case 'tradeForItem': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradepay="${c.id}-resource" ${c.resources>0?'':'disabled'}>paga 1 risorsa → oggetto</button> <button class="small" data-tradepay="${c.id}-anima">paga 1 Anima → oggetto</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta</button></div>`;
     case 'tradeResourceForItem': return `<div>${acts.map(c=>`<button class="small" data-tradepay="${c.id}-resource" ${c.resources>0?'':'disabled'}>${c.name}: paga 1 risorsa → oggetto</button>`).join(' ')}<button id="btnDeclineReward">Rifiuta</button></div>`;
+    case 'pattoOnore': return `<button class="primary" id="btnApplyReward">Sigilla il patto: da ora ogni vittoria contro l'Entropia frutta un oggetto al gruppo</button>`;
     default: return `<button class="primary" id="btnApplyReward">Applica e continua</button>`;
   }
 }
@@ -2065,6 +2071,7 @@ function bindRewardPanel(card, acts){
     if(r.type==='choice3'){ logMsg('🎁 Beneficio del viaggiatore applicato a scelta del tavolo.'); }
     if(r.type==='itemPlusCheck'){ const it=drawOggetto(); if(it&&acts[0]) acts[0].inventory.push(it); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
+    if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
   };
   document.querySelectorAll('[data-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.heal); healStat(c,'pv',r.n); done(); });
