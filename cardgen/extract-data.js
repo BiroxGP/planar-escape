@@ -1,6 +1,7 @@
-// Rigenera piani-data.json leggendo i dati direttamente da ../index.html,
-// così restano sempre sincronizzati con l'ultima versione delle regole
-// (utile da rilanciare se cambi il testo di qualche Piano in index.html).
+// Rigenera piani-data.json e piano-terreno-data.json leggendo i dati direttamente
+// da ../index.html, così restano sempre sincronizzati con l'ultima versione delle
+// regole (utile da rilanciare se cambi il testo di un Piano o di una destinazione
+// del Piano Terreno in index.html).
 //
 // Uso: node extract-data.js
 
@@ -28,7 +29,7 @@ if (idx === -1) {
 
 const scriptStart = src.indexOf('<script>') + '<script>'.length;
 let code = src.slice(scriptStart, idx);
-code += '\nthis.__DATA__ = { PIANI: PIANI };\n';
+code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO };\n';
 
 const sandbox = {};
 vm.createContext(sandbox);
@@ -38,6 +39,22 @@ if (!sandbox.__DATA__ || !Array.isArray(sandbox.__DATA__.PIANI)) {
   console.error('Estrazione fallita: PIANI non trovato.');
   process.exit(1);
 }
+if (!Array.isArray(sandbox.__DATA__.PIANO_TERRENO)) {
+  console.error('Estrazione fallita: PIANO_TERRENO non trovato.');
+  process.exit(1);
+}
 
 fs.writeFileSync(path.join(__dirname, 'piani-data.json'), JSON.stringify(sandbox.__DATA__.PIANI, null, 2));
 console.log(`OK — ${sandbox.__DATA__.PIANI.length} piani scritti in piani-data.json`);
+
+// "finale" = destinazione che porta a vincere la partita (i 3 veri finali A/B/C),
+// non le altre 9 destinazioni speciali (bonus/rischio) — stessa regola di index.html
+// (kind:"finaleA", oppure kind:"boss" con finale:true come L'Antro della Creatura).
+const pianoTerreno = sandbox.__DATA__.PIANO_TERRENO.map(p => ({
+  id: p.id,
+  name: p.name,
+  text: p.text,
+  finale: p.kind === 'finaleA' || !!p.finale,
+}));
+fs.writeFileSync(path.join(__dirname, 'piano-terreno-data.json'), JSON.stringify(pianoTerreno, null, 2));
+console.log(`OK — ${pianoTerreno.length} destinazioni Piano Terreno scritte in piano-terreno-data.json (${pianoTerreno.filter(p=>p.finale).length} finali)`);

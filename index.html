@@ -2321,11 +2321,20 @@ function resolvePianoTerreno(){
   logMsg(`🏔️ Il gruppo raggiunge una destinazione del Piano Terreno: <strong>${dest.name}</strong>!`,'warn');
   openPianoTerrenoModal(dest);
 }
-function openPianoTerrenoModal(dest){
-  let body = `<div class="card-display">
-    ${cardArt(dest.id, '🏔️', dest.name, 'fam-piano')}
-    <div class="card-body"><h3>🏔️ ${dest.name}</h3><p>${dest.text}</p></div>
+function pianoTerrenoHeroArt(dest){
+  return `<div class="plane-hero fam-piano">
+    <img src="assets/cards/${dest.id}.png" alt="${escapeHtml(dest.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="plane-hero-fallback" style="display:none;"><div class="ic">🏔️</div></div>
   </div>`;
+}
+function openPianoTerrenoModal(dest){
+  // le 12 destinazioni catalogate hanno ormai una carta composta da cardgen (nome e
+  // testo già incollati nei pixel); il placeholder sintetico "__win__" di renderBossFight
+  // (Finale B da un boss "di passaggio" reso finale) non ha un'immagine reale, quindi
+  // per quello continuiamo a scrivere noi nome e testo sotto.
+  const hasComposedCard = PIANO_TERRENO.some(p=>p.id===dest.id);
+  let body = pianoTerrenoHeroArt(dest);
+  if(!hasComposedCard){ body += `<div class="card-body"><h3>🏔️ ${escapeHtml(dest.name)}</h3><p>${escapeHtml(dest.text)}</p></div>`; }
   if(dest.kind==='finaleA'){
     body += `<div class="row mt1">${activeChars().map(c=>`<button class="primary small" data-win="${c.id}">${c.name} torna a casa (vittoria)</button>`).join('')}<button id="btnPTClose">Nessuno per ora</button></div>`;
   } else if(dest.kind==='boss'){

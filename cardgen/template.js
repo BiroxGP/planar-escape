@@ -18,6 +18,11 @@ const FAMILY_EMOJI = {
   elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️',
 };
 
+// Piano Terreno: destinazioni leggendarie, nessuna Famiglia — un unico accento fisso
+// (oro/bronzo) le distingue a colpo d'occhio dalle carte Piano elementali/eteree/ecc.
+const PIANO_TERRENO_ACCENT = '#a3781c';
+const PIANO_TERRENO_EMOJI = '🏔️';
+
 const STAT_ICON = { for:'💪', int:'🧠', des:'🤸', pv:'❤️', san:'🌙', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
 
@@ -48,13 +53,14 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function artLayer(plane, artDir) {
-  const accent = FAMILY_ACCENT[plane.family] || '#5f564a';
+function artLayer(item, artDir, accent, emoji) {
+  accent = accent || FAMILY_ACCENT[item.family] || '#5f564a';
+  emoji = emoji || FAMILY_EMOJI[item.family] || '🌐';
   const exts = ['.png', '.jpg', '.jpeg', '.webp'];
   let found = null;
   if (artDir) {
     for (const ext of exts) {
-      const p = path.join(artDir, plane.id + ext);
+      const p = path.join(artDir, item.id + ext);
       if (fs.existsSync(p)) { found = p; break; }
     }
   }
@@ -67,10 +73,9 @@ function artLayer(plane, artDir) {
     return `<div class="art" style="background-image:url('${fileUrl}');"></div>`;
   }
   // placeholder fallback, same spirit as the web app's missing-art placeholder
-  const emoji = FAMILY_EMOJI[plane.family] || '🌐';
   return `<div class="art placeholder" style="background:${accent};">
     <div class="placeholder-emoji">${emoji}</div>
-    <div class="placeholder-label">immagine mancante<br>${esc(plane.id)}.${exts[0].slice(1)}</div>
+    <div class="placeholder-label">immagine mancante<br>${esc(item.id)}.${exts[0].slice(1)}</div>
   </div>`;
 }
 
@@ -105,12 +110,45 @@ function cardHtml(plane, flavor, artDir) {
   </div>`;
 }
 
-function pageHtml(planes, flavors, artDir) {
-  const cards = planes.map(p => cardHtml(p, flavors[p.id], artDir)).join('\n');
+function pianoTerrenoCardHtml(dest, artDir) {
+  return `
+  <div class="card" id="card-${dest.id}" data-id="${dest.id}" style="--fam:${PIANO_TERRENO_ACCENT};">
+    ${artLayer(dest, artDir, PIANO_TERRENO_ACCENT, PIANO_TERRENO_EMOJI)}
+    <div class="top-strip"></div>
+    ${dest.finale ? `<div class="finale-ribbon">★ FINALE ★</div>` : ''}
+    <div class="panel">
+      <div class="name-row">
+        <div class="name-block">
+          <div class="name">${esc(dest.name)}</div>
+        </div>
+      </div>
+      <div class="rule-text">${esc(dest.text)}</div>
+    </div>
+  </div>`;
+}
+
+function pianoTerrenoPageHtml(destinations, artDir) {
+  const cards = destinations.map(d => pianoTerrenoCardHtml(d, artDir)).join('\n');
   return `<!doctype html>
 <html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
-<style>
+<style>${sharedCardCss()}
+  .finale-ribbon{
+    position:absolute; top:38px; right:-64px; z-index:3;
+    background:linear-gradient(135deg,#d9a521,#a3781c); color:#241a04;
+    font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
+    font-size:24px; letter-spacing:.08em; text-align:center;
+    width:320px; padding:10px 0; transform:rotate(40deg);
+    box-shadow:0 4px 14px rgba(0,0,0,.45); border:2px solid rgba(255,255,255,.35);
+  }
+</style></head>
+<body><div class="stage">
+${cards}
+</div></body></html>`;
+}
+
+function sharedCardCss() {
+  return `
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ background:#3a3630; }
   .stage{ display:flex; flex-direction:column; gap:40px; padding:40px; align-items:flex-start; }
@@ -165,11 +203,18 @@ function pageHtml(planes, flavors, artDir) {
   }
   .rule-text{
     font-size:28px; line-height:1.4; color:#f4ede0; max-width:96%;
-  }
-</style></head>
+  }`;
+}
+
+function pageHtml(planes, flavors, artDir) {
+  const cards = planes.map(p => cardHtml(p, flavors[p.id], artDir)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>${sharedCardCss()}</style></head>
 <body><div class="stage">
 ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, CARD_W, CARD_H, FAMILY_ACCENT };
+module.exports = { pageHtml, pianoTerrenoPageHtml, CARD_W, CARD_H, FAMILY_ACCENT };
