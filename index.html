@@ -85,6 +85,8 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview{width:300px; max-width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px var(--shadow); border:1px solid var(--line);}
 .class-card-preview img{width:100%; display:block;}
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
+.incontro-card-hero{width:360px; max-width:100%; margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
+.incontro-card-hero img{width:100%; display:block;}
 
 /* ---- party bar ---- */
 .party-bar{display:flex; gap:.8rem; flex-wrap:wrap; margin-bottom:1.2rem;}
@@ -1668,10 +1670,22 @@ function renderDrawFlow(){
   return html;
 }
 
+// Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
+// mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
+const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo']);
+function incontroHeroArt(id, name){
+  return `<div class="incontro-card-hero">
+    <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">
+  </div>`;
+}
 function renderIncontroCard(plane, card){
   const famClass = 'fam-'+ (state.currentDraw.incontroDeck==='demoni'?'demoniaco':(state.currentDraw.incontroDeck==='nonmorti'?'nonmorti':state.currentDraw.incontroDeck));
   const icon = FAMILIES[state.currentDraw.incontroDeck]?.icon || FAMILIES[plane.family]?.icon || '🃏';
-  let inner = `<div class="card-display">
+  let inner;
+  if(INCONTRO_COMPOSED_IDS.has(card.id)){
+    inner = `${incontroHeroArt(card.id, card.name)}<div id="incontroAction"></div>`;
+  } else {
+    inner = `<div class="card-display">
     ${cardArt(card.id, icon, card.name, famClass)}
     <div class="card-body">
       <h3>${escapeHtml(card.name)}</h3>
@@ -1680,6 +1694,7 @@ function renderIncontroCard(plane, card){
       <div id="incontroAction"></div>
     </div>
   </div>`;
+  }
   return `<div class="panel">${inner}</div>` + `<script>setTimeout(renderIncontroAction,0);<\/script>`;
 }
 

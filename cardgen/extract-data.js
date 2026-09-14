@@ -29,7 +29,7 @@ if (idx === -1) {
 
 const scriptStart = src.indexOf('<script>') + '<script>'.length;
 let code = src.slice(scriptStart, idx);
-code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES };\n';
+code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES, INCONTRI: INCONTRI };\n';
 
 const sandbox = {};
 vm.createContext(sandbox);
@@ -45,6 +45,10 @@ if (!Array.isArray(sandbox.__DATA__.PIANO_TERRENO)) {
 }
 if (!sandbox.__DATA__.CLASSES || typeof sandbox.__DATA__.CLASSES !== 'object') {
   console.error('Estrazione fallita: CLASSES non trovato.');
+  process.exit(1);
+}
+if (!sandbox.__DATA__.INCONTRI || typeof sandbox.__DATA__.INCONTRI !== 'object') {
+  console.error('Estrazione fallita: INCONTRI non trovato.');
   process.exit(1);
 }
 
@@ -84,3 +88,25 @@ const classes = Object.entries(sandbox.__DATA__.CLASSES).map(([id, c]) => ({
 }));
 fs.writeFileSync(path.join(__dirname, 'classes-data.json'), JSON.stringify(classes, null, 2));
 console.log(`OK — ${classes.length} classi scritte in classes-data.json`);
+
+// INCONTRI è {deckKey: [carte...]}; il deckKey non è sempre il nome della Famiglia
+// (demoni -> demoniaco), stessa mappa usata da P() in index.html per plane.deck.
+const DECK_TO_FAMILY = { demoni: 'demoniaco', nonmorti: 'nonmorti' };
+const incontri = [];
+for (const [deckKey, cards] of Object.entries(sandbox.__DATA__.INCONTRI)) {
+  for (const card of cards) {
+    incontri.push({
+      id: card.id,
+      name: card.name,
+      deck: deckKey,
+      family: DECK_TO_FAMILY[deckKey] || deckKey,
+      type: card.type,
+      text: card.text,
+      manual: !!card.manual,
+      forte: !!card.forte,
+      persistent: !!card.persistent,
+    });
+  }
+}
+fs.writeFileSync(path.join(__dirname, 'incontri-data.json'), JSON.stringify(incontri, null, 2));
+console.log(`OK — ${incontri.length} carte Incontro scritte in incontri-data.json`);

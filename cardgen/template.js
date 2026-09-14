@@ -18,11 +18,14 @@ const FAMILY_ACCENT = {
   entropia:   '#5f3f92',
   demoniaco:  '#8f1f1f',
   nonmorti:   '#3d5c40',
+  generico:   '#5f564a',
 };
 
 const FAMILY_EMOJI = {
-  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋',
+  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋', generico: '🌐',
 };
+
+const INCONTRO_TYPE_LABEL = { nessun: 'Nessun evento', incontro: 'Incontro', check: 'Check', ricompensa: 'Ricompensa' };
 
 // Piano Terreno: destinazioni leggendarie, nessuna Famiglia — un unico accento fisso
 // (oro/bronzo) le distingue a colpo d'occhio dalle carte Piano elementali/eteree/ecc.
@@ -204,6 +207,50 @@ ${cards}
 </div></body></html>`;
 }
 
+function incontroCardHtml(card, artDir) {
+  const accent = FAMILY_ACCENT[card.family] || '#5f564a';
+  const emoji = FAMILY_EMOJI[card.family] || '🌐';
+  const typeLabel = INCONTRO_TYPE_LABEL[card.type] || card.type;
+  return `
+  <div class="card card-portrait" id="card-${card.id}" data-id="${card.id}" style="--fam:${accent};">
+    ${artLayer(card, artDir, accent, emoji)}
+    <div class="top-strip"></div>
+    <div class="panel incontro-panel">
+      <div class="name-row">
+        <div class="name-block">
+          <div class="name incontro-name">${esc(card.name)}</div>
+        </div>
+      </div>
+      <div class="badges incontro-badges">
+        <span class="badge">${esc(typeLabel)}</span>
+        ${card.manual?`<span class="badge badge-manual">manuale</span>`:''}
+        ${card.forte?`<span class="badge badge-forte">forte</span>`:''}
+        ${card.persistent?`<span class="badge">persistente</span>`:''}
+      </div>
+      <div class="rule-text incontro-text">${esc(card.text)}</div>
+    </div>
+  </div>`;
+}
+
+function incontroPageHtml(cards, artDir) {
+  const html = cards.map(c => incontroCardHtml(c, artDir)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>${sharedCardCss()}
+  .incontro-panel{ height:40%; padding:16px 26px 24px; }
+  .incontro-name{ font-size:32px; }
+  .incontro-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
+  .incontro-badges .badge{ font-size:12px; padding:4px 10px; }
+  .badge-manual{ background:rgba(214,140,69,.22); border-color:rgba(214,140,69,.55); color:#f0c396; }
+  .badge-forte{ background:rgba(196,64,64,.22); border-color:rgba(196,64,64,.55); color:#f3a3a3; }
+  .incontro-text{ font-size:16px; line-height:1.35; }
+</style></head>
+<body><div class="stage">
+${html}
+</div></body></html>`;
+}
+
 function sharedCardCss() {
   return `
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -286,4 +333,4 @@ ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
+module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
