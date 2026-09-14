@@ -3,72 +3,84 @@
     "id": "via_di_casa",
     "name": "La Via di Casa",
     "text": "Si torna a casa incolumi — Finale A.",
-    "finale": true
+    "finale": true,
+    "personalExit": false
   },
   {
     "id": "antro_creatura",
     "name": "L'Antro della Creatura",
     "text": "Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",
-    "finale": true
+    "finale": true,
+    "personalExit": false
   },
   {
     "id": "finale_c",
     "name": "L'Eden Alieno",
     "text": "Un mondo alieno che sembra un paradiso terrestre: cieli tersi, foreste rigogliose, acque pure. Lo abita un popolo dalla tecnologia arretrata ma intelligente e pacifico, che accoglie il gruppo a braccia aperte — Finale C.",
-    "finale": true
+    "finale": true,
+    "personalExit": false
   },
   {
     "id": "cuore_montagna",
     "name": "Il Cuore della Montagna",
     "text": "Ogni presente recupera 1 oggetto e 1 risorsa planare, senza rischi.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "fondo_mare",
     "name": "Il Fondo del Mare",
     "text": "Scontro contro il Leviatano Ancestrale (Forza 5) per risalire in superficie.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "labirinto_specchi",
     "name": "Il Labirinto degli Specchi",
     "text": "Check di Intelletto: se superato, +1 a Forza/Destrezza/Intelletto per il prossimo piano.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "trono_vuoto",
     "name": "Il Trono Vuoto",
     "text": "Contesa di Anima contro un'eco (valore 3): se vinta, +1 permanente a scelta; se persa, 1 danno diretto ad Anima.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "biblioteca_infinita",
     "name": "La Biblioteca Infinita",
     "text": "Check di Intelletto: se superato, 1 carta spell gratuita a scelta; se fallito, si saltano 2 turni.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "giardino_pietrificato",
     "name": "Il Giardino Pietrificato",
     "text": "Si risveglia una statua alleata: dona un compagno personale (valore 3) al prezzo di un depotenziamento permanente casuale.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "fucina_dei",
     "name": "La Fucina degli Dei",
     "text": "Sconfiggi il guardiano meccanico (valore 3, For o Des): potenzia permanentemente un'arma equipaggiata, +2 a un bonus a scelta.",
-    "finale": false
+    "finale": false,
+    "personalExit": false
   },
   {
     "id": "eta_terra_antica",
     "name": "Età della Terra Antica",
     "text": "Pericoloso dal primo all'ultimo istante. Uscita personale dello Sciamano.",
-    "finale": false
+    "finale": false,
+    "personalExit": true
   },
   {
     "id": "flora_aliena",
     "name": "Flora Aliena",
     "text": "Tranquillo, di Recupero per chiunque. Uscita personale del Druido.",
-    "finale": false
+    "finale": false,
+    "personalExit": true
   }
 ]

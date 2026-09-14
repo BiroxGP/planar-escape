@@ -264,7 +264,7 @@ const CLASSES = {
   druido:{name:"Druido",icon:"🌿",for:2,int:3,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["terrestre"],special:"forma_selvatica",waterOk:true,exitPlane:"flora_aliena",
     desc:"Forma Selvatica: scambia temporaneamente due caratteristiche (ricarica a Recupero). A proprio agio in acqua. Uscita personale: Flora Aliena."},
   warlock:{name:"Warlock",icon:"👹",for:2,int:3,des:2,pv:3,san:5,anima:5,affinity:{essenza:2},reroll:0,rerollLvl:0,weapons:"light",resistance:["demoniaco"],special:"evocazione",
-    desc:"Evoca un demone minore (valore 1) che combatte al suo fianco (ricarica a Recupero). Resistenza Demoniaco."},
+    desc:"Evoca un demone minore come compagno personale (valore 1, ricarica a Recupero). Resistenza Demoniaco."},
   negromante:{name:"Negromante",icon:"☠️",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{flusso:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["nonmorti"],special:"resurrezione",
     desc:"Se muore, una sola volta a partita torna in vita come non-morto con 1 PV. Resistenza Non-morti."},
   sciamano:{name:"Sciamano",icon:"🌀",for:1,int:3,des:3,pv:4,san:5,anima:5,affinity:{essenza:1,divinazione:1,flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["elementare"],waterOk:true,exitPlane:"eta_terra_antica",
@@ -688,7 +688,6 @@ function makeChar(name, clsKey, bonus){
     pendingFollia:null, // 'salto' | 'trascina' — azione dovuta al prossimo turno
     pendingCorruzione:null, // 'contrario' | 'ostile' — azione dovuta al prossimo turno
     dardoReady:false, // Mago: prossima Contesa infligge 2 danni sicuri
-    demonReady:false, // Warlock: demone minore al fianco nel prossimo scontro
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
@@ -1502,12 +1501,6 @@ function passthroughTargets(acts){
   });
   return eligible.length ? eligible : acts;
 }
-function demonContribution(acts){
-  const user = acts.find(c=>c.demonReady);
-  if(!user) return null;
-  const r=d6(); const hit = r<=1||r===6;
-  return {user, roll:r, hit, dmg:hit?1:0};
-}
 function resolveAutoCombat(acts, entityDefs, ctx){
   if(!acts || acts.length===0) return; // nessuno presente/cosciente: niente da risolvere
   // Combattimento one-shot risolto automaticamente giro dopo giro (usato per effetti intrinseci di piano, es. Ombra),
@@ -1522,7 +1515,6 @@ function resolveAutoCombat(acts, entityDefs, ctx){
       const a=resolveAttack(c,stat);
       teamDmg+=a.dmg;
     });
-    const demon=demonContribution(acts); if(demon){ teamDmg+=demon.dmg; }
     entities.forEach(e=>{ if(e.hp<=0) return; const r=d6(); if(r<=e.value) entityDmg+=e.value; });
     let remaining=teamDmg;
     entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
@@ -1987,11 +1979,6 @@ function fightRound(plane, card, acts, cb){
     teamDmg+=a.dmg;
     log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo});
   });
-  const demon=demonContribution(acts);
-  if(demon){
-    teamDmg+=demon.dmg;
-    log.push({who:`Demone minore di ${demon.user.name}`, roll:demon.roll, stat:'for', hit:demon.hit, dmg:demon.dmg});
-  }
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
   if(cb.freezeNextRound){
@@ -2280,8 +2267,6 @@ function bindOblioCard(acts){
   if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.'); finishIncontro(); };
 }
 function finishIncontro(){
-  // il demone evocato dal Warlock combatte "in quella Contesa": finita, si scioglie.
-  state.players.forEach(c=>{ c.demonReady=false; });
   state.currentDraw = null;
   render();
 }
@@ -2528,8 +2513,6 @@ function fightRoundGeneric(cb, acts, plane, opts){
     teamDmg+=a.dmg;
     logMsg(`　 🙂 ${c.name}: ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''}`);
   });
-  const demon=demonContribution(acts);
-  if(demon){ teamDmg+=demon.dmg; logMsg(`　 👹 Demone minore di ${demon.user.name}: tiro ${demon.roll} ${demon.hit?'✔':'✘'}${demon.dmg?` (${demon.dmg} dmg)`:''}`); }
   cb.entities.forEach(e=>{
     if(e.hp<=0) return;
     const r=d6(); const hit=r<=e.value;
@@ -2624,8 +2607,8 @@ function useClassSpecial(c){
       openFormaSelvaticaModal(c);
       break;
     case 'evocazione':
-      c.charges.special=false; c.demonReady=true;
-      logMsg(`👹 ${c.name} evoca un demone minore (valore 1) che combatterà al suo fianco nel prossimo scontro.`);
+      c.charges.special=false;
+      grantCompanion(c, 'Demone Minore', 1);
       break;
     case 'resistenza_universale':
       c.charges.special=false; c.monkShieldReady=true;

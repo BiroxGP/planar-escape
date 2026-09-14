@@ -198,7 +198,7 @@
       "essenza": 2
     },
     "exitPlane": null,
-    "desc": "Evoca un demone minore (valore 1) che combatte al suo fianco (ricarica a Recupero). Resistenza Demoniaco."
+    "desc": "Evoca un demone minore come compagno personale (valore 1, ricarica a Recupero). Resistenza Demoniaco."
   },
   {
     "id": "negromante",

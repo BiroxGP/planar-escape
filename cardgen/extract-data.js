@@ -54,14 +54,17 @@ console.log(`OK — ${sandbox.__DATA__.PIANI.length} piani scritti in piani-data
 // "finale" = destinazione che porta a vincere la partita (i 3 veri finali A/B/C),
 // non le altre 9 destinazioni speciali (bonus/rischio) — stessa regola di index.html
 // (kind:"finaleA", oppure kind:"boss" con finale:true come L'Antro della Creatura).
+// "personalExit" = uscita personale di una classe (kind:"terrestre" con exitFor:
+// Flora Aliena per il Druido, Età della Terra Antica per lo Sciamano).
 const pianoTerreno = sandbox.__DATA__.PIANO_TERRENO.map(p => ({
   id: p.id,
   name: p.name,
   text: p.text,
   finale: p.kind === 'finaleA' || !!p.finale,
+  personalExit: !!p.exitFor,
 }));
 fs.writeFileSync(path.join(__dirname, 'piano-terreno-data.json'), JSON.stringify(pianoTerreno, null, 2));
-console.log(`OK — ${pianoTerreno.length} destinazioni Piano Terreno scritte in piano-terreno-data.json (${pianoTerreno.filter(p=>p.finale).length} finali)`);
+console.log(`OK — ${pianoTerreno.length} destinazioni Piano Terreno scritte in piano-terreno-data.json (${pianoTerreno.filter(p=>p.finale).length} finali, ${pianoTerreno.filter(p=>p.personalExit).length} uscite personali)`);
 
 // CLASSES è un oggetto {id: {...}}, non un array come gli altri due: aggiungiamo l'id.
 const classes = Object.entries(sandbox.__DATA__.CLASSES).map(([id, c]) => ({

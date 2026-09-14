@@ -127,6 +127,7 @@ function pianoTerrenoCardHtml(dest, artDir) {
     ${artLayer(dest, artDir, PIANO_TERRENO_ACCENT, PIANO_TERRENO_EMOJI)}
     <div class="top-strip"></div>
     ${dest.finale ? `<div class="corner-ribbon finale-ribbon">★ FINALE ★</div>` : ''}
+    ${dest.personalExit ? `<div class="corner-ribbon exit-ribbon">✦ USCITA ✦</div>` : ''}
     <div class="panel">
       <div class="name-row">
         <div class="name-block">
@@ -156,7 +157,6 @@ function classCardHtml(cls, artDir) {
   <div class="card card-portrait" id="card-${cls.id}" data-id="${cls.id}" style="--fam:${CLASS_ACCENT};">
     ${artLayer(cls, artDir, CLASS_ACCENT, cls.icon)}
     <div class="top-strip"></div>
-    ${cls.exitPlane ? `<div class="corner-ribbon exit-ribbon">✦ USCITA ✦</div>` : ''}
     <div class="panel class-panel">
       <div class="name-row">
         <div class="name-block">
