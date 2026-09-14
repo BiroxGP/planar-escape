@@ -2486,7 +2486,7 @@ function openCharManageModal(id){
   const inRecuperoPlane = (()=>{ const p=currentPlane(); return p && RECUPERO_PLANES.has(p.id); })();
   let body = `<h3>${cls.icon} ${escapeHtml(c.name)} — Gestisci</h3>
     <div class="row mb1">
-      ${STATS.map(s=>`<span class="badge">${STAT_LABEL[s]}: ${c.stats[s]}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`).join('')}
+      ${STATS.map(s=>{ const eff=effectiveStat(c,s); const base=c.stats[s]; return `<span class="badge">${STAT_LABEL[s]}: ${base}${eff!==base?` (${eff} con equip)`:''}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`; }).join('')}
     </div>
     <p class="hint">${cls.desc}</p>
     ${inRecuperoPlane?`<p class="hint">🛌 Piano di Recupero: il riposo è automatico all'ingresso.</p>`:''}
@@ -2494,6 +2494,15 @@ function openCharManageModal(id){
     <div class="row mb1">
       ${cls.special ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
+    </div>
+    <h4 class="mt1">Equipaggiamento</h4>
+    <div class="row mb1">
+      ${[['weapon','⚔️ Arma'],['armor','🛡️ Armatura'],['shield','🛡️ Scudo']].map(([slot,label])=>{
+        const id=c.equipped[slot];
+        if(!id) return `<span class="badge">${label}: nessuna</span>`;
+        return `<span class="badge">${label}: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequip="${slot}">Togli</button></span>`;
+      }).join('')}
+      ${c.equipped.rings.map((id,i)=>`<span class="badge">💍 Anello: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequipring="${i}">Togli</button></span>`).join('')}
     </div>
     <h4>Oggetti (${c.inventory.length})</h4>
     <div>${c.inventory.map((id,i)=>{
@@ -2530,6 +2539,8 @@ function openCharManageModal(id){
   const rerollBtn=document.getElementById('mgrReroll');
   if(rerollBtn) rerollBtn.onclick=()=>{ c.rerolls--; logMsg(`🔁 ${c.name} usa un reroll.`); render(); openCharManageModal(id); };
   document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ useItem(c, +b.dataset.useitem); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-unequip]').forEach(b=>b.onclick=()=>{ unequipSlot(c, b.dataset.unequip); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-unequipring]').forEach(b=>b.onclick=()=>{ unequipRing(c, +b.dataset.unequipring); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{ useSpell(c, +b.dataset.usespell); render(); openCharManageModal(id); });
   document.getElementById('mgrClose').onclick=closeModal;
@@ -2613,9 +2624,19 @@ function revertPerPlaneBuffs(c){
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
   if(!it) return;
-  if(it.slot==='weapon'){ c.equipped.weapon=id; logMsg(`⚔️ ${c.name} equipaggia ${it.name}.`); return; }
-  if(it.slot==='armor'){ c.equipped.armor=id; if(it.instantBonus) Object.entries(it.instantBonus).forEach(([s,n])=>{ c.stats[s]=Math.min(6,c.stats[s]+n); }); logMsg(`🛡️ ${c.name} indossa ${it.name}.`); return; }
-  if(it.slot==='shield'){ c.equipped.shield=id; logMsg(`🛡️ ${c.name} imbraccia ${it.name}.`); return; }
+  if(it.slot==='weapon'||it.slot==='armor'||it.slot==='shield'){
+    // equipaggiare deve TOGLIERE l'oggetto dall'inventario (altrimenti resta lì, identico,
+    // col suo bottone "Usa/Equip" ancora cliccabile: sembra che equipaggiare non faccia nulla)
+    // e restituire all'inventario l'eventuale oggetto già equipaggiato in quello slot.
+    const old = c.equipped[it.slot];
+    c.equipped[it.slot] = id;
+    c.inventory.splice(idx,1);
+    if(old) c.inventory.push(old);
+    if(it.instantBonus) Object.entries(it.instantBonus).forEach(([s,n])=>{ c.stats[s]=Math.min(6,c.stats[s]+n); });
+    const verb = it.slot==='weapon' ? 'equipaggia' : (it.slot==='armor' ? 'indossa' : 'imbraccia');
+    logMsg(`${it.slot==='weapon'?'⚔️':'🛡️'} ${c.name} ${verb} ${it.name}.`);
+    return;
+  }
   if(it.slot==='ring'){ c.equipped.rings.push(id); if(it.instantBonus) Object.entries(it.instantBonus).forEach(([s,n])=>{ c.stats[s]=Math.min(6,c.stats[s]+n); }); c.inventory.splice(idx,1); logMsg(`💍 ${c.name} indossa ${it.name}.`); return; }
   if(it.consumable){
     if(it.heal) Object.entries(it.heal).forEach(([s,n])=>healStat(c,s,n));
@@ -2692,6 +2713,18 @@ function useItem(c, idx){
   }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
   if(it.oneUse) c.inventory.splice(idx,1);
+}
+function unequipSlot(c, slot){
+  const id = c.equipped[slot]; if(!id) return;
+  c.equipped[slot] = null;
+  c.inventory.push(id);
+  logMsg(`${slot==='weapon'?'⚔️':'🛡️'} ${c.name} toglie ${OGGETTI_BY_ID[id]?.name} e lo rimette nell'inventario.`);
+}
+function unequipRing(c, ringIdx){
+  const id = c.equipped.rings[ringIdx]; if(!id) return;
+  c.equipped.rings.splice(ringIdx,1);
+  c.inventory.push(id);
+  logMsg(`💍 ${c.name} si toglie ${OGGETTI_BY_ID[id]?.name} e lo rimette nell'inventario.`);
 }
 function useSpell(c, idx){
   const id=c.spells[idx]; const sp=SPELLS_BY_ID[id];
