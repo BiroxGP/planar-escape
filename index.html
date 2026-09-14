@@ -1750,7 +1750,8 @@ function renderIncontroAction(){
   }
   if(card.type==='check'){
     if(card.groupCheck){
-      el.innerHTML = `<button class="primary" id="btnGroupCheck">Esegui check di gruppo (${STAT_LABEL[card.groupCheck]}, penalità ${card.penalty})</button><div id="checkResult"></div>`;
+      const failHint = consequenceLabel(card.onFail, plane);
+      el.innerHTML = (failHint?`<p class="hint">⚠️ Se il gruppo fallisce: ${failHint}.</p>`:'') + `<button class="primary" id="btnGroupCheck">Esegui check di gruppo (${STAT_LABEL[card.groupCheck]}, penalità ${card.penalty})</button><div id="checkResult"></div>`;
       document.getElementById('btnGroupCheck').onclick=()=>{
         const best = Math.max(...acts.map(c=>effectiveStat(c,card.groupCheck))) + card.penalty;
         const r=d6(); const success = r<=best || r===6;
@@ -1770,7 +1771,8 @@ function renderIncontroAction(){
       return;
     }
     const checkStat = card.check==='native' ? nativeStatFor(plane) : card.check;
-    el.innerHTML = acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
+    const failHint = consequenceLabel(card.onFail, plane);
+    el.innerHTML = (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
     let done=0;
     el.querySelectorAll('[data-checkchar]').forEach(b=>{
       b.onclick=()=>{
@@ -1794,6 +1796,34 @@ function renderIncontroAction(){
   document.getElementById('btnResolveDone').onclick=finishIncontro;
 }
 
+function consequenceLabel(cons, plane){
+  // traduce onFail in una frase breve, mostrata PRIMA di tirare: altrimenti l'unico modo
+  // di scoprire cosa succede fallendo un check è fallirlo e leggerlo nel diario a cose fatte.
+  if(!cons) return null;
+  switch(cons.type){
+    case 'tempDebuff': {
+      let stat=cons.stat;
+      if(stat==='native') stat = plane ? nativeStatFor(plane) : null;
+      if(stat==='random') return 'depotenziamento temporaneo a una caratteristica casuale';
+      return stat ? `depotenziamento temporaneo a ${STAT_LABEL[stat]}` : 'depotenziamento temporaneo';
+    }
+    case 'damage': return `-${cons.n||1} PV`;
+    case 'loseTurn': return 'perdita del turno';
+    case 'loseItem': return 'perdita di un oggetto casuale';
+    case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
+    case 'scatterFamily': return `trasferimento forzato in un altro piano di Famiglia ${FAMILIES[cons.family]?.name||cons.family}`;
+    case 'scatterSelf': return 'allontanamento temporaneo dal gruppo';
+    case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
+    case 'minor': return 'un piccolo effetto negativo, a discrezione del tavolo';
+    default: return null;
+  }
+}
+function onLoseExtraLabel(key){
+  if(key==='loseTurn') return 'perdita del turno';
+  if(key==='tempDebuffSan') return 'depotenziamento temporaneo a Sanità Mentale';
+  if(key==='tempDebuffRandom') return 'depotenziamento temporaneo a una caratteristica casuale';
+  return null;
+}
 function applyConsequence(cons, targets, plane){
   targets.forEach(c=>{
     switch(cons.type){
@@ -1956,9 +1986,12 @@ function renderCombatPanel(plane, card, acts){
   const cb = state.currentDraw.combat;
   const aliveEntities = cb.entities.filter(e=>e.hp===undefined || e.hp>0);
   const totalHp = cb.entities.reduce((s,e)=>s+(e.hp===undefined?e.value:e.hp),0);
+  const loseExtra = onLoseExtraLabel(card.onLoseExtra);
   return `
     <div class="mb1"><strong>Entità:</strong> ${cb.entities.map(e=>`${e.name} (${STAT_LABEL[e.statKey]||''} ${e.value}, PV ${e.hp===undefined?e.value:e.hp})`).join(' · ')}</div>
+    <p class="hint">Ogni giro: i colpi a segno del gruppo tolgono PV alle entità; il danno delle entità che supera quello inflitto passa al gruppo, -1 ${STAT_LABEL[cb.damageStat]} a testa a rotazione.</p>
     ${cb.choiceEach ? `<p class="hint">Ogni personaggio sceglie su quale caratteristica (For/Int/Des) giocare questa Contesa.</p>`:''}
+    ${loseExtra ? `<p class="hint">⚠️ Se il danno passa oltre le difese: anche ${loseExtra}.</p>` : ''}
     <div id="combatLog"></div>
     <div class="row mt1">
       <button class="primary" id="btnRoundFight">🎲 Tira un giro di combattimento</button>
