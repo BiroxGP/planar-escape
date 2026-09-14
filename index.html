@@ -348,9 +348,9 @@ const INCONTRI = {
     C("el_vena","Vena preziosa","ricompensa","Si scopre una vena di cristalli pregiati.",{reward:{type:"resource",n:1}}),
     C("el_instabilita","Instabilità","check","Il piano ha un sussulto improvviso.",{check:"native",onFail:{type:"tempDebuff",stat:"native"}}),
     C("el_guida","Guida elementale","ricompensa","Una creatura minore indica una via d'uscita.",{reward:{type:"peek",n:1}}),
-    C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: oggetto per oggetto o risorsa planare.",{manual:true}),
+    C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: oggetto per oggetto o risorsa planare.",{reward:{type:"tradeItemForItemOrResource"}}),
     C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio.",{check:"native",gravity:1,forte:true}),
-    C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare.",{manual:true}),
+    C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare.",{auto:true,onFail:{type:"amplify"}}),
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro.",{reward:{type:"heal",n:1}}),
     C("el_frattura","Frattura planare","check","Una crepa verso un altro piano elementare si apre.",{groupCheck:"int",penalty:-1,onFail:{type:"scatterFamily",family:"elementare"}}),
     C("el_onda","Onda d'Urto","incontro","Una scarica improvvisa mette alla prova i riflessi.",{check:"des",gravity:0}),
@@ -362,13 +362,13 @@ const INCONTRI = {
     C("de_nessuno","Nessun evento","nessun","Anche l'inferno, a volte, tace per un turno."),
     C("de_tentatore","Tentatore","incontro","Tranelli, inganni, patti ingannevoli.",{check:"int",gravity:"level"}),
     C("de_bruto","Bruto infernale","incontro","Attacco diretto, forza bruta.",{check:"for",gravity:"level"}),
-    C("de_patto","Patto di sangue","check","Un demone offre 1 risorsa planare in cambio di 1 Anima; rifiutabile con check Intelletto.",{manual:true}),
+    C("de_patto","Patto di sangue","check","Un demone offre 1 risorsa planare in cambio di 1 Anima; rifiutabile con check Intelletto.",{pattoSangueCard:true}),
     C("de_orda","Orda minore","incontro","Un gruppo di diavoletti minori assale in massa.",{check:"for",gravity:"level-1",swarm:"auto"}),
     C("de_bottino","Bottino infernale","ricompensa","Un oggetto strappato a un demone sconfitto da altri viandanti.",{reward:{type:"item"}}),
     C("de_sussurro","Sussurro tentatore","check","Una voce promette scorciatoie.",{check:"int",onFail:{type:"loseTurn"}}),
     C("de_guardiano","Guardiano del girone","incontro","Un demone maggiore sorveglia il passaggio.",{check:"for",gravity:"level+1",forte:true}),
     C("de_fiamme","Fiamme eterne","check","Il fuoco infernale non si spegne mai.",{check:"for",onFail:{type:"tempDebuff",stat:"random"}}),
-    C("de_mercante","Mercante d'anime","ricompensa","Un demone offre un oggetto raro per risorsa planare o 1 Anima.",{manual:true}),
+    C("de_mercante","Mercante d'anime","ricompensa","Un demone offre un oggetto raro per risorsa planare o 1 Anima.",{reward:{type:"tradeForItem"}}),
     C("de_legione","Legione in marcia","incontro","Un'intera legione di demoni minori marcia in massa.",{check:"for",gravity:"level+1",persistent:true}),
     C("de_infranto","Patto Infranto","check","Il retaggio di un patto non mantenuto perseguita il luogo.",{check:"anima",onFail:{type:"animaLoss",n:1}}),
   ],
@@ -427,11 +427,11 @@ const INCONTRI = {
     C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto.",{onFail:{type:"loseItem"},auto:true}),
     C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo.",{check:"int",gravity:0,onLoseExtra:"loseTurn"}),
     C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa.",{check:"des",onFail:{type:"scatterSelf"}}),
-    C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente un punto a scelta, ma si trova un oggetto minore.",{manual:true}),
+    C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente un punto a scelta, ma si trova un oggetto minore.",{oblioCard:true}),
     C("en_ombra","Ombra strisciante","incontro","Non il combattimento fisico di Ombra: qui è un ricordo che perseguita.",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
     C("en_relitto","Relitto insanguinato","ricompensa","Un'arma intrisa di sangue avversario.",{reward:{type:"item"}}),
     C("en_avatar","Avatar dell'Entropia","incontro","Incarna la rovina stessa.",{check:"native",gravity:1,forte:true}),
-    C("en_corrosione","Corrosione lenta","check","Un'arma o armatura equipaggiata perde temporaneamente il bonus.",{manual:true}),
+    C("en_corrosione","Corrosione lenta","check","Un'arma o armatura equipaggiata perde temporaneamente il bonus.",{auto:true,onFail:{type:"corrode"}}),
     C("en_eco","Eco del Nulla","ricompensa","Si ottiene 1 risorsa planare, legata a un piccolo sacrificio immediato.",{reward:{type:"resourceForSacrifice"}}),
     C("en_marcescenza","Marcescenza contagiosa","incontro","Una creatura nata dalla decomposizione.",{check:"for",gravity:0}),
     C("en_richiamo","Richiamo di sangue","check","Chi ha già perso PV in questo turno ne perde 1 in più.",{manual:true}),
@@ -440,12 +440,12 @@ const INCONTRI = {
   generico:[
     C("ge_nessuno","Nessun evento","nessun","Un turno di viaggio senza incidenti."),
     C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti.",{reward:{type:"choice3"}}),
-    C("ge_mercante","Mercante planare","ricompensa","Un mercante offre oggetti rari in cambio di risorse planari.",{manual:true}),
+    C("ge_mercante","Mercante planare","ricompensa","Un mercante offre oggetti rari in cambio di risorse planari.",{reward:{type:"tradeResourceForItem"}}),
     C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta.",{reward:{type:"sanheal",n:1}}),
     C("ge_stranezza","Stranezza del portale","check","Il portale ha uno strano sussulto.",{check:"int",onFail:{type:"minor"}}),
     C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma turba la mente.",{reward:{type:"itemPlusCheck"}}),
     C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque.",{check:"choice",gravity:0}),
-    C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani.",{manual:true}),
+    C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani.",{bivioCard:true}),
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato.",{reward:{type:"syncJump"}}),
     C("ge_cacciatore","Cacciatore di taglie planare","incontro","Dà la caccia a chi porta più oggetti nel gruppo.",{check:"choice",gravity:0}),
     C("ge_anomalia","Anomalia temporale","check","Il tempo si comporta in modo strano.",{manual:true}),
@@ -694,6 +694,7 @@ function makeChar(name, clsKey, bonus){
     wildcardResistance:false, // Cimelio del Viandante/Vaticinio: para il primo danno d'ingresso del prossimo piano, qualunque famiglia
     contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
+    corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -884,6 +885,7 @@ function effectiveStat(c, stat){
   // equipped bonuses
   ['weapon','armor','shield'].forEach(slot=>{
     const id=c.equipped[slot]; if(!id) return;
+    if(c.corroded && c.corroded[slot]) return; // Corrosione lenta: bonus sospeso fino al prossimo Recupero
     const it=OGGETTI_BY_ID[id]; if(!it) return;
     if(it.statKey===stat) v+=it.statBonus||0;
     if(it.statKey2===stat) v+=it.statBonus||0;
@@ -1039,7 +1041,6 @@ function renderVuotoChoice(){
   const allDone = acts.every(c=>choices[c.id]);
   return `<div class="panel">
     ${planeHeroArt(plane, '🕳️')}
-    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
     <p class="hint">Ogni presente deve scegliere cosa perdere — obbligatorio, una sola volta a testa.</p>
     ${acts.map(c=>{
       const done = !!choices[c.id];
@@ -1071,7 +1072,6 @@ function renderSpecchiChoice(){
   const allDone = acts.every(c=>choices[c.id]);
   return `<div class="panel">
     ${planeHeroArt(plane, '🪞')}
-    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
     <p class="hint">Ogni presente affronta il proprio riflesso in una Contesa, prima dell'Incontro del turno.</p>
     ${acts.map(c=>{
       const done = choices[c.id];
@@ -1127,22 +1127,18 @@ function cardThumb(id, icon, famClass){
     <div class="ic">${icon||'🃏'}</div>
   </div>`;
 }
-// Piani la cui immagine in assets/cards/ è già la carta composta da cardgen (nome, testo di
-// atmosfera e regole incollati nei pixel): per questi l'app non deve riscrivere nome/testo
-// sopra, altrimenti duplica quello che la carta mostra già da sé. Aggiornare mano a mano che
-// altri piani vengono rigenerati con cardgen/render.js e la nuova immagine sostituisce quella
-// grezza in assets/cards/<id>.png.
-const COMPOSED_CARD_PLANES = new Set(['acqua','aria','astrale','baratro_in_fiamme','caos','cenere','cristallo','decadimento','eternita','fuoco','gelo_dellabisso','legge','logica','luce','metallo','oblio','ombra','ordine','palude_sconsacrata','porte_di_brace','putrefazione','sacro','sangue','sogno','sole','specchi','stasi','tempesta','tempo','tenebre','terra','veleno','velo_dei_sussurri','verita','voragine_della_negativita','vuoto']);
+// Le carte dei Piani in assets/cards/ sono le carte composte da cardgen: nome, testo di
+// atmosfera e regole sono già incollati nei pixel dell'immagine. L'app non deve MAI
+// riscriverli sopra, altrimenti duplica quello che la carta mostra già da sé — vale per
+// tutti i 36 piani attuali e per ogni carta rigenerata in futuro.
 function planeHeroArt(plane, iconOverride){
   // l'immagine del piano è una scena panoramica (16:9), pensata per essere l'illustrazione
   // grande e immersiva della pagina d'ingresso — non la miniatura in formato carta.
   const famClass = 'fam-'+plane.family;
   const icon = iconOverride || FAMILIES[plane.family]?.icon || '🌀';
-  const composed = COMPOSED_CARD_PLANES.has(plane.id);
   return `<div class="plane-hero ${famClass}">
     <img src="assets/cards/${plane.id}.png" alt="${escapeHtml(plane.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
     <div class="plane-hero-fallback" style="display:none;"><div class="ic">${icon}</div></div>
-    ${composed ? '' : `<div class="plane-hero-caption"><h2>${icon} ${escapeHtml(plane.name)}</h2></div>`}
   </div>`;
 }
 
@@ -1624,7 +1620,6 @@ function renderDrawFlow(){
   const card = currentIncontro();
   let html = `<div class="panel">
     ${planeHeroArt(plane)}
-    ${COMPOSED_CARD_PLANES.has(plane.id) ? '' : `<p style="font-size:.88rem;color:var(--ink-soft);">${plane.text}</p>`}
   </div>`;
   if(card){
     html += renderIncontroCard(plane, card);
@@ -1664,6 +1659,21 @@ function renderIncontroAction(){
     bindManualPanel(card, acts);
     return;
   }
+  if(card.pattoSangueCard){
+    el.innerHTML = renderPattoSangueCard(acts);
+    bindPattoSangueCard(acts);
+    return;
+  }
+  if(card.bivioCard){
+    el.innerHTML = renderBivioCard();
+    bindBivioCard();
+    return;
+  }
+  if(card.oblioCard){
+    el.innerHTML = renderOblioCard(acts);
+    bindOblioCard(acts);
+    return;
+  }
   if(card.type==='incontro'){
     const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
     const decided = state.currentDraw.stealthDecided||{};
@@ -1697,8 +1707,10 @@ function renderIncontroAction(){
       return;
     }
     if(card.auto){
-      // automatic check-less effect
-      if(card.onFail) applyConsequence(card.onFail, acts, plane);
+      // automatic check-less effect — renderIncontroAction() viene rischedulata a ogni
+      // render() (bindGame -> setTimeout), quindi senza questo guard l'effetto verrebbe
+      // riapplicato a ogni interazione UI mentre il pannello resta a schermo, non solo una volta.
+      if(card.onFail && !state.currentDraw.autoApplied){ applyConsequence(card.onFail, acts, plane); state.currentDraw.autoApplied = true; }
       el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
       document.getElementById('btnResolveDone').onclick=finishIncontro;
       return;
@@ -1743,6 +1755,40 @@ function applyConsequence(cons, targets, plane){
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'minor': logMsg(`❓ ${c.name}: effetto minore casuale, risolvilo narrativamente.`); break;
+      case 'amplify': {
+        // Amplificazione: potenzia un beneficio o maleficio elementare GIA' attivo su questo
+        // personaggio — nessuna scelta, si limita ad amplificare ciò che già c'è (se c'è).
+        const boosted = STATS.filter(s=>s!=='pv' && c.tempBonus && c.tempBonus[s]);
+        const debuffed = STATS.filter(s=>s!=='pv' && c.tempDebuff && c.tempDebuff[s]);
+        if(boosted.length){
+          const s=boosted[0]; const before=c.stats[s]; c.stats[s]=Math.min(6,c.stats[s]+1); c.tempBonus[s]+=(c.stats[s]-before);
+          logMsg(`🔥 ${c.name}: il piano amplifica il suo beneficio temporaneo a ${STAT_LABEL[s]} (${before} → ${c.stats[s]}).`,'good');
+        } else if(debuffed.length){
+          const s=debuffed[0];
+          applyTempDebuff(c,s); // se già temporaneo, questo lo aggrava a permanente (comportamento esistente)
+          logMsg(`🔥 ${c.name}: il piano amplifica il suo maleficio a ${STAT_LABEL[s]}.`,'warn');
+        } else {
+          logMsg(`🔥 ${c.name}: nessun beneficio o maleficio elementare attivo da amplificare, nessun effetto.`);
+        }
+        break;
+      }
+      case 'corrode': {
+        // Corrosione lenta: sospende il bonus di un'arma o armatura equipaggiata con bonus,
+        // fino al prossimo Recupero. Se equipaggia entrambe, sceglie il personaggio.
+        const slots = ['weapon','armor'].filter(slot=>{
+          const id=c.equipped[slot]; if(!id || (c.corroded && c.corroded[slot])) return false;
+          const it=OGGETTI_BY_ID[id];
+          return it && (it.statBonus||0)>0 && (it.statKey||it.statKey2||it.statKey3);
+        });
+        if(slots.length===0){ logMsg(`⚙️ ${c.name}: nessun'arma o armatura equipaggiata con bonus da corrodere, nessun effetto.`); }
+        else if(slots.length===1){
+          c.corroded[slots[0]]=true;
+          logMsg(`⚙️ ${c.name}: ${OGGETTI_BY_ID[c.equipped[slots[0]]].name} perde temporaneamente il bonus (torna a Recupero).`,'warn');
+        } else {
+          openCorrosioneChoiceModal(c, slots);
+        }
+        break;
+      }
     }
   });
 }
@@ -1999,6 +2045,9 @@ function renderRewardPanel(card, acts){
     case 'itemPlusCheck': return `<button class="primary" id="btnApplyReward">Pesca oggetto (check San a parte, manuale)</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
     case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
+    case 'tradeItemForItemOrResource': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradeitem="${c.id}-item" ${c.inventory.length?'':'disabled'}>scambia oggetto → nuovo oggetto</button> <button class="small" data-tradeitem="${c.id}-resource" ${c.inventory.length?'':'disabled'}>scambia oggetto → risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta il baratto</button></div>`;
+    case 'tradeForItem': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradepay="${c.id}-resource" ${c.resources>0?'':'disabled'}>paga 1 risorsa → oggetto</button> <button class="small" data-tradepay="${c.id}-anima">paga 1 Anima → oggetto</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta</button></div>`;
+    case 'tradeResourceForItem': return `<div>${acts.map(c=>`<button class="small" data-tradepay="${c.id}-resource" ${c.resources>0?'':'disabled'}>${c.name}: paga 1 risorsa → oggetto</button>`).join(' ')}<button id="btnDeclineReward">Rifiuta</button></div>`;
     default: return `<button class="primary" id="btnApplyReward">Applica e continua</button>`;
   }
 }
@@ -2033,6 +2082,20 @@ function bindRewardPanel(card, acts){
     else if(c.inventory.length){ c.inventory.pop(); sacrificed=true; }
     if(sacrificed){ c.resources+=1; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); }
     else logMsg(`⚠️ ${c.name} non ha nulla da sacrificare.`,'warn');
+    done();
+  });
+  document.querySelectorAll('[data-tradeitem]').forEach(b=>b.onclick=()=>{
+    const [id,mode]=b.dataset.tradeitem.split('-'); const c=acts.find(x=>x.id===id);
+    if(!c.inventory.length) return;
+    const lost=c.inventory.pop();
+    if(mode==='item'){ const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🔁 ${c.name} scambia ${OGGETTI_BY_ID[lost]?.name} con ${OGGETTI_BY_ID[it].name}.`,'good');} }
+    else { c.resources+=1; logMsg(`🔁 ${c.name} scambia ${OGGETTI_BY_ID[lost]?.name} con 1 risorsa planare.`,'good'); }
+    done();
+  });
+  document.querySelectorAll('[data-tradepay]').forEach(b=>b.onclick=()=>{
+    const [id,mode]=b.dataset.tradepay.split('-'); const c=acts.find(x=>x.id===id);
+    if(mode==='resource'){ if(c.resources<=0) return; c.resources-=1; } else { applyAnimaLoss(c,1); }
+    const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🤝 ${c.name} paga ${mode==='resource'?'1 risorsa':'1 Anima'} e ottiene ${OGGETTI_BY_ID[it].name}.`,'good'); }
     done();
   });
 }
@@ -2116,6 +2179,53 @@ function bindManualPanel(card, acts){
   document.getElementById('btnManualDone').onclick=finishIncontro;
 }
 
+/* ---------- Patto di sangue / Bivio / Sussurro dell'Oblio ---------- */
+function renderPattoSangueCard(acts){
+  return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-patto="${c.id}-accept">Accetta (-1 Anima, +1 risorsa)</button> <button class="small" data-patto="${c.id}-refuse">Prova a rifiutare (check Intelletto)</button></div>`).join('')}</div>`;
+}
+function bindPattoSangueCard(acts){
+  document.querySelectorAll('[data-patto]').forEach(b=>b.onclick=()=>{
+    const [id,mode]=b.dataset.patto.split('-'); const c=acts.find(x=>x.id===id);
+    if(mode==='accept'){
+      applyAnimaLoss(c,1); c.resources+=1;
+      logMsg(`🩸 ${c.name} accetta il patto: -1 Anima, +1 risorsa planare.`,'warn');
+    } else {
+      const r=checkRoll(c,'int');
+      if(r.success){ logMsg(`🩸 ${c.name} rifiuta il patto con successo (check Intelletto ${r.roll} vs ${r.val}): nessun effetto.`,'good'); }
+      else {
+        applyAnimaLoss(c,1); c.resources+=1;
+        logMsg(`🩸 ${c.name} prova a rifiutare ma fallisce (check Intelletto ${r.roll} vs ${r.val}): costretto ad accettare comunque, -1 Anima +1 risorsa.`,'warn');
+      }
+    }
+    finishIncontro();
+  });
+}
+function renderBivioCard(){
+  return `<p class="hint">Scegli alla cieca una delle prime tre carte del mazzo Piani: diventerà la prossima destinazione.</p>
+    <div class="row">${[0,1,2].map(i=>`<button class="small" data-bivio="${i}">${i+1}ª carta</button>`).join('')}</div>`;
+}
+function bindBivioCard(){
+  document.querySelectorAll('[data-bivio]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.bivio;
+    if(i>0 && i<state.mazzoPiani.length){ const [chosen]=state.mazzoPiani.splice(i,1); state.mazzoPiani.unshift(chosen); }
+    logMsg(`🔀 Bivio: la ${i+1}ª carta scelta alla cieca diventa la prossima destinazione.`,'warn');
+    finishIncontro();
+  });
+}
+function renderOblioCard(acts){
+  return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <select id="oblioStat_${c.id}">${STATS.filter(s=>s!=='pv').map(s=>`<option value="${s}">${STAT_LABEL[s]}</option>`).join('')}</select> <button class="small" data-oblio="${c.id}">Dimentica e trova un oggetto</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta per tutti</button></div>`;
+}
+function bindOblioCard(acts){
+  document.querySelectorAll('[data-oblio]').forEach(b=>b.onclick=()=>{
+    const c=acts.find(x=>x.id===b.dataset.oblio);
+    const stat=document.getElementById('oblioStat_'+c.id).value;
+    applyTempDebuff(c,stat);
+    const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`❓ ${c.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); }
+    finishIncontro();
+  });
+  const declineBtn=document.getElementById('btnDeclineReward');
+  if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.'); finishIncontro(); };
+}
 function finishIncontro(){
   // il demone evocato dal Warlock combatte "in quella Contesa": finita, si scioglie.
   state.players.forEach(c=>{ c.demonReady=false; });
@@ -2146,6 +2256,11 @@ function recuperoFor(c){
     boosted.forEach(s=>{ c.stats[s]=Math.max(1,c.stats[s]-c.tempBonus[s]); });
     c.tempBonus={};
     parts.push(`perde il bonus temporaneo a ${boosted.map(s=>STAT_LABEL[s]).join(', ')}`);
+  }
+  const corroded = Object.keys(c.corroded||{}).filter(slot=>c.corroded[slot]);
+  if(corroded.length){
+    corroded.forEach(slot=>{ c.corroded[slot]=false; });
+    parts.push(`l'equipaggiamento corroso torna a funzionare normalmente`);
   }
   logMsg(parts.length ? `🛌 ${c.name} recupera: ${parts.join('; ')}.` : `🛌 ${c.name} riposa, ma non aveva nulla da recuperare.`);
 }
@@ -2719,6 +2834,17 @@ function openVaticinioModal(caster, idx){
     state.pendingVaticinio = { groupId: g?g.id:null, family: fam };
     logMsg(`🔮 ${caster.name} lancia Vaticinio: il gruppo scommette che il prossimo salto sarà di Famiglia ${FAMILIES[fam].name}.`,'good');
     caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+}
+function openCorrosioneChoiceModal(c, slots){
+  const label = {weapon:'Arma', armor:'Armatura'};
+  openModal(`<h3>⚙️ Corrosione lenta</h3><p>${escapeHtml(c.name)} equipaggia sia arma che armatura con bonus: quale perde temporaneamente il bonus (torna a Recupero)?</p>
+    <div class="row">${slots.map(slot=>`<button class="small" data-corrslot="${slot}">${label[slot]}: ${escapeHtml(OGGETTI_BY_ID[c.equipped[slot]].name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-corrslot]').forEach(b=>b.onclick=()=>{
+    const slot = b.dataset.corrslot;
+    c.corroded[slot]=true;
+    logMsg(`⚙️ ${c.name}: ${OGGETTI_BY_ID[c.equipped[slot]].name} perde temporaneamente il bonus (torna a Recupero).`,'warn');
     closeModal(); render();
   });
 }
