@@ -2,8 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
-const CARD_W = 1417; // 120mm @ 300dpi
+const CARD_W = 1417; // 120mm @ 300dpi — scena panoramica (Piani, Piano Terreno)
 const CARD_H = 827;  // 70mm  @ 300dpi
+
+// Formato "standard" ritratto: personaggi/oggetti/incontri/spell, non scene d'ambiente.
+// 63x94mm @ 300dpi — combacia quasi esattamente col rapporto nativo dei ritratti
+// generati (1696x2528, ~0.671), quindi l'immagine riempie la carta senza tagli pesanti.
+const PORTRAIT_CARD_W = 744;
+const PORTRAIT_CARD_H = 1110;
 
 const FAMILY_ACCENT = {
   elementare: '#c1531f',
@@ -15,13 +21,18 @@ const FAMILY_ACCENT = {
 };
 
 const FAMILY_EMOJI = {
-  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️',
+  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋',
 };
 
 // Piano Terreno: destinazioni leggendarie, nessuna Famiglia — un unico accento fisso
 // (oro/bronzo) le distingue a colpo d'occhio dalle carte Piano elementali/eteree/ecc.
 const PIANO_TERRENO_ACCENT = '#a3781c';
 const PIANO_TERRENO_EMOJI = '🏔️';
+
+// Classi: stesso discorso, un accento fisso (bordeaux araldico) invece di una Famiglia.
+const CLASS_ACCENT = '#7a2f3d';
+
+const WEAPONS_LABEL = { heavy: 'Armi pesanti', light: 'Armi leggere', none: "Nessun'arma" };
 
 const STAT_ICON = { for:'💪', int:'🧠', des:'🤸', pv:'❤️', san:'🌙', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
@@ -115,7 +126,7 @@ function pianoTerrenoCardHtml(dest, artDir) {
   <div class="card" id="card-${dest.id}" data-id="${dest.id}" style="--fam:${PIANO_TERRENO_ACCENT};">
     ${artLayer(dest, artDir, PIANO_TERRENO_ACCENT, PIANO_TERRENO_EMOJI)}
     <div class="top-strip"></div>
-    ${dest.finale ? `<div class="finale-ribbon">★ FINALE ★</div>` : ''}
+    ${dest.finale ? `<div class="corner-ribbon finale-ribbon">★ FINALE ★</div>` : ''}
     <div class="panel">
       <div class="name-row">
         <div class="name-block">
@@ -132,15 +143,61 @@ function pianoTerrenoPageHtml(destinations, artDir) {
   return `<!doctype html>
 <html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>${sharedCardCss()}</style></head>
+<body><div class="stage">
+${cards}
+</div></body></html>`;
+}
+
+function classCardHtml(cls, artDir) {
+  const stats = cls.stats;
+  const resistBadges = cls.resistance.map(f => `<span class="badge"><span class="badge-icon">${FAMILY_EMOJI[f]||'🛡️'}</span>Resist. ${f}</span>`).join('');
+  return `
+  <div class="card card-portrait" id="card-${cls.id}" data-id="${cls.id}" style="--fam:${CLASS_ACCENT};">
+    ${artLayer(cls, artDir, CLASS_ACCENT, cls.icon)}
+    <div class="top-strip"></div>
+    ${cls.exitPlane ? `<div class="corner-ribbon exit-ribbon">✦ USCITA ✦</div>` : ''}
+    <div class="panel class-panel">
+      <div class="name-row">
+        <div class="name-block">
+          <div class="name">${cls.icon} ${esc(cls.name)}</div>
+        </div>
+      </div>
+      <div class="stat-block">
+        ${['for','int','des','pv','san','anima'].map(s => `<div class="stat-cell"><div class="stat-ic">${STAT_ICON[s]}</div><div class="stat-v">${stats[s]}</div></div>`).join('')}
+      </div>
+      <div class="badges class-badges">
+        <span class="badge"><span class="badge-icon">⚔️</span>${WEAPONS_LABEL[cls.weapons]||cls.weapons}</span>
+        ${cls.reroll ? `<span class="badge"><span class="badge-icon">🔁</span>${cls.reroll} reroll</span>` : ''}
+        ${cls.stealth ? `<span class="badge"><span class="badge-icon">🥷</span>Furtività</span>` : ''}
+        ${cls.waterOk ? `<span class="badge"><span class="badge-icon">💧</span>A suo agio in acqua</span>` : ''}
+        ${resistBadges}
+      </div>
+      <div class="rule-text class-desc">${esc(cls.desc)}</div>
+    </div>
+  </div>`;
+}
+
+function classPageHtml(classes, artDir) {
+  const cards = classes.map(c => classCardHtml(c, artDir)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
-  .finale-ribbon{
-    position:absolute; top:38px; right:-64px; z-index:3;
-    background:linear-gradient(135deg,#d9a521,#a3781c); color:#241a04;
-    font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
-    font-size:24px; letter-spacing:.08em; text-align:center;
-    width:320px; padding:10px 0; transform:rotate(40deg);
-    box-shadow:0 4px 14px rgba(0,0,0,.45); border:2px solid rgba(255,255,255,.35);
+  .class-panel{ height:44%; padding:16px 26px 24px; }
+  .class-panel .name{ font-size:34px; }
+  .stat-block{ display:flex; gap:6px; margin-bottom:8px; }
+  .stat-cell{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:8px;
+    width:56px; padding:5px 0;
   }
+  .stat-ic{ font-size:15px; line-height:1; }
+  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:17px; font-weight:600; }
+  .class-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
+  .class-badges .badge{ font-size:12px; padding:4px 10px; gap:5px; }
+  .class-badges .badge-icon{ font-size:15px; }
+  .class-desc{ font-size:15px; line-height:1.3; }
 </style></head>
 <body><div class="stage">
 ${cards}
@@ -158,6 +215,7 @@ function sharedCardCss() {
     font-family:'Source Serif 4','Lora','Liberation Serif',serif;
     background:#141110;
   }
+  .card-portrait{ width:${PORTRAIT_CARD_W}px; height:${PORTRAIT_CARD_H}px; }
   .art{ position:absolute; inset:0; background-size:cover; background-position:center; }
   .art.placeholder{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
   .placeholder-emoji{ font-size:180px; opacity:.55; filter:grayscale(.15); }
@@ -170,6 +228,17 @@ function sharedCardCss() {
     padding:8px 22px 8px 28px; border-radius:0 8px 8px 0;
     box-shadow:0 4px 10px rgba(0,0,0,.35);
   }
+  .corner-ribbon{
+    position:absolute; top:38px; right:-64px; z-index:3;
+    color:#241a04; font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
+    font-size:24px; letter-spacing:.08em; text-align:center;
+    width:320px; padding:10px 0; transform:rotate(40deg);
+    box-shadow:0 4px 14px rgba(0,0,0,.45); border:2px solid rgba(255,255,255,.35);
+  }
+  /* stesso nastro diagonale del Finale, ma oro contro verde: un colpo d'occhio basta
+     a distinguere "fine partita" (Finale) da "esce solo questo personaggio" (Uscita). */
+  .finale-ribbon{ background:linear-gradient(135deg,#d9a521,#a3781c); }
+  .exit-ribbon{ background:linear-gradient(135deg,#4caf7d,#1f6b46); color:#f4fff8; }
   .panel{
     position:absolute; left:0; right:0; bottom:0; height:47%; z-index:2;
     background:linear-gradient(to bottom, rgba(12,10,9,0) 0%, rgba(12,10,9,.5) 20%, rgba(10,8,7,.90) 52%, rgba(8,6,6,.97) 100%);
@@ -217,4 +286,4 @@ ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, pianoTerrenoPageHtml, CARD_W, CARD_H, FAMILY_ACCENT };
+module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };

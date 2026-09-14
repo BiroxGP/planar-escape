@@ -29,7 +29,7 @@ if (idx === -1) {
 
 const scriptStart = src.indexOf('<script>') + '<script>'.length;
 let code = src.slice(scriptStart, idx);
-code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO };\n';
+code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES };\n';
 
 const sandbox = {};
 vm.createContext(sandbox);
@@ -41,6 +41,10 @@ if (!sandbox.__DATA__ || !Array.isArray(sandbox.__DATA__.PIANI)) {
 }
 if (!Array.isArray(sandbox.__DATA__.PIANO_TERRENO)) {
   console.error('Estrazione fallita: PIANO_TERRENO non trovato.');
+  process.exit(1);
+}
+if (!sandbox.__DATA__.CLASSES || typeof sandbox.__DATA__.CLASSES !== 'object') {
+  console.error('Estrazione fallita: CLASSES non trovato.');
   process.exit(1);
 }
 
@@ -58,3 +62,22 @@ const pianoTerreno = sandbox.__DATA__.PIANO_TERRENO.map(p => ({
 }));
 fs.writeFileSync(path.join(__dirname, 'piano-terreno-data.json'), JSON.stringify(pianoTerreno, null, 2));
 console.log(`OK — ${pianoTerreno.length} destinazioni Piano Terreno scritte in piano-terreno-data.json (${pianoTerreno.filter(p=>p.finale).length} finali)`);
+
+// CLASSES è un oggetto {id: {...}}, non un array come gli altri due: aggiungiamo l'id.
+const classes = Object.entries(sandbox.__DATA__.CLASSES).map(([id, c]) => ({
+  id,
+  name: c.name,
+  icon: c.icon,
+  stats: { for: c.for, int: c.int, des: c.des, pv: c.pv, san: c.san, anima: c.anima },
+  weapons: c.weapons,
+  resistance: c.resistance || [],
+  stealth: !!c.stealth,
+  waterOk: !!c.waterOk,
+  reroll: c.reroll || 0,
+  rerollLvl: c.rerollLvl || 0,
+  affinity: c.affinity || {},
+  exitPlane: c.exitPlane || null, // Druido/Sciamano: uscita personale verso una destinazione del Piano Terreno
+  desc: c.desc,
+}));
+fs.writeFileSync(path.join(__dirname, 'classes-data.json'), JSON.stringify(classes, null, 2));
+console.log(`OK — ${classes.length} classi scritte in classes-data.json`);

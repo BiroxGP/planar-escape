@@ -82,6 +82,9 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .player-setup{border:1px dashed var(--line); border-radius:8px; padding:1rem; margin-bottom:.9rem; background:var(--surface-2);}
 .player-setup .row{margin-bottom:.5rem;}
 .class-desc{font-size:.82rem; color:var(--ink-soft); max-width:60ch;}
+.class-card-preview{width:300px; max-width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px var(--shadow); border:1px solid var(--line);}
+.class-card-preview img{width:100%; display:block;}
+.class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
 
 /* ---- party bar ---- */
 .party-bar{display:flex; gap:.8rem; flex-wrap:wrap; margin-bottom:1.2rem;}
@@ -924,6 +927,15 @@ function render(){
 }
 /* ---------------- SETUP SCREEN ---------------- */
 let setupPlayers = [{name:'Giocatore 1', cls:'guerriero'}];
+function classCardPreview(clsKey){
+  const cls = CLASSES[clsKey];
+  return `<div class="class-card-preview">
+    <img src="assets/cards/${clsKey}.png" alt="${escapeHtml(cls.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    <div class="class-card-fallback" style="display:none;">
+      <div class="class-desc">${escapeHtml(cls.desc)}</div>
+    </div>
+  </div>`;
+}
 function renderSetup(){
   const classOptions = Object.entries(CLASSES).map(([k,c])=>`<option value="${k}">${c.icon} ${c.name}</option>`).join('');
   const n = setupPlayers.length;
@@ -941,7 +953,7 @@ function renderSetup(){
             ${n<=2?`<select data-idx="${i}" class="pbonus stat-sel"><option value="">Bonus su...</option>${STATS.map(s=>`<option value="${s}" ${p.bonusStat===s?'selected':''}>${STAT_LABEL[s]}</option>`).join('')}</select>`:''}
             ${setupPlayers.length>1?`<button class="small danger" data-remove="${i}">✕</button>`:''}
           </div>
-          <div class="class-desc">${CLASSES[p.cls].desc}</div>
+          ${classCardPreview(p.cls)}
         </div>
       `).join('')}
     </div>
@@ -1005,7 +1017,7 @@ function renderCharCard(c){
   ensureGroups();
   const groupIdx = state.groups.length>1 ? state.groups.findIndex(g=>g.memberIds.includes(c.id)) : -1;
   return `<div class="char-card ${dead?'dead':''} ${out?'out':''}">
-    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''} ${groupIdx>=0?`<span class="badge">Gruppo ${groupIdx+1}</span>`:''}</div>
+    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="Vedi la carta della classe" style="padding:.1rem .4rem;">🃏</button> ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''} ${groupIdx>=0?`<span class="badge">Gruppo ${groupIdx+1}</span>`:''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} salti personali</div>
     <div class="stat-dice">
       ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?'Depotenziato per tutta la permanenza nel piano':(c.tempBonus?.[s]?'Bonus temporaneo, dura fino al prossimo Recupero':'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
@@ -2998,6 +3010,12 @@ function showOggettoInfoModal(id){
     <div class="row mt1"><button class="primary" id="btnInfoClose">Chiudi</button></div>`);
   document.getElementById('btnInfoClose').onclick=closeModal;
 }
+function openClassCardModal(clsKey){
+  const cls = CLASSES[clsKey]; if(!cls) return;
+  openModal(`<div style="max-width:340px; margin:0 auto;">${classCardPreview(clsKey)}</div>
+    <div class="row mt1"><button class="primary" id="btnInfoClose">Chiudi</button></div>`);
+  document.getElementById('btnInfoClose').onclick=closeModal;
+}
 function showSpellInfoModal(id){
   const sp = SPELLS_BY_ID[id]; if(!sp) return;
   const school = spellSchoolOf(id);
@@ -3040,6 +3058,7 @@ function bindGame(){
   const ap=document.getElementById('btnAfterPlane'); if(ap) ap.onclick=finishIncontro;
   document.querySelectorAll('[data-open-char]').forEach(b=>b.onclick=()=>openCharManageModal(b.dataset.openChar));
   document.querySelectorAll('[data-quickinfo-item]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); showOggettoInfoModal(b.dataset.quickinfoItem); });
+  document.querySelectorAll('[data-viewclass]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openClassCardModal(b.dataset.viewclass); });
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{
     const gid = b.dataset.groupjump;
     if(state.groups.length>1 && state.jumpedThisRound[gid]) return; // ha già saltato in questo turno sincronizzato

@@ -1,0 +1,328 @@
+[
+  {
+    "id": "guerriero",
+    "name": "Guerriero",
+    "icon": "⚔️",
+    "stats": {
+      "for": 4,
+      "int": 1,
+      "des": 3,
+      "pv": 5,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "heavy",
+    "resistance": [
+      "elementare",
+      "terrestre"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {},
+    "exitPlane": null,
+    "desc": "Nessuno spell, ma armi e armature pesanti. Resistenza a tutto il Tipo Fisico (Elementare + Terrestre)."
+  },
+  {
+    "id": "barbaro",
+    "name": "Barbaro",
+    "icon": "🪓",
+    "stats": {
+      "for": 5,
+      "int": 1,
+      "des": 3,
+      "pv": 4,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {},
+    "exitPlane": null,
+    "desc": "Furia brutale: ogni colpo a segno in Contese di Forza infligge 2 danni; un 6 naturale in qualsiasi Contesa infligge 2 danni. A 0 PV non sviene, resta attivo."
+  },
+  {
+    "id": "ladro",
+    "name": "Ladro",
+    "icon": "🗡️",
+    "stats": {
+      "for": 2,
+      "int": 2,
+      "des": 4,
+      "pv": 3,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [],
+    "stealth": true,
+    "waterOk": false,
+    "reroll": 1,
+    "rerollLvl": 0,
+    "affinity": {},
+    "exitPlane": null,
+    "desc": "Furtività: può tentare di restare nascosto da un Incontro (check Destrezza). Classe ibrida: 1 reroll fisso."
+  },
+  {
+    "id": "veggente",
+    "name": "Veggente",
+    "icon": "🔮",
+    "stats": {
+      "for": 1,
+      "int": 4,
+      "des": 2,
+      "pv": 3,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "none",
+    "resistance": [
+      "eterei",
+      "entropia"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "divinazione": 2,
+      "essenza": 1
+    },
+    "exitPlane": null,
+    "desc": "Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza a Eterei + Entropia."
+  },
+  {
+    "id": "mago",
+    "name": "Mago",
+    "icon": "🪄",
+    "stats": {
+      "for": 1,
+      "int": 4,
+      "des": 2,
+      "pv": 3,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "none",
+    "resistance": [
+      "elementare"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "essenza": 3
+    },
+    "exitPlane": null,
+    "desc": "Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."
+  },
+  {
+    "id": "chierico",
+    "name": "Chierico",
+    "icon": "✨",
+    "stats": {
+      "for": 2,
+      "int": 3,
+      "des": 2,
+      "pv": 4,
+      "san": 5,
+      "anima": 6
+    },
+    "weapons": "light",
+    "resistance": [
+      "armonia"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "flusso": 3
+    },
+    "exitPlane": null,
+    "desc": "Ogni Flusso lanciato su un compagno cura anche 1 PV extra. Anima iniziale 6. Resistenza Armonia."
+  },
+  {
+    "id": "druido",
+    "name": "Druido",
+    "icon": "🌿",
+    "stats": {
+      "for": 2,
+      "int": 3,
+      "des": 2,
+      "pv": 4,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [
+      "terrestre"
+    ],
+    "stealth": false,
+    "waterOk": true,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "flusso": 1
+    },
+    "exitPlane": "flora_aliena",
+    "desc": "Forma Selvatica: scambia temporaneamente due caratteristiche (ricarica a Recupero). A proprio agio in acqua. Uscita personale: Flora Aliena."
+  },
+  {
+    "id": "warlock",
+    "name": "Warlock",
+    "icon": "👹",
+    "stats": {
+      "for": 2,
+      "int": 3,
+      "des": 2,
+      "pv": 3,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [
+      "demoniaco"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "essenza": 2
+    },
+    "exitPlane": null,
+    "desc": "Evoca un demone minore (valore 1) che combatte al suo fianco (ricarica a Recupero). Resistenza Demoniaco."
+  },
+  {
+    "id": "negromante",
+    "name": "Negromante",
+    "icon": "☠️",
+    "stats": {
+      "for": 1,
+      "int": 4,
+      "des": 2,
+      "pv": 3,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "none",
+    "resistance": [
+      "nonmorti"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "flusso": 2,
+      "essenza": 1
+    },
+    "exitPlane": null,
+    "desc": "Se muore, una sola volta a partita torna in vita come non-morto con 1 PV. Resistenza Non-morti."
+  },
+  {
+    "id": "sciamano",
+    "name": "Sciamano",
+    "icon": "🌀",
+    "stats": {
+      "for": 1,
+      "int": 3,
+      "des": 3,
+      "pv": 4,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [
+      "elementare"
+    ],
+    "stealth": false,
+    "waterOk": true,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "essenza": 1,
+      "divinazione": 1,
+      "flusso": 1
+    },
+    "exitPlane": "eta_terra_antica",
+    "desc": "Generalista, un piede in ogni scuola. A proprio agio in acqua. Uscita personale: Età della Terra Antica. Resistenza Elementare."
+  },
+  {
+    "id": "saltimbanco",
+    "name": "Saltimbanco",
+    "icon": "🎭",
+    "stats": {
+      "for": 2,
+      "int": 2,
+      "des": 3,
+      "pv": 4,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "light",
+    "resistance": [],
+    "stealth": true,
+    "waterOk": false,
+    "reroll": 3,
+    "rerollLvl": 2,
+    "affinity": {},
+    "exitPlane": null,
+    "desc": "Nessuno spell: 3 reroll fissi (+2 per livello). Furtività come il Ladro."
+  },
+  {
+    "id": "monaco",
+    "name": "Monaco",
+    "icon": "🧘",
+    "stats": {
+      "for": 3,
+      "int": 2,
+      "des": 3,
+      "pv": 4,
+      "san": 6,
+      "anima": 6
+    },
+    "weapons": "light",
+    "resistance": [],
+    "stealth": false,
+    "waterOk": true,
+    "reroll": 1,
+    "rerollLvl": 0,
+    "affinity": {},
+    "exitPlane": null,
+    "desc": "San e Anima iniziali 6. Classe ibrida: 1 reroll fisso. Una volta per carica, annulla del tutto un danno su una qualsiasi caratteristica (ricarica a Recupero)."
+  },
+  {
+    "id": "paladino",
+    "name": "Paladino",
+    "icon": "🛡️",
+    "stats": {
+      "for": 3,
+      "int": 2,
+      "des": 2,
+      "pv": 4,
+      "san": 5,
+      "anima": 5
+    },
+    "weapons": "heavy",
+    "resistance": [
+      "armonia"
+    ],
+    "stealth": false,
+    "waterOk": false,
+    "reroll": 0,
+    "rerollLvl": 0,
+    "affinity": {
+      "flusso": 1
+    },
+    "exitPlane": null,
+    "desc": "Armi e armature pesanti pur avendo un'affinità. A ogni avanzamento pesca anche una carta Flusso extra. Resistenza Armonia."
+  }
+]
