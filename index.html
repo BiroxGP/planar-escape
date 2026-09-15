@@ -1693,7 +1693,21 @@ function applyPendingMadnessActions(){
     if(c.pendingCorruzione){
       const action = c.pendingCorruzione; c.pendingCorruzione=null;
       if(action==='contrario') logMsg(`👹 ${c.name} (Corruzione): in questo turno fa esattamente il contrario di quello che fa il resto del gruppo — il tavolo interpreta l'azione.`, 'warn');
-      else logMsg(`👹 ${c.name} (Corruzione): in questo turno agisce contro il team, un'azione ostile verso i compagni (usa spell/oggetti d'attacco se ne possiede) — singola e circoscritta a questo turno, nessun effetto duraturo.`, 'warn');
+      else {
+        // agire ostile reale: attacca il compagno più debole di lui nella sua caratteristica
+        // migliore, un solo giro di scontro (non il ciclo di combattimento completo).
+        const topStat = ['for','int','des'].reduce((best,s)=>effectiveStat(c,s)>effectiveStat(c,best)?s:best,'for');
+        const others = activeChars().filter(x=>x.id!==c.id);
+        const targets = others.filter(x=>effectiveStat(x,topStat)<effectiveStat(c,topStat));
+        if(targets.length===0){
+          logMsg(`👹 ${c.name} (Corruzione): agisce contro il team, ma nessun compagno è più debole di lui in ${STAT_LABEL[topStat]} — l'aggressione non trova bersaglio.`, 'warn');
+        } else {
+          const target = targets[Math.floor(Math.random()*targets.length)];
+          const r = checkRoll(c, topStat);
+          logMsg(`👹 ${c.name} (Corruzione) attacca ${target.name} su ${STAT_LABEL[topStat]}: ${r.roll} vs ${r.val} → ${r.success?'colpito':'mancato'}.`, 'warn');
+          if(r.success) applyDamage(target,'pv',1,{ignoreResistance:true});
+        }
+      }
     }
   });
 }
