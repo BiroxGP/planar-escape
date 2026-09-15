@@ -357,7 +357,7 @@ const INCONTRI = {
     C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",{check:"native",gravity:1,forte:true}),
     C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",{auto:true,onFail:{type:"amplify"}}),
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",{reward:{type:"heal",n:1}}),
-    C("el_frattura","Frattura planare","check","Una crepa verso un altro piano elementare si apre. Check di gruppo di Intelletto (penalità -1): se fallito, il gruppo viene scaraventato in un altro piano di Famiglia Elementare.",{groupCheck:"int",penalty:-1,onFail:{type:"scatterFamily",family:"elementare"}}),
+    C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
     C("el_onda","Onda d'Urto","incontro","Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza, difficoltà normale.",{check:"des",gravity:0}),
     C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
     C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",{reward:{type:"spellBoost"}}),
@@ -378,17 +378,17 @@ const INCONTRI = {
     C("de_infranto","Patto Infranto","check","Il retaggio di un patto non mantenuto perseguita il luogo.",{check:"anima",onFail:{type:"animaLoss",n:1}}),
   ],
   nonmorti:[
-    C("nm_nessuno","Nessun evento","nessun","Il piano è insolitamente silenzioso."),
-    C("nm_appestato","Appestato","incontro","Contagia malattie ed effetti negativi al contatto.",{check:"for",gravity:"level"}),
-    C("nm_spettro","Spettro","incontro","Risucchia forza vitale e paralizza con il terrore.",{check:"int",gravity:"level",damageStat:"pv"}),
-    C("nm_nugolo","Nugolo necrotico","incontro","Sciame di ratti o insetti.",{check:"des",gravity:"level-1",swarm:"auto"}),
+    C("nm_nessuno","Nessun evento","nessun","Il piano è insolitamente silenzioso. Nessun effetto."),
+    C("nm_appestato","Appestato","incontro","Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza, difficoltà normale.",{check:"for",gravity:"level"}),
+    C("nm_spettro","Spettro","incontro","Risucchia la forza vitale e paralizza col terrore. Scontro di Intelletto, difficoltà normale.",{check:"int",gravity:"level",damageStat:"pv"}),
+    C("nm_nugolo","Nugolo necrotico","incontro","Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza, difficoltà ridotta.",{check:"des",gravity:"level-1",swarm:"auto"}),
     C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta. Check di Destrezza: se superato, trovi un oggetto; se fallito, una trappola ti ferisce (-1 PV).",{check:"des",onFail:{type:"damage",n:1},onSuccess:{type:"item"}}),
-    C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
-    C("nm_lich","Lich minore","incontro","Non-morto senziente capace di un piccolo incantesimo ostile.",{check:"int",gravity:"level+1",forte:true}),
-    C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca.",{check:"for",gravity:"level",persistent:true}),
-    C("nm_reliquia","Reliquia protettiva","ricompensa","Un amuleto: il prossimo scontro con un non-morto para il primo danno.",{reward:{type:"item"}}),
-    C("nm_eco","Eco di un caduto","check","La disperazione di un'anima perduta intacca la mente.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
-    C("nm_mano","Mano Putrescente","incontro","Un arto in decomposizione emerge dal terreno e afferra alla cieca.",{check:"pv",gravity:0}),
+    C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
+    C("nm_lich","Lich minore","incontro","Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto, difficoltà aumentata.",{check:"int",gravity:"level+1",forte:true}),
+    C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza, difficoltà normale, persistente (torna anche nei prossimi turni).",{check:"for",gravity:"level",persistent:true}),
+    C("nm_reliquia","Reliquia protettiva","ricompensa","Un amuleto trovato fra le rovine, di natura ignota. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
+    C("nm_eco","Eco di un caduto","check","La disperazione di un'anima perduta si insinua nella mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
+    C("nm_mano","Mano Putrescente","incontro","Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita, difficoltà normale.",{check:"pv",gravity:0}),
     C("nm_cripta","Cripta Sigillata","check","Una cripta sigillata da un rito antico. Check di Anima: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",{check:"anima",onFail:{type:"animaLoss",n:1},onSuccess:{type:"item"}}),
   ],
   eterei:[
@@ -400,7 +400,7 @@ const INCONTRI = {
     C("et_eco","Eco di un altro piano","ricompensa","Si intravede un frammento di un piano diverso.",{reward:{type:"peek",n:1}}),
     C("et_entita","Entità eterea maggiore","incontro","Presenza potente e aliena.",{check:"int",gravity:1,forte:true}),
     C("et_silenzio","Silenzio assoluto","check","Il vuoto sensoriale logora la mente.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
-    C("et_portale","Portale instabile","check","Il confine tra piani è sottile qui.",{groupCheck:"des",penalty:-1,onFail:{type:"scatterFamily",family:"eterei"}}),
+    C("et_portale","Portale instabile","check","Il confine fra i piani è sottile e cede al passaggio. Check di Destrezza per ciascuno: chi fallisce viene risucchiato e forma un nuovo gruppo, separato dal resto.",{check:"des",onFail:{type:"splitGroup"}}),
     C("et_reliquia","Reliquia astrale","ricompensa","Un oggetto legato a Divinazione o Essenza.",{reward:{type:"item"}}),
     C("et_quiete","Quiete astrale","ricompensa","Un momento di calma cosmica.",{reward:{type:"restChoice"}}),
     C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio.",{check:"des",gravity:0,onLoseExtra:"loseTurn"}),
@@ -1722,7 +1722,7 @@ function renderDrawFlow(){
 
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
-const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto']);
+const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta']);
 function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">
@@ -1868,18 +1868,29 @@ function renderIncontroAction(){
     const successHint = card.onSuccess?.type==='item' ? 'trovi un oggetto' : null;
     el.innerHTML = (successHint?`<p class="hint">✨ Se superi: ${successHint}.</p>`:'') + (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
     let done=0;
+    const splitFailed = [];
     el.querySelectorAll('[data-checkchar]').forEach(b=>{
       b.onclick=()=>{
         const c = acts.find(x=>x.id===b.dataset.checkchar);
         const r=checkRoll(c,checkStat);
         document.getElementById('res_'+c.id).innerHTML = `<span class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${r.success?'OK':'Fallito'}</span>`;
         b.disabled=true;
-        if(!r.success && card.onFail) applyConsequence(card.onFail, [c], plane);
+        if(!r.success && card.onFail?.type==='splitGroup'){ splitFailed.push(c.id); }
+        else if(!r.success && card.onFail){ applyConsequence(card.onFail, [c], plane); }
         if(r.success && card.onSuccess?.type==='item'){ const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); } }
         done++; if(done>=acts.length){ document.getElementById('btnResolveDone').disabled=false; }
       };
     });
-    document.getElementById('btnResolveDone').onclick=finishIncontro;
+    document.getElementById('btnResolveDone').onclick=()=>{
+      // lo split va fatto qui, a risoluzione ultimata: farlo dentro il singolo click
+      // toglierebbe personaggi dal gruppo mentre altri stanno ancora tirando il check.
+      if(splitFailed.length){
+        const newG = splitIntoNewGroup(splitFailed);
+        const names = groupMembers(newG).map(x=>x.name).join(', ');
+        logMsg(`🌀 ${names} non regge la frattura e finisce in un nuovo gruppo, separato dal resto.`,'warn');
+      }
+      finishIncontro();
+    };
     return;
   }
   if(card.type==='ricompensa'){
@@ -1906,7 +1917,7 @@ function consequenceLabel(cons, plane){
     case 'loseTurn': return 'perdita del turno';
     case 'loseItem': return 'perdita di un oggetto casuale';
     case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
-    case 'scatterFamily': return `trasferimento forzato in un altro piano di Famiglia ${FAMILIES[cons.family]?.name||cons.family}`;
+    case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
     case 'scatterSelf': return 'allontanamento temporaneo dal gruppo';
     case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
     case 'minor': return 'un piccolo effetto negativo, a discrezione del tavolo';
@@ -1930,7 +1941,6 @@ function applyConsequence(cons, targets, plane){
       case 'loseTurn': logMsg(`⏳ ${c.name} perde il turno.`); break;
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
-      case 'scatterFamily': logMsg(`🌀 ${c.name} viene scaraventato in un altro piano di ${FAMILIES[cons.family].name} a caso (gestisci manualmente il prossimo salto isolato, oppure ignora se preferite trattarlo narrativamente).`,'warn'); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'minor': logMsg(`❓ ${c.name}: effetto minore casuale, risolvilo narrativamente.`); break;

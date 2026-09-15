@@ -115,7 +115,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Una crepa verso un altro piano elementare si apre. Check di gruppo di Intelletto (penalità -1): se fallito, il gruppo viene scaraventato in un altro piano di Famiglia Elementare.",
+    "text": "Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -302,7 +302,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "nessun",
-    "text": "Il piano è insolitamente silenzioso.",
+    "text": "Il piano è insolitamente silenzioso. Nessun effetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -313,7 +313,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Contagia malattie ed effetti negativi al contatto.",
+    "text": "Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -324,7 +324,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Risucchia forza vitale e paralizza con il terrore.",
+    "text": "Risucchia la forza vitale e paralizza col terrore. Scontro di Intelletto, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -335,7 +335,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Sciame di ratti o insetti.",
+    "text": "Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza, difficoltà ridotta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -357,7 +357,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "check",
-    "text": "L'aria stessa marcisce.",
+    "text": "L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -368,7 +368,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Non-morto senziente capace di un piccolo incantesimo ostile.",
+    "text": "Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -379,7 +379,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un non-morto incatenato attacca.",
+    "text": "Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza, difficoltà normale, persistente (torna anche nei prossimi turni).",
     "manual": false,
     "forte": false,
     "persistent": true
@@ -390,7 +390,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "ricompensa",
-    "text": "Un amuleto: il prossimo scontro con un non-morto para il primo danno.",
+    "text": "Un amuleto trovato fra le rovine, di natura ignota. Ricompensa: pesca un oggetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -401,7 +401,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "check",
-    "text": "La disperazione di un'anima perduta intacca la mente.",
+    "text": "La disperazione di un'anima perduta si insinua nella mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -412,7 +412,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un arto in decomposizione emerge dal terreno e afferra alla cieca.",
+    "text": "Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -522,7 +522,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Il confine tra piani è sottile qui.",
+    "text": "Il confine fra i piani è sottile e cede al passaggio. Check di Destrezza per ciascuno: chi fallisce viene risucchiato e forma un nuovo gruppo, separato dal resto.",
     "manual": false,
     "forte": false,
     "persistent": false
