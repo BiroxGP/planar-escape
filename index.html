@@ -365,7 +365,7 @@ const INCONTRI = {
   ],
   demoni:[
     C("de_nessuno","Nessun evento","nessun","Anche l'inferno, a volte, tace per un turno."),
-    C("de_tentatore","Tentatore","incontro","Tranelli, inganni, patti ingannevoli.",{check:"int",gravity:"level"}),
+    C("de_tentatore","Tentatrice","incontro","Tranelli, inganni, patti ingannevoli.",{check:"int",gravity:"level"}),
     C("de_bruto","Bruto infernale","incontro","Attacco diretto, forza bruta.",{check:"for",gravity:"level"}),
     C("de_patto","Patto di sangue","check","Un demone offre 1 risorsa planare in cambio di 1 Anima; rifiutabile con check Intelletto.",{pattoSangueCard:true}),
     C("de_orda","Orda minore","incontro","Un gruppo di diavoletti minori assale in massa.",{check:"for",gravity:"level-1",swarm:"auto"}),
@@ -1722,7 +1722,7 @@ function renderDrawFlow(){
 
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
-const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo']);
+const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto']);
 function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">
