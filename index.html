@@ -868,6 +868,21 @@ function applyPermDebuff(c, stat){
   c.stats[stat]=Math.max(1,c.stats[stat]-1);
   logMsg(`⬇️⬇️ ${c.name} subisce un depotenziamento PERMANENTE a ${STAT_LABEL[stat]}.`,'bad');
 }
+function applyTempBonus(c, stat, n){
+  n = n||1;
+  if(c.tempBonus && c.tempBonus[stat]){
+    // stesso identico comportamento dei depotenziamenti: un secondo bonus temporaneo
+    // sulla stessa statistica, mentre il primo è ancora attivo, diventa PERMANENTE
+    // (il bonus temporaneo originale resta com'era, si cura comunque a Recupero).
+    const before=c.stats[stat]; c.stats[stat]=Math.min(6,c.stats[stat]+n);
+    c.start[stat]=Math.min(6,c.start[stat]+n); // +n sul baseline, non "= al valore corrente" (che include ancora il bonus temporaneo non suo)
+    logMsg(`🎁 ${c.name}: nuovo bonus a ${STAT_LABEL[stat]} già attivo → diventa PERMANENTE (${before} → ${c.stats[stat]}).`,'good');
+  } else {
+    const before=c.stats[stat]; c.stats[stat]=Math.min(6,c.stats[stat]+n);
+    c.tempBonus[stat]=(c.tempBonus[stat]||0)+(c.stats[stat]-before);
+    logMsg(`🎁 ${c.name} ottiene +${n} temporaneo a ${STAT_LABEL[stat]} (dura fino al prossimo Recupero).`);
+  }
+}
 function healStat(c, stat, n){
   const cap = stat==='pv'||stat==='san'||stat==='anima' ? c.start[stat] : 6;
   const before=c.stats[stat];
@@ -2166,11 +2181,7 @@ function grantCombatReward(plane, card, acts, cb){
     const minVal = Math.min(...acts.map(c=>c.stats[stat]));
     acts.filter(c=>c.stats[stat]===minVal).forEach(c=>{
       if(permanent){ c.stats[stat]=Math.min(6,c.stats[stat]+1); c.start[stat]=Math.max(c.start[stat],c.stats[stat]); logMsg(`🎁 ${c.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (boss sconfitto).`); }
-      else {
-        const before=c.stats[stat]; c.stats[stat]=Math.min(6,c.stats[stat]+1);
-        c.tempBonus[stat]=(c.tempBonus[stat]||0)+(c.stats[stat]-before);
-        logMsg(`🎁 ${c.name} ottiene +1 temporaneo a ${STAT_LABEL[stat]} (dura fino al prossimo Recupero).`);
-      }
+      else applyTempBonus(c, stat, 1);
     });
   }
   if(state.pattoOnoreActive && plane.family==='entropia' && acts.length){
