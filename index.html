@@ -262,7 +262,7 @@ const CLASSES = {
   mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["elementare"],special:"dardo",
     desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."},
   chierico:{name:"Chierico",icon:"✨",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_bonus",
-    desc:"Ogni Flusso lanciato su un compagno cura anche 1 PV extra. Anima iniziale 6. Resistenza Armonia."},
+    desc:"Abilità: il primo Flusso lanciato su un compagno dopo l'attivazione cura anche 1 PV extra (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."},
   druido:{name:"Druido",icon:"🌿",for:2,int:3,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["terrestre"],special:"forma_selvatica",waterOk:true,exitPlane:"flora_aliena",
     desc:"Forma Selvatica: scambia temporaneamente due caratteristiche (ricarica a Recupero). A proprio agio in acqua. Uscita personale: Flora Aliena."},
   warlock:{name:"Warlock",icon:"👹",for:2,int:3,des:2,pv:3,san:5,anima:5,affinity:{essenza:2},reroll:0,rerollLvl:0,weapons:"light",resistance:["demoniaco"],special:"evocazione",
@@ -547,7 +547,7 @@ const SPELLS = {
     S("sp_ecofondo","Eco dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},cost:1,daTestare:true}),
   ],
   flusso:[
-    S("sp_manirisan","Mani Risananti","Cura 1 PV a un compagno (2 se lanciato dal Chierico).",{reward:{type:"healOther",n:1}}),
+    S("sp_manirisan","Mani Risananti","Cura 2 PV a un compagno.",{reward:{type:"healOther",n:2}}),
     S("sp_tempra","Tempra","Il primo danno subito dal bersaglio nella prossima Contesa è sempre parato.",{blockNextHit:true}),
     S("sp_benedizione","Benedizione","Un personaggio a scelta infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza.",{benedizioneSpell:true}),
     S("sp_paroladiconforto","Parola di Conforto","Ripristina 1 Sanità Mentale a un compagno.",{reward:{type:"healOther",n:1,stat:"san"}}),
@@ -703,6 +703,7 @@ function makeChar(name, clsKey, bonus){
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
     protectedItemId:null, // Statua di Stasi: oggetto immune a qualsiasi perdita/furto/distruzione, un solo oggetto alla volta
+    curaBonusReady:false, // Chierico: abilità attiva, il prossimo Flusso lanciato su un compagno cura anche 1 PV extra
     turnStartPv:null, // PV all'inizio del turno corrente, per Richiamo di sangue (chi ha già perso PV in questo turno)
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
@@ -888,6 +889,10 @@ function healStat(c, stat, n){
   const before=c.stats[stat];
   c.stats[stat]=Math.min(cap, c.stats[stat]+n);
   if(c.stats[stat]!==before) logMsg(`💚 ${c.name} recupera ${STAT_LABEL[stat]} (${before} → ${c.stats[stat]}).`);
+  if(stat==='pv' && c.status==='unconscious' && c.stats.pv>0){
+    c.status='active';
+    logMsg(`✨ ${c.name} torna cosciente.`,'good');
+  }
 }
 function cureOneDebuff(c, stat){
   if(!c.tempDebuff[stat]) return false;
@@ -1384,6 +1389,13 @@ function largestOtherGroup(g){
   return state.groups.filter(x=>x!==g).sort((a,b)=>groupMembers(b).length-groupMembers(a).length)[0] || null;
 }
 function activeChars(){ return groupMembers(currentGroup()); }
+function healableChars(){
+  // a differenza di activeChars() (chi PUÒ agire questo turno), include anche chi è svenuto
+  // a 0 PV: uno svenuto non agisce da solo, ma resta un bersaglio valido per cure altrui.
+  const g = currentGroup();
+  if(!g) return [];
+  return g.memberIds.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && (c.status==='active'||c.status==='undead'||c.status==='unconscious'));
+}
 
 function applyPlaneIntrinsic(plane){
   const acts = activeChars();
@@ -2792,7 +2804,7 @@ function openCharManageModal(id){
   if(specialBtn) specialBtn.onclick=()=>{ useClassSpecial(c); render(); openCharManageModal(id); };
   const rerollBtn=document.getElementById('mgrReroll');
   if(rerollBtn) rerollBtn.onclick=()=>{ c.rerolls--; logMsg(`🔁 ${c.name} usa un reroll.`); render(); openCharManageModal(id); };
-  document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ useItem(c, +b.dataset.useitem); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ const openedOwnModal=useItem(c, +b.dataset.useitem); render(); if(!openedOwnModal) openCharManageModal(id); });
   document.querySelectorAll('[data-unequip]').forEach(b=>b.onclick=()=>{ unequipSlot(c, b.dataset.unequip); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-unequipring]').forEach(b=>b.onclick=()=>{ unequipRing(c, +b.dataset.unequipring); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
@@ -2828,6 +2840,10 @@ function useClassSpecial(c){
       logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito, su qualunque caratteristica.`);
       break;
     case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}); break;
+    case 'cura_bonus':
+      c.charges.special=false; c.curaBonusReady=true;
+      logMsg(`✨ ${c.name} si prepara: il primo Flusso lanciato su un compagno curerà anche 1 PV extra.`);
+      break;
     default: c.charges.special=false; logMsg(`✳️ ${c.name} usa la propria abilità di classe.`);
   }
 }
@@ -2901,6 +2917,11 @@ function useItem(c, idx){
   }
   if(it.slot==='ring'){ c.equipped.rings.push(id); if(it.instantBonus) Object.entries(it.instantBonus).forEach(([s,n])=>{ c.stats[s]=Math.min(6,c.stats[s]+n); }); c.inventory.splice(idx,1); logMsg(`💍 ${c.name} indossa ${it.name}.`); return; }
   if(it.consumable){
+    if(it.heal && !it.cureDebuff && !it.giveResource){
+      // pozioni di cura pure: si può scegliere il bersaglio (anche uno svenuto a 0 PV, per rimetterlo in piedi)
+      openUseItemTargetModal(c, idx, it);
+      return true;
+    }
     if(it.heal) Object.entries(it.heal).forEach(([s,n])=>healStat(c,s,n));
     if(it.cureDebuff){ const d=activeTempDebuffs(c); if(d.length) cureOneDebuff(c,d[Math.floor(Math.random()*d.length)]); }
     if(it.giveResource) c.resources+=it.giveResource;
@@ -2975,6 +2996,20 @@ function useItem(c, idx){
   }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
   if(it.oneUse) c.inventory.splice(idx,1);
+}
+function openUseItemTargetModal(c, idx, it){
+  // consente di curare anche un compagno svenuto a 0 PV, non solo se stessi
+  const targets = healableChars();
+  const parts = Object.entries(it.heal).map(([s,n])=>`+${n} ${STAT_LABEL[s]}`).join(', ');
+  openModal(`<h3>🧪 ${escapeHtml(it.name)}</h3><p>Scegli il bersaglio: ${parts}.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-itemtarget="${t.id}">${escapeHtml(t.name)}${t.status==='unconscious'?' 😵':''}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-itemtarget]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.itemtarget);
+    Object.entries(it.heal).forEach(([s,n])=>healStat(t,s,n));
+    logMsg(`🧪 ${c.name} usa ${it.name} su ${t.id===c.id?'se stesso':t.name}.`);
+    c.inventory.splice(idx,1);
+    closeModal(); render();
+  });
 }
 function unequipSlot(c, slot){
   const id = c.equipped[slot]; if(!id) return;
@@ -3232,14 +3267,19 @@ function showSpellInfoModal(id){
 function openHealOtherModal(caster, idx, sp, r, mult){
   mult = mult||1;
   const stat = r.stat||'pv';
-  const bonus = (caster.cls==='chierico' && stat==='pv') ? 1 : 0;
-  const amount = (r.n||1)*mult + bonus;
-  const targets = activeChars();
-  openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}${bonus?' (incluso il bonus di classe del Chierico)':''}.</p>
-    <div class="row">${targets.map(t=>`<button class="small" data-healtarget="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  const amount = (r.n||1)*mult;
+  const bonus = caster.curaBonusReady ? 1 : 0;
+  const targets = healableChars();
+  openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}${bonus?' (più 1 PV extra dall\'abilità del Chierico)':''}.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-healtarget="${t.id}">${escapeHtml(t.name)}${t.status==='unconscious'?' 😵':''}</button>`).join('')}</div>`);
   document.querySelectorAll('[data-healtarget]').forEach(b=>b.onclick=()=>{
     const t=targets.find(x=>x.id===b.dataset.healtarget);
     healStat(t, stat, amount);
+    if(bonus){
+      healStat(t, 'pv', bonus);
+      caster.curaBonusReady=false;
+      logMsg(`✨ ${caster.name}: l'abilità del Chierico attivata cura anche 1 PV extra a ${t.name} (consumata, ricarica a Recupero).`,'good');
+    }
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
