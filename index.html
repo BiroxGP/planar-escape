@@ -448,7 +448,7 @@ const INCONTRI = {
     C("ge_mercante","Mercante planare","ricompensa","Un mercante offre oggetti rari in cambio di risorse planari.",{reward:{type:"tradeResourceForItem"}}),
     C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta.",{reward:{type:"sanheal",n:1}}),
     C("ge_stranezza","Stranezza del portale","check","Il portale ha uno strano sussulto.",{check:"int",onFail:{type:"minor"}}),
-    C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma turba la mente.",{reward:{type:"itemPlusCheck"}}),
+    C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma la scoperta turba la mente: check di Sanità, se fallito depotenziamento temporaneo.",{reward:{type:"itemPlusCheck"}}),
     C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque.",{check:"choice",gravity:0}),
     C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani.",{bivioCard:true}),
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato.",{reward:{type:"syncJump"}}),
@@ -2196,7 +2196,7 @@ function renderRewardPanel(card, acts){
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
     case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button></span>`).join('')}</div>`;
     case 'choice3': return `<div>${acts.length?`<button class="small" data-choice3="resistance">🛡️ Resistenza per tutto il gruppo (prossimo piano)</button>`:''}<button class="small" data-choice3="peek">👁️ Guarda 2 carte in cima al mazzo Piani, scegli quale resta in cima</button><button class="small" data-choice3="reshuffle">🔀 Rimescola il mazzo Piani</button></div>`;
-    case 'itemPlusCheck': return `<button class="primary" id="btnApplyReward">Pesca oggetto (check San a parte, manuale)</button>`;
+    case 'itemPlusCheck': return `<p class="hint">⚠️ Se il check di Sanità fallisce: depotenziamento temporaneo a San.</p><div>${acts.map(c=>`<button class="small" data-itemcheck="${c.id}">Pesca oggetto e fai il check di Sanità → ${c.name}</button>`).join(' ')}</div>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
     case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
     case 'tradeItemForItemOrResource': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradeitem="${c.id}-item" ${c.inventory.length?'':'disabled'}>scambia oggetto → nuovo oggetto</button> <button class="small" data-tradeitem="${c.id}-resource" ${c.inventory.length?'':'disabled'}>scambia oggetto → risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta il baratto</button></div>`;
@@ -2217,7 +2217,6 @@ function bindRewardPanel(card, acts){
     if(r.type==='spellBoost'){ if(acts[0]){ acts[0].nextSpellBoost=true; logMsg(`✨ Il prossimo spell di ${acts[0].name} è potenziato.`);} }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); if(acts[0]){ const d=activeTempDebuffs(acts[0])[0]; if(d) cureOneDebuff(acts[0],d);} }
-    if(r.type==='itemPlusCheck'){ const it=drawOggetto(); if(it&&acts[0]) acts[0].inventory.push(it); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
@@ -2228,6 +2227,15 @@ function bindRewardPanel(card, acts){
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
   document.querySelectorAll('[data-lose]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.lose.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length){ c.inventory.pop(); } done(); });
+  document.querySelectorAll('[data-itemcheck]').forEach(b=>b.onclick=()=>{
+    const c=acts.find(x=>x.id===b.dataset.itemcheck);
+    const it=drawOggetto();
+    if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}, ma la scoperta lo turba.`); }
+    const r=checkRoll(c,'san');
+    logMsg(`🧠 ${c.name} check Sanità: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`);
+    if(!r.success) applyTempDebuff(c,'san');
+    done();
+  });
   document.querySelectorAll('[data-choice3]').forEach(b=>b.onclick=()=>{
     const mode=b.dataset.choice3;
     if(mode==='resistance'){ acts.forEach(c=>{ c.wildcardResistance=true; }); logMsg('🛡️ Il gruppo ottiene Resistenza universale per il prossimo piano (para il primo danno d\'ingresso, qualunque famiglia).','good'); done(); }
