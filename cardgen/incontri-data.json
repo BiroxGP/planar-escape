@@ -434,7 +434,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "nessun",
-    "text": "Un momento di quiete irreale.",
+    "text": "Un momento di quiete irreale. Nessun effetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -445,7 +445,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Contesa contro il proprio riflesso, su una caratteristica a scelta.",
+    "text": "Il proprio riflesso sfida in una Contesa. Scontro su una caratteristica a scelta (Forza, Intelletto o Destrezza), difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -456,7 +456,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Un'illusione si adatta al piano corrente.",
+    "text": "Un'illusione si adatta al piano corrente e confonde i sensi. Check di Intelletto: se fallito, perdita del turno.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -467,7 +467,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "ricompensa",
-    "text": "Una presenza eterea indica la via.",
+    "text": "Una presenza eterea indica la via. Ricompensa: guarda la prima carta del mazzo Piani, puoi scartarla e pescarne un'altra.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -478,7 +478,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Lo spazio si piega.",
+    "text": "Lo spazio si piega su se stesso, disorientando ogni passo. Check di Intelletto: se fallito, perdita del turno.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -489,7 +489,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "ricompensa",
-    "text": "Si intravede un frammento di un piano diverso.",
+    "text": "Si intravede un frammento di un piano diverso. Ricompensa: guarda la prima carta del mazzo Piani.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -500,7 +500,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Presenza potente e aliena.",
+    "text": "Una presenza potente e aliena si manifesta. Scontro forte di Intelletto, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -511,7 +511,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Il vuoto sensoriale logora la mente.",
+    "text": "Il vuoto sensoriale logora la mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -533,7 +533,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "ricompensa",
-    "text": "Un oggetto legato a Divinazione o Essenza.",
+    "text": "Un oggetto ancora carico di energia eterea. Ricompensa: pesca un oggetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -544,7 +544,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "ricompensa",
-    "text": "Un momento di calma cosmica.",
+    "text": "Un momento di calma cosmica pervade il piano. Ricompensa: Recupero per il gruppo, più 1 Sanità Mentale extra.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -555,7 +555,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Qualcosa si muove nel buio.",
+    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza, difficoltà normale (danno passante: perdita anche del turno).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -566,7 +566,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Un incubo che prende forma propria.",
+    "text": "Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale, difficoltà normale (danno passante: depotenziamento temporaneo anche a San).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -577,7 +577,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Un doppelganger nato da pura riflessione.",
+    "text": "Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -588,7 +588,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "ricompensa",
-    "text": "Un oggetto onirico e instabile.",
+    "text": "Un oggetto onirico e instabile si materializza. Ricompensa: pesca un oggetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -599,7 +599,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "nessun",
-    "text": "L'ordine regna, tranquillo.",
+    "text": "L'ordine regna, tranquillo. Nessun effetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -610,7 +610,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "check",
-    "text": "Valuta la purezza del gruppo (chi ha meno di 4 Anima).",
+    "text": "Il Giudice dell'Ordine valuta la purezza di ognuno. Check di Intelletto: se fallito, depotenziamento temporaneo a una caratteristica casuale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -632,7 +632,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Guardiano purificatore (colpisce chi ha Corruzione, non-morti, demoni).",
+    "text": "Un guardiano purificatore attacca chiunque si trovi nel gruppo. Scontro di Forza, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -643,7 +643,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Un costrutto meccanico attacca con precisione glaciale.",
+    "text": "Un costrutto meccanico attacca con precisione glaciale. Scontro di Destrezza, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -654,7 +654,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "check",
-    "text": "Rivela un fatto scomodo.",
+    "text": "Un oracolo rivela un fatto scomodo. Check di Sanità Mentale: se fallito, depotenziamento temporaneo a una caratteristica casuale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -665,7 +665,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "ricompensa",
-    "text": "Un archivio cosmico restituisce qualcosa di perduto (rara).",
+    "text": "Un archivio cosmico restituisce ciò che era perduto per sempre. Ricompensa (rara): rimuovi un depotenziamento permanente a un personaggio a scelta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -687,7 +687,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "ricompensa",
-    "text": "Cura o protezione tipica del piano Sacro.",
+    "text": "Una cura o protezione tipica del piano Sacro. Ricompensa: +1 PV a tutti i presenti, e un depotenziamento temporaneo guarito a un personaggio.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -698,7 +698,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Un'entità di Ordine assoluto punisce ogni imperfezione.",
+    "text": "Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -709,7 +709,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Una luce di giudizio rivela ogni colpa.",
+    "text": "Una luce di giudizio rivela ogni colpa. Scontro di Anima, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -720,7 +720,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "ricompensa",
-    "text": "Ogni vittoria contro l'Entropia da qui in poi frutta un oggetto al gruppo.",
+    "text": "Da qui in poi, ogni vittoria del gruppo contro l'Entropia farà trovare un oggetto. Ricompensa: sigilla il patto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -731,7 +731,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "check",
-    "text": "Un enigma a struttura rigida, nessun reroll possibile.",
+    "text": "Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, perdita del turno.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -742,7 +742,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "check",
-    "text": "Qualcosa si blocca nel meccanismo.",
+    "text": "Un ingranaggio si blocca all'improvviso. Check di Destrezza: se fallito, perdita di un oggetto casuale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -753,7 +753,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "ricompensa",
-    "text": "Un lampo di lucidità assoluta (rara).",
+    "text": "Un lampo di lucidità assoluta. Ricompensa (rara): +1 Sanità Mentale o +1 Anima, a scelta, per un personaggio.",
     "manual": false,
     "forte": false,
     "persistent": false
