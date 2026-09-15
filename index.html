@@ -426,21 +426,21 @@ const INCONTRI = {
     C("ar_illuminazione","Illuminazione improvvisa","ricompensa","Un lampo di lucidità assoluta. Ricompensa (rara): +1 Sanità Mentale o +1 Anima, a scelta, per un personaggio.",{reward:{type:"healChoiceSanAnima"}}),
   ],
   entropia:[
-    C("en_nessuno","Nessun evento","nessun","Il nulla, per una volta, è letteralmente nulla."),
-    C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca, su una statistica casuale.",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
-    C("en_voragine","Voragine del Vuoto","ricompensa","Si sceglie cosa perdere fra PV, oggetto, spell o abilità.",{reward:{type:"choiceLoss"}}),
-    C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto.",{onFail:{type:"loseItem"},auto:true}),
-    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo.",{check:"int",gravity:0,onLoseExtra:"loseTurn"}),
-    C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa.",{check:"des",onFail:{type:"scatterSelf"}}),
-    C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente un punto a scelta, ma si trova un oggetto minore.",{oblioCard:true}),
-    C("en_ombra","Ombra strisciante","incontro","Non il combattimento fisico di Ombra: qui è un ricordo che perseguita.",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
-    C("en_relitto","Relitto insanguinato","ricompensa","Un'arma intrisa di sangue avversario.",{reward:{type:"item"}}),
-    C("en_avatar","Avatar dell'Entropia","incontro","Incarna la rovina stessa.",{check:"native",gravity:1,forte:true}),
-    C("en_corrosione","Corrosione lenta","check","Un'arma o armatura equipaggiata perde temporaneamente il bonus.",{auto:true,onFail:{type:"corrode"}}),
-    C("en_eco","Eco del Nulla","ricompensa","Si ottiene 1 risorsa planare, legata a un piccolo sacrificio immediato.",{reward:{type:"resourceForSacrifice"}}),
-    C("en_marcescenza","Marcescenza contagiosa","incontro","Una creatura nata dalla decomposizione.",{check:"for",gravity:0}),
+    C("en_nessuno","Nessun evento","nessun","Il nulla, per una volta, è letteralmente nulla. Nessun effetto."),
+    C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca su una statistica casuale. Scontro di difficoltà normale (danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
+    C("en_voragine","Voragine del Vuoto","ricompensa","Il vuoto reclama qualcosa in cambio del passaggio. Scelta: -1 PV, oppure perdi un oggetto, uno spell o un'abilità.",{reward:{type:"choiceLoss"}}),
+    C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto. Automatico, nessun check: perdita di un oggetto casuale.",{onFail:{type:"loseItem"},auto:true}),
+    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto, difficoltà normale (danno passante: perdita anche del turno).",{check:"int",gravity:0,onLoseExtra:"loseTurn"}),
+    C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa. Check di Destrezza: se fallito, allontanamento temporaneo dal gruppo (ci si riunisce al turno successivo).",{check:"des",onFail:{type:"scatterSelf"}}),
+    C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente una caratteristica a scelta, ma si trova in cambio un oggetto minore (oppure si rifiuta, senza conseguenze).",{oblioCard:true}),
+    C("en_ombra","Ombra strisciante","incontro","Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale, difficoltà normale (danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
+    C("en_relitto","Relitto insanguinato","ricompensa","Un'arma intrisa di sangue avversario, ancora carica di potere. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
+    C("en_avatar","Avatar dell'Entropia","incontro","Incarna la rovina stessa. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",{check:"native",gravity:1,forte:true}),
+    C("en_corrosione","Corrosione lenta","check","Un'arma o un'armatura equipaggiata perde temporaneamente il bonus. Automatico, nessun check: se ne hai entrambe scegli quale, il bonus torna al prossimo Recupero.",{auto:true,onFail:{type:"corrode"}}),
+    C("en_eco","Eco del Nulla","ricompensa","Si ottiene una risorsa planare, in cambio di un piccolo sacrificio. Ricompensa: sacrifica 1 PV o un oggetto → +1 risorsa planare (oppure rifiuta).",{reward:{type:"resourceForSacrifice"}}),
+    C("en_marcescenza","Marcescenza contagiosa","incontro","Una creatura nata dalla decomposizione attacca. Scontro di Forza, difficoltà normale.",{check:"for",gravity:0}),
     C("en_richiamo","Richiamo di sangue","check","Automatico: chi ha già perso PV in questo turno (dall'ingresso nel piano o da un evento precedente) ne perde 1 in più.",{richiamoCard:true}),
-    C("en_voce","Voce dimenticata","check","Si dimentica temporaneamente come usare uno spell o abilità.",{check:"int",onFail:{type:"forgetSpell"}}),
+    C("en_voce","Voce dimenticata","check","Si dimentica temporaneamente come usare uno spell o abilità. Check di Intelletto: se fallito, dimentica temporaneamente uno spell (o depotenziamento a Intelletto se non ne ha).",{check:"int",onFail:{type:"forgetSpell"}}),
   ],
   generico:[
     C("ge_nessuno","Nessun evento","nessun","Un turno di viaggio senza incidenti."),
@@ -1722,7 +1722,7 @@ function renderDrawFlow(){
 
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
-const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione']);
+const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce']);
 function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">

@@ -764,7 +764,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "nessun",
-    "text": "Il nulla, per una volta, è letteralmente nulla.",
+    "text": "Il nulla, per una volta, è letteralmente nulla. Nessun effetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -775,7 +775,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità di puro Caos attacca, su una statistica casuale.",
+    "text": "Un'entità di puro Caos attacca su una statistica casuale. Scontro di difficoltà normale (danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -786,7 +786,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "ricompensa",
-    "text": "Si sceglie cosa perdere fra PV, oggetto, spell o abilità.",
+    "text": "Il vuoto reclama qualcosa in cambio del passaggio. Scelta: -1 PV, oppure perdi un oggetto, uno spell o un'abilità.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -797,7 +797,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "Accelera la perdita di un oggetto.",
+    "text": "Accelera la perdita di un oggetto. Automatico, nessun check: perdita di un oggetto casuale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -808,7 +808,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità che ruba letteralmente tempo.",
+    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto, difficoltà normale (danno passante: perdita anche del turno).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -819,7 +819,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "La tempesta disorienta e separa.",
+    "text": "La tempesta disorienta e separa. Check di Destrezza: se fallito, allontanamento temporaneo dal gruppo (ci si riunisce al turno successivo).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -830,7 +830,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "Si dimentica temporaneamente un punto a scelta, ma si trova un oggetto minore.",
+    "text": "Si dimentica temporaneamente una caratteristica a scelta, ma si trova in cambio un oggetto minore (oppure si rifiuta, senza conseguenze).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -841,7 +841,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Non il combattimento fisico di Ombra: qui è un ricordo che perseguita.",
+    "text": "Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale, difficoltà normale (danno passante: depotenziamento temporaneo anche a San).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -852,7 +852,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "ricompensa",
-    "text": "Un'arma intrisa di sangue avversario.",
+    "text": "Un'arma intrisa di sangue avversario, ancora carica di potere. Ricompensa: pesca un oggetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -863,7 +863,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Incarna la rovina stessa.",
+    "text": "Incarna la rovina stessa. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -874,7 +874,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "Un'arma o armatura equipaggiata perde temporaneamente il bonus.",
+    "text": "Un'arma o un'armatura equipaggiata perde temporaneamente il bonus. Automatico, nessun check: se ne hai entrambe scegli quale, il bonus torna al prossimo Recupero.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -885,7 +885,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "ricompensa",
-    "text": "Si ottiene 1 risorsa planare, legata a un piccolo sacrificio immediato.",
+    "text": "Si ottiene una risorsa planare, in cambio di un piccolo sacrificio. Ricompensa: sacrifica 1 PV o un oggetto → +1 risorsa planare (oppure rifiuta).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -896,7 +896,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Una creatura nata dalla decomposizione.",
+    "text": "Una creatura nata dalla decomposizione attacca. Scontro di Forza, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -918,7 +918,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "Si dimentica temporaneamente come usare uno spell o abilità.",
+    "text": "Si dimentica temporaneamente come usare uno spell o abilità. Check di Intelletto: se fallito, dimentica temporaneamente uno spell (o depotenziamento a Intelletto se non ne ha).",
     "manual": false,
     "forte": false,
     "persistent": false
