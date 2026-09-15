@@ -4,9 +4,12 @@
 //  - una cartella con le illustrazioni generate: <id>.png / .jpg / .webp
 //
 // Uso:
-//   node render.js <artDir> <outDir>
+//   node render.js <artDir> <outDir> [id1,id2,...]
 // Se una carta non ha ancora l'immagine, viene mostrato un segnaposto colorato
 // (stessa convenzione dell'app web) invece di bloccare il render.
+// Il terzo argomento, opzionale, filtra a una lista di id (es. "aria,tempesta")
+// invece di rigenerare tutti e 36 — comodo per aggiornare solo i Piani che hanno
+// appena ricevuto un'illustrazione, senza rischiare segnaposto sugli altri.
 //
 // Nota: usa i font Google (Cinzel / Source Serif 4 / JetBrains Mono) via link
 // online. Se lo esegui in un ambiente senza accesso a internet, il browser userà
@@ -22,8 +25,11 @@ async function main() {
   // che usa già l'app web) e scrive le carte finite in cards_final/piani/
   const artDir = process.argv[2] || path.join(__dirname, '..', 'assets', 'cards');
   const outDir = process.argv[3] || path.join(__dirname, '..', 'cards_final', 'piani');
+  const idFilter = process.argv[4] ? process.argv[4].split(',') : null;
 
-  const planes = JSON.parse(fs.readFileSync(path.join(__dirname, 'piani-data.json'), 'utf8'));
+  let planes = JSON.parse(fs.readFileSync(path.join(__dirname, 'piani-data.json'), 'utf8'));
+  if (idFilter) planes = planes.filter(p => idFilter.includes(p.id));
+  if (planes.length === 0) { console.error('Nessun piano trovato per il filtro "' + (idFilter||[]).join(',') + '".'); process.exit(1); }
   const flavors = JSON.parse(fs.readFileSync(path.join(__dirname, 'flavors.json'), 'utf8'));
 
   fs.mkdirSync(outDir, { recursive: true });

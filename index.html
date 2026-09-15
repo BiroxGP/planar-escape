@@ -87,6 +87,11 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
 .incontro-card-hero{width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
 .incontro-card-hero img{width:100%; display:block;}
+.lvlup-star{text-align:center; font-size:1.7rem; line-height:1; margin-bottom:.3rem; text-shadow:0 0 14px var(--ember-soft);}
+.lvlup-portrait{width:140px; height:140px; margin:0 auto .8rem; border-radius:50%; overflow:hidden; border:3px solid var(--ember); box-shadow:0 0 0 6px var(--ember-soft), 0 10px 24px var(--shadow);}
+.lvlup-portrait img{width:100%; height:100%; object-fit:cover; object-position:50% 12%; display:block;}
+.lvlup-portrait .lvlup-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:3rem; background:var(--surface-2);}
+.lvlup-title{text-align:center;}
 
 /* ---- party bar ---- */
 .party-bar{display:flex; gap:.8rem; flex-wrap:wrap; margin-bottom:1.2rem;}
@@ -1291,7 +1296,9 @@ function processLevelUpQueue(){
 }
 function openLevelUpModal(c){
   const cls=CLASSES[c.cls];
-  openModal(`<h3>⭐ Avanzamento di livello — ${escapeHtml(c.name)}</h3>
+  openModal(`<div class="lvlup-star">⭐</div>
+    <div class="lvlup-portrait"><img src="assets/cards/${c.cls}.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="lvlup-fallback" style="display:none;">${cls.icon}</div></div>
+    <h3 class="lvlup-title">Avanzamento di livello — ${escapeHtml(c.name)}</h3>
     <p>Scegli su quale caratteristica applicare <strong>+1</strong>:</p>
     <div class="row">${STATS.map(s=>`<button class="small" data-lvlstat="${s}">${STAT_LABEL[s]} (${c.stats[s]})</button>`).join('')}</div>
     <p class="mt1 hint">Progresso di classe: ${classProgressText(c.cls)}</p>
