@@ -85,7 +85,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview{width:300px; max-width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px var(--shadow); border:1px solid var(--line);}
 .class-card-preview img{width:100%; display:block;}
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
-.incontro-card-hero{width:360px; max-width:100%; margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
+.incontro-card-hero{width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
 .incontro-card-hero img{width:100%; display:block;}
 
 /* ---- party bar ---- */
@@ -1222,6 +1222,7 @@ function doJump(){
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
+  processLevelUpQueue();
   if(drawnId==='__PT__'){
     resolvePianoTerreno();
     return;
@@ -1274,9 +1275,19 @@ function checkLevelUp(c){
   if(c.jumps>0 && c.jumps%5===0){
     c.level++;
     logMsg(`⭐ ${c.name} avanza di livello (Lv ${c.level})! +1 a scelta e progresso di classe.`);
-    // auto-apply a sensible default (+1 to lowest stat) then progression handled via modal offering choice
-    openLevelUpModal(c);
+    // in coda: se più personaggi salgono di livello nello stesso salto sincronizzato,
+    // aprire subito una modale per ciascuno le sovrascriverebbe a vicenda — solo l'ultima
+    // resterebbe visibile, e gli altri perderebbero silenziosamente scelta e progresso.
+    state.pendingLevelUps = state.pendingLevelUps || [];
+    state.pendingLevelUps.push(c.id);
   }
+}
+function processLevelUpQueue(){
+  if(!state.pendingLevelUps || state.pendingLevelUps.length===0) return;
+  const id = state.pendingLevelUps.shift();
+  const c = state.players.find(p=>p.id===id);
+  if(!c){ processLevelUpQueue(); return; }
+  openLevelUpModal(c);
 }
 function openLevelUpModal(c){
   const cls=CLASSES[c.cls];
@@ -1290,7 +1301,7 @@ function openLevelUpModal(c){
     b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('primary'));
     b.classList.add('primary');
   });
-  document.getElementById('lvlConfirm').onclick=()=>{ applyClassProgress(c); closeModal(); render(); };
+  document.getElementById('lvlConfirm').onclick=()=>{ applyClassProgress(c); closeModal(); render(); processLevelUpQueue(); };
 }
 function classProgressText(clsKey){
   const map={
