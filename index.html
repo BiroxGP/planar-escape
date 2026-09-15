@@ -411,7 +411,7 @@ const INCONTRI = {
   armonia:[
     C("ar_nessuno","Nessun evento","nessun","L'ordine regna, tranquillo."),
     C("ar_giudice","Giudice dell'Ordine","check","Valuta la purezza del gruppo (chi ha meno di 4 Anima).",{check:"int",onFail:{type:"tempDebuff",stat:"random"}}),
-    C("ar_esattore","Esattore della Legge","check","Richiede un pegno per il passaggio, o attacca.",{manual:true}),
+    C("ar_esattore","Esattore della Legge","check","Richiede un pegno (1 risorsa planare o un oggetto) per lasciare passare indenne; chi rifiuta viene attaccato (check di Forza, fallito = -1 PV).",{esattoreCard:true}),
     C("ar_custode","Custode Sacro","incontro","Guardiano purificatore (colpisce chi ha Corruzione, non-morti, demoni).",{check:"for",gravity:0}),
     C("ar_automa","Automa di Metallo","incontro","Un costrutto meccanico attacca con precisione glaciale.",{check:"des",gravity:0}),
     C("ar_oracolo","Oracolo della Verità","check","Rivela un fatto scomodo.",{check:"san",onFail:{type:"tempDebuff",stat:"random"}}),
@@ -439,7 +439,7 @@ const INCONTRI = {
     C("en_corrosione","Corrosione lenta","check","Un'arma o armatura equipaggiata perde temporaneamente il bonus.",{auto:true,onFail:{type:"corrode"}}),
     C("en_eco","Eco del Nulla","ricompensa","Si ottiene 1 risorsa planare, legata a un piccolo sacrificio immediato.",{reward:{type:"resourceForSacrifice"}}),
     C("en_marcescenza","Marcescenza contagiosa","incontro","Una creatura nata dalla decomposizione.",{check:"for",gravity:0}),
-    C("en_richiamo","Richiamo di sangue","check","Chi ha già perso PV in questo turno ne perde 1 in più.",{manual:true}),
+    C("en_richiamo","Richiamo di sangue","check","Automatico: chi ha già perso PV in questo turno (dall'ingresso nel piano o da un evento precedente) ne perde 1 in più.",{richiamoCard:true}),
     C("en_voce","Voce dimenticata","check","Si dimentica temporaneamente come usare uno spell o abilità.",{check:"int",onFail:{type:"forgetSpell"}}),
   ],
   generico:[
@@ -453,7 +453,7 @@ const INCONTRI = {
     C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani.",{bivioCard:true}),
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato.",{reward:{type:"syncJump"}}),
     C("ge_cacciatore","Cacciatore di taglie planare","incontro","Dà la caccia a chi porta più oggetti nel gruppo.",{check:"choice",gravity:0}),
-    C("ge_anomalia","Anomalia temporale","check","Il tempo si comporta in modo strano.",{manual:true}),
+    C("ge_anomalia","Anomalia temporale","check","Automatico: il tempo si comporta in modo strano (tira un d6 per l'effetto).",{anomaliaCard:true}),
     C("ge_randagio","Randagio planare","incontro","Una creatura minore, spaventata, attacca solo se minacciata.",{check:"for",gravity:-1,forceBase2:true}),
     C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta del Viandante smarrito.",{reward:{type:"choice3"}}),
     C("ge_legame","Legame a distanza","ricompensa","Il prossimo salto sarà lo stesso per tutti i separati.",{reward:{type:"syncJump"}}),
@@ -703,6 +703,7 @@ function makeChar(name, clsKey, bonus){
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
     protectedItemId:null, // Statua di Stasi: oggetto immune a qualsiasi perdita/furto/distruzione, un solo oggetto alla volta
+    turnStartPv:null, // PV all'inizio del turno corrente, per Richiamo di sangue (chi ha già perso PV in questo turno)
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -1199,6 +1200,7 @@ function doJump(){
   if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
   const jumpers = activeChars();
+  jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
     resolvePianoTerreno();
@@ -1752,6 +1754,44 @@ function renderIncontroAction(){
   if(card.statuaCard){
     el.innerHTML = renderStatuaCard(acts);
     bindStatuaCard(acts);
+    return;
+  }
+  if(card.esattoreCard){
+    el.innerHTML = renderEsattoreCard(acts);
+    bindEsattoreCard(acts, plane);
+    return;
+  }
+  if(card.richiamoCard){
+    if(!state.currentDraw.autoApplied){
+      const victims = acts.filter(c=>c.turnStartPv!=null && c.stats.pv < c.turnStartPv);
+      victims.forEach(c=>{ applyDamage(c,'pv',1,{family:plane.family, planeId:plane.id}); logMsg(`🩸 ${c.name} aveva già perso PV in questo turno: il Richiamo di sangue lo colpisce di nuovo (-1 PV).`,'warn'); });
+      if(!victims.length) logMsg('🩸 Nessuno ha ancora perso PV in questo turno: il Richiamo di sangue non ha effetto.');
+      state.currentDraw.autoApplied = true;
+    }
+    el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
+    document.getElementById('btnResolveDone').onclick=finishIncontro;
+    return;
+  }
+  if(card.anomaliaCard){
+    if(!state.currentDraw.autoApplied){
+      state.currentDraw.autoApplied = true;
+      const r = d6();
+      if(r<=2){
+        logMsg(`⏳ Anomalia temporale (${r}): il tempo rallenta, il gruppo perde questo turno.`,'warn');
+        acts.forEach(c=>logMsg(`⏳ ${c.name} perde il turno.`));
+      } else if(r<=4){
+        logMsg(`⏳ Anomalia temporale (${r}): un breve sussulto, poi tutto torna normale. Nessun effetto.`);
+      } else if(r===5){
+        logMsg(`⏳ Anomalia temporale (${r}): il tempo accelera, si pesca subito un altro Incontro.`,'warn');
+        drawIncontroForPlane(plane, null, acts);
+        return;
+      } else {
+        acts.forEach(c=>c.resources++);
+        logMsg(`⏳ Anomalia temporale (${r}): un dejà-vu favorevole, +1 risorsa planare a testa.`,'good');
+      }
+    }
+    el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
+    document.getElementById('btnResolveDone').onclick=finishIncontro;
     return;
   }
   if(card.type==='incontro'){
@@ -2362,6 +2402,46 @@ function bindStatuaCard(acts){
     const c=acts.find(x=>x.id===cid);
     setProtectedItem(c, itemId);
     finishIncontro();
+  });
+  const btn=document.getElementById('btnResolveDone');
+  if(btn) btn.onclick=finishIncontro;
+}
+function renderEsattoreCard(acts){
+  const used = (state.currentDraw && state.currentDraw.esattoreDone) || {};
+  return `<div class="manual-box">
+    <h4>⚖️ Esattore della Legge</h4>
+    <p style="font-size:.85rem;">Chiede un pegno per lasciare passare indenne: 1 risorsa planare o un oggetto. Chi rifiuta viene attaccato (check di Forza, fallito = -1 PV).</p>
+    ${acts.map(c=>{
+      const canItem = pickLosableItemIndex(c) >= 0;
+      return `<div class="row" style="margin-bottom:.4rem;flex-wrap:wrap;"><span style="min-width:120px;">${c.name}</span>
+      <button class="small" data-esattore-pay="${c.id}::res" ${used[c.id]||c.resources<=0?'disabled':''}>Paga risorsa</button>
+      <button class="small" data-esattore-pay="${c.id}::item" ${used[c.id]||!canItem?'disabled':''}>Paga oggetto</button>
+      <button class="small" data-esattore-refuse="${c.id}" ${used[c.id]?'disabled':''}>Rifiuta e combatti</button>
+      <span id="esattoreRes_${c.id}"></span>
+    </div>`;
+    }).join('')}
+    <button class="primary mt1" id="btnResolveDone" ${acts.every(c=>used[c.id])?'':'disabled'}>Continua</button>
+  </div>`;
+}
+function bindEsattoreCard(acts, plane){
+  state.currentDraw.esattoreDone = state.currentDraw.esattoreDone || {};
+  const used = state.currentDraw.esattoreDone;
+  const markDone=()=>{ render(); setTimeout(renderIncontroAction,0); };
+  document.querySelectorAll('[data-esattore-pay]').forEach(b=>b.onclick=()=>{
+    const [cid,mode]=b.dataset.esattorePay.split('::');
+    const c=acts.find(x=>x.id===cid);
+    if(mode==='res'){ c.resources--; logMsg(`⚖️ ${c.name} paga il pegno con 1 risorsa planare: passaggio libero.`); }
+    else { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`⚖️ ${c.name} paga il pegno con ${OGGETTI_BY_ID[lost]?.name}: passaggio libero.`); } }
+    used[c.id]=true;
+    markDone();
+  });
+  document.querySelectorAll('[data-esattore-refuse]').forEach(b=>b.onclick=()=>{
+    const c=acts.find(x=>x.id===b.dataset.esattoreRefuse);
+    const r=checkRoll(c,'for');
+    if(r.success){ logMsg(`⚖️ ${c.name} rifiuta il pegno e respinge l'Esattore (check Forza ${r.roll} vs ${r.val}): nessuna conseguenza.`,'good'); }
+    else { applyDamage(c,'pv',1,{family:plane.family, planeId:plane.id}); logMsg(`⚖️ ${c.name} rifiuta il pegno ma l'Esattore lo colpisce (check Forza ${r.roll} vs ${r.val} FALLITO): -1 PV.`,'warn'); }
+    used[c.id]=true;
+    markDone();
   });
   const btn=document.getElementById('btnResolveDone');
   if(btn) btn.onclick=finishIncontro;
