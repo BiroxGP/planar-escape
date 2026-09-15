@@ -16,7 +16,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Un elementale si manifesta, della natura del piano corrente.",
+    "text": "Un elementale si manifesta, della natura del piano corrente. Scontro sulla statistica nativa del piano, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -27,7 +27,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Tre piccole creature elementari attaccano in gruppo.",
+    "text": "Tre piccole creature elementari attaccano in gruppo. Scontro sulla statistica nativa del piano, difficoltà ridotta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -38,7 +38,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Si scopre una vena di cristalli pregiati.",
+    "text": "Si scopre una vena di cristalli pregiati: +1 risorsa planare al gruppo.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -49,7 +49,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Il piano ha un sussulto improvviso.",
+    "text": "Il piano ha un sussulto improvviso. Check sulla statistica nativa del piano: se fallito, depotenziamento temporaneo alla stessa statistica.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -60,7 +60,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Una creatura minore indica una via d'uscita.",
+    "text": "Una creatura minore indica una via d'uscita: guarda la prima carta del mazzo Piani.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -71,7 +71,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Uno spirito offre un baratto: oggetto per oggetto o risorsa planare.",
+    "text": "Uno spirito offre un baratto: un oggetto in cambio di un nuovo oggetto o di 1 risorsa planare, a scelta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -82,7 +82,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Un elementale maggiore sorveglia il passaggio.",
+    "text": "Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -93,7 +93,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Il piano amplifica temporaneamente un beneficio o maleficio elementare.",
+    "text": "Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -104,7 +104,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Un angolo relativamente sicuro.",
+    "text": "Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -115,7 +115,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Una crepa verso un altro piano elementare si apre.",
+    "text": "Una crepa verso un altro piano elementare si apre. Check di gruppo di Intelletto (penalità -1): se fallito, il gruppo viene scaraventato in un altro piano di Famiglia Elementare.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -126,7 +126,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Una scarica improvvisa mette alla prova i riflessi.",
+    "text": "Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza, difficoltà normale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -137,7 +137,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Correnti che disorientano.",
+    "text": "Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -148,7 +148,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Echi del piano Cristallo potenziano il prossimo spell.",
+    "text": "Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -159,7 +159,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Esalazioni velenose.",
+    "text": "Esalazioni velenose. Check di Punti Vita: se fallito, -1 PV.",
     "manual": false,
     "forte": false,
     "persistent": false

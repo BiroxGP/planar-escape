@@ -348,20 +348,20 @@ function C(id,name,type,text,extra){ return Object.assign({id,name,type,text},ex
 const INCONTRI = {
   elementare:[
     C("el_nessuno","Nessun evento","nessun","Un turno tranquillo, nessun effetto."),
-    C("el_elementale","Elementale","incontro","Un elementale si manifesta, della natura del piano corrente.",{check:"native",gravity:0}),
-    C("el_sciame","Sciame minore","incontro","Tre piccole creature elementari attaccano in gruppo.",{check:"native",gravity:-1,swarm:3}),
-    C("el_vena","Vena preziosa","ricompensa","Si scopre una vena di cristalli pregiati.",{reward:{type:"resource",n:1}}),
-    C("el_instabilita","Instabilità","check","Il piano ha un sussulto improvviso.",{check:"native",onFail:{type:"tempDebuff",stat:"native"}}),
-    C("el_guida","Guida elementale","ricompensa","Una creatura minore indica una via d'uscita.",{reward:{type:"peek",n:1}}),
-    C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: oggetto per oggetto o risorsa planare.",{reward:{type:"tradeItemForItemOrResource"}}),
-    C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio.",{check:"native",gravity:1,forte:true}),
-    C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare.",{auto:true,onFail:{type:"amplify"}}),
-    C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro.",{reward:{type:"heal",n:1}}),
-    C("el_frattura","Frattura planare","check","Una crepa verso un altro piano elementare si apre.",{groupCheck:"int",penalty:-1,onFail:{type:"scatterFamily",family:"elementare"}}),
-    C("el_onda","Onda d'Urto","incontro","Una scarica improvvisa mette alla prova i riflessi.",{check:"des",gravity:0}),
-    C("el_vento","Vento Ingannatore","check","Correnti che disorientano.",{check:"des",onFail:{type:"loseTurn"}}),
-    C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell.",{reward:{type:"spellBoost"}}),
-    C("el_fumo","Fumo Tossico","check","Esalazioni velenose.",{check:"pv",onFail:{type:"damage",n:1}}),
+    C("el_elementale","Elementale","incontro","Un elementale si manifesta, della natura del piano corrente. Scontro sulla statistica nativa del piano, difficoltà normale.",{check:"native",gravity:0}),
+    C("el_sciame","Sciame minore","incontro","Tre piccole creature elementari attaccano in gruppo. Scontro sulla statistica nativa del piano, difficoltà ridotta.",{check:"native",gravity:-1,swarm:3}),
+    C("el_vena","Vena preziosa","ricompensa","Si scopre una vena di cristalli pregiati: +1 risorsa planare al gruppo.",{reward:{type:"resource",n:1}}),
+    C("el_instabilita","Instabilità","check","Il piano ha un sussulto improvviso. Check sulla statistica nativa del piano: se fallito, depotenziamento temporaneo alla stessa statistica.",{check:"native",onFail:{type:"tempDebuff",stat:"native"}}),
+    C("el_guida","Guida elementale","ricompensa","Una creatura minore indica una via d'uscita: guarda la prima carta del mazzo Piani.",{reward:{type:"peek",n:1}}),
+    C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: un oggetto in cambio di un nuovo oggetto o di 1 risorsa planare, a scelta.",{reward:{type:"tradeItemForItemOrResource"}}),
+    C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",{check:"native",gravity:1,forte:true}),
+    C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",{auto:true,onFail:{type:"amplify"}}),
+    C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",{reward:{type:"heal",n:1}}),
+    C("el_frattura","Frattura planare","check","Una crepa verso un altro piano elementare si apre. Check di gruppo di Intelletto (penalità -1): se fallito, il gruppo viene scaraventato in un altro piano di Famiglia Elementare.",{groupCheck:"int",penalty:-1,onFail:{type:"scatterFamily",family:"elementare"}}),
+    C("el_onda","Onda d'Urto","incontro","Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza, difficoltà normale.",{check:"des",gravity:0}),
+    C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
+    C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",{reward:{type:"spellBoost"}}),
+    C("el_fumo","Fumo Tossico","check","Esalazioni velenose. Check di Punti Vita: se fallito, -1 PV.",{check:"pv",onFail:{type:"damage",n:1}}),
   ],
   demoni:[
     C("de_nessuno","Nessun evento","nessun","Anche l'inferno, a volte, tace per un turno."),
@@ -416,7 +416,7 @@ const INCONTRI = {
     C("ar_automa","Automa di Metallo","incontro","Un costrutto meccanico attacca con precisione glaciale.",{check:"des",gravity:0}),
     C("ar_oracolo","Oracolo della Verità","check","Rivela un fatto scomodo.",{check:"san",onFail:{type:"tempDebuff",stat:"random"}}),
     C("ar_eternita","Custode di Eternità","ricompensa","Un archivio cosmico restituisce qualcosa di perduto (rara).",{reward:{type:"removePermDebuff"}}),
-    C("ar_statua","Statua di Stasi","check","Il tempo si ferma per un oggetto, proteggendolo.",{manual:true}),
+    C("ar_statua","Statua di Stasi","check","Il tempo si ferma per un oggetto, proteggendolo per sempre da perdite, furti e distruzione.",{statuaCard:true}),
     C("ar_benedizione","Benedizione","ricompensa","Cura o protezione tipica del piano Sacro.",{reward:{type:"groupHealCure"}}),
     C("ar_geometria","Geometria perfetta","incontro","Un'entità di Ordine assoluto punisce ogni imperfezione.",{check:"native",gravity:1,forte:true}),
     C("ar_bagliore","Bagliore del Sole","incontro","Una luce di giudizio rivela ogni colpa.",{check:"anima",gravity:0}),
@@ -702,6 +702,7 @@ function makeChar(name, clsKey, bonus){
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
+    protectedItemId:null, // Statua di Stasi: oggetto immune a qualsiasi perdita/furto/distruzione, un solo oggetto alla volta
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -1029,8 +1030,9 @@ function renderCharCard(c){
       <span>🎒 ${c.inventory.length} oggetti</span>
       <span>📖 ${c.spells.length} spell</span>
       ${c.companion?`<span>🗿 ${escapeHtml(c.companion.name)} (${c.companion.value})</span>`:''}
+      ${c.protectedItemId?`<span>⏳ ${escapeHtml(OGGETTI_BY_ID[c.protectedItemId]?.name||c.protectedItemId)}</span>`:''}
     </div>
-    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
+    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}${id===c.protectedItemId?' ⏳':''}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
     <div class="char-actions">
       ${c.status==='active'||c.status==='undead' ? `<button class="small" data-open-char="${c.id}">Gestisci</button>` : ''}
     </div>
@@ -1446,10 +1448,10 @@ const PLANE_EFFECTS = {
   verita:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`🔎 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success) applyTempDebuff(c,'san'); }); },
   caos:(p,acts,ctx)=>{ logMsg('🌀 Caos: ogni check qui userà una statistica casuale. Il mazzo Piani viene rimescolato ora, incluse le carte Piano Terreno sul fondo.'); reshuffleMazzoPiani(); },
   sangue:(p,acts,ctx)=>{ logMsg('🩸 Qui ogni check/combattimento fallito costa anche 1 PV extra, e le perdite di PV raddoppiano.'); },
-  decadimento:(p,acts,ctx)=>{ acts.forEach(c=>{ if(c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🦴 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Decadimento).`); } }); },
+  decadimento:(p,acts,ctx)=>{ acts.forEach(c=>{ const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🦴 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Decadimento).`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto dal Decadimento.`); } }); },
   putrefazione:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=d6(); const stat = r<=3?'for':'des'; applyTempDebuff(c,stat); }); },
   tempo:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`⏳ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ const stat=STATS[Math.floor(Math.random()*6)]; applyTempDebuff(c,stat); } }); },
-  cenere:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`💨 ${c.name} check Forza: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success && c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`💨 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Cenere).`); } }); },
+  cenere:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`💨 ${c.name} check Forza: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`💨 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Cenere).`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto dalla Cenere.`); } } }); },
   oblio:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`🌫️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ if(c.spells.length){ logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (rimane in mano ma non utilizzabile fino a Recupero — gestione manuale).`);} else applyTempDebuff(c,'int'); } }); },
   ombra:(p,acts,ctx)=>{ acts.forEach(c=>{ resolveAutoCombat([c],[{name:'La tua Ombra (Ombra)', statKey:'des', value:2}], ctx); }); },
   none:()=>{},
@@ -1475,6 +1477,25 @@ function grantCompanion(c, name, value){
   if(c.companion) logMsg(`🗿 ${c.companion.name} di ${c.name} viene sostituito da ${name}.`,'warn');
   c.companion = {name, value};
   logMsg(`🗿 ${c.name} lega a sé ${name} (valore ${value}).`,'good');
+}
+function setProtectedItem(c, itemId){
+  // Statua di Stasi: un solo oggetto alla volta, il tempo si ferma per lui —
+  // non può più essere perso, rubato o distrutto da nessun effetto, per il resto della partita.
+  const prev = c.protectedItemId;
+  c.protectedItemId = itemId;
+  const name = OGGETTI_BY_ID[itemId]?.name || itemId;
+  if(prev && prev!==itemId){
+    logMsg(`⏳ ${c.name}: la protezione della Statua passa a ${name} (${OGGETTI_BY_ID[prev]?.name||prev} torna vulnerabile).`,'warn');
+  } else {
+    logMsg(`⏳ ${c.name}: il tempo si ferma per ${name}. Non potrà più essere perso, rubato o distrutto.`,'good');
+  }
+}
+function pickLosableItemIndex(c){
+  // esclude l'oggetto protetto dalla Statua di Stasi da qualsiasi perdita casuale/manuale
+  const idxs = [];
+  c.inventory.forEach((id,i)=>{ if(id!==c.protectedItemId) idxs.push(i); });
+  if(!idxs.length) return -1;
+  return idxs[Math.floor(Math.random()*idxs.length)];
 }
 function applyCombatPassthrough(c, statKey, ctx){
   // il compagno protegge il personaggio durante uno scontro (come fosse in Furtività):
@@ -1728,6 +1749,11 @@ function renderIncontroAction(){
     bindOblioCard(acts);
     return;
   }
+  if(card.statuaCard){
+    el.innerHTML = renderStatuaCard(acts);
+    bindStatuaCard(acts);
+    return;
+  }
   if(card.type==='incontro'){
     const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
     const decided = state.currentDraw.stealthDecided||{};
@@ -1833,7 +1859,7 @@ function applyConsequence(cons, targets, plane){
       }
       case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
       case 'loseTurn': logMsg(`⏳ ${c.name} perde il turno.`); break;
-      case 'loseItem': if(c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`);} break;
+      case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterFamily': logMsg(`🌀 ${c.name} viene scaraventato in un altro piano di ${FAMILIES[cons.family].name} a caso (gestisci manualmente il prossimo salto isolato, oppure ignora se preferite trattarlo narrativamente).`,'warn'); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
@@ -2260,7 +2286,7 @@ function bindManualPanel(card, acts){
   document.querySelectorAll('[data-m-dmg]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mDmg); applyDamage(c,'pv',1,{ignoreResistance:true}); markManualUsed(c,'dmg'); render(); setTimeout(renderIncontroAction,0); });
   document.querySelectorAll('[data-m-tdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mTdebuff); applyTempDebuff(c,statSel()); markManualUsed(c,'tdebuff'); render(); setTimeout(renderIncontroAction,0); });
   document.querySelectorAll('[data-m-pdebuff]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mPdebuff); applyPermDebuff(c,statSel()); markManualUsed(c,'pdebuff'); render(); setTimeout(renderIncontroAction,0); });
-  document.querySelectorAll('[data-m-item-lose]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemLose); if(c.inventory.length){ const n=c.inventory.pop(); logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[n]?.name}.`);} markManualUsed(c,'itemlose'); render(); setTimeout(renderIncontroAction,0); });
+  document.querySelectorAll('[data-m-item-lose]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemLose); const idx=pickLosableItemIndex(c); if(idx>=0){ const n=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[n]?.name}.`);} else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } markManualUsed(c,'itemlose'); render(); setTimeout(renderIncontroAction,0); });
   document.querySelectorAll('[data-m-item-gain]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mItemGain); const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} ottiene ${OGGETTI_BY_ID[it].name}.`);} markManualUsed(c,'itemgain'); render(); setTimeout(renderIncontroAction,0); });
   document.querySelectorAll('[data-m-res]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mRes); c.resources++; logMsg(`💠 ${c.name} ottiene 1 risorsa planare.`); markManualUsed(c,'res'); render(); setTimeout(renderIncontroAction,0); });
   document.querySelectorAll('[data-m-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.mHeal); healStat(c,'pv',1); markManualUsed(c,'heal'); render(); setTimeout(renderIncontroAction,0); });
@@ -2313,6 +2339,30 @@ function bindOblioCard(acts){
   });
   const declineBtn=document.getElementById('btnDeclineReward');
   if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.'); finishIncontro(); };
+}
+function renderStatuaCard(acts){
+  const withItems = acts.filter(c=>c.inventory.length);
+  if(!withItems.length){
+    return `<p class="hint">🗿 Nessuno del gruppo ha un oggetto da proteggere: la statua resta dormiente.</p><button class="primary" id="btnResolveDone">Continua</button>`;
+  }
+  return `<div class="manual-box">
+    <h4>⏳ Statua di Stasi</h4>
+    <p style="font-size:.85rem;">Scegli un oggetto: il tempo si ferma per lui e da questo momento non potrà mai più essere perso, rubato o distrutto da nessun effetto, per il resto della partita. Un solo oggetto protetto alla volta: sceglierne uno nuovo (anche più avanti, riaprendo la scheda) toglie la protezione al precedente.</p>
+    ${withItems.map(c=>`<div style="margin-bottom:.4rem;"><span style="display:block;margin-bottom:.2rem;">${c.name}${c.protectedItemId?` <span class="hint">(protetto: ${OGGETTI_BY_ID[c.protectedItemId]?.name||'?'})</span>`:''}</span>
+      ${c.inventory.map(id=>`<button class="small" data-statua="${c.id}::${id}" ${c.protectedItemId===id?'disabled':''}>${OGGETTI_BY_ID[id]?.name||id}${c.protectedItemId===id?' ✓':''}</button>`).join(' ')}
+    </div>`).join('')}
+    <button class="primary mt1" id="btnResolveDone">Nessuna protezione, continua</button>
+  </div>`;
+}
+function bindStatuaCard(acts){
+  document.querySelectorAll('[data-statua]').forEach(b=>b.onclick=()=>{
+    const [cid,itemId]=b.dataset.statua.split('::');
+    const c=acts.find(x=>x.id===cid);
+    setProtectedItem(c, itemId);
+    finishIncontro();
+  });
+  const btn=document.getElementById('btnResolveDone');
+  if(btn) btn.onclick=finishIncontro;
 }
 function finishIncontro(){
   state.currentDraw = null;
@@ -2586,6 +2636,7 @@ function openCharManageModal(id){
     </div>
     <p class="hint">${cls.desc}</p>
     ${c.companion?`<p class="hint">🗿 Compagno: <strong>${escapeHtml(c.companion.name)}</strong> (valore ${c.companion.value}) — aiuta in qualsiasi check se il suo valore è più alto, e protegge da un colpo per volta negli scontri finché non si distrugge.</p>`:''}
+    ${c.protectedItemId?`<p class="hint">⏳ Statua di Stasi: <strong>${escapeHtml(OGGETTI_BY_ID[c.protectedItemId]?.name||c.protectedItemId)}</strong> è protetto — non può essere perso, rubato o distrutto da nessun effetto.</p>`:''}
     ${inRecuperoPlane?`<p class="hint">🛌 Piano di Recupero: il riposo è automatico all'ingresso.</p>`:''}
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
