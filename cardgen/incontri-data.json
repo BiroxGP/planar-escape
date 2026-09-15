@@ -16,7 +16,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Un elementale si manifesta, della natura del piano corrente. Scontro sulla statistica nativa del piano, difficoltà normale.",
+    "text": "Un elementale si manifesta, della natura del piano corrente. Scontro sulla statistica nativa del piano (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -27,7 +27,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Tre piccole creature elementari attaccano in gruppo. Scontro sulla statistica nativa del piano, difficoltà ridotta.",
+    "text": "Tre piccole creature elementari attaccano in gruppo. Scontro sulla statistica nativa del piano: 3 creature, ciascuna di valore 1.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -82,7 +82,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
+    "text": "Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano (valore nemico 3).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -126,7 +126,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "incontro",
-    "text": "Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza, difficoltà normale.",
+    "text": "Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -170,7 +170,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "nessun",
-    "text": "Anche l'inferno, a volte, tace per un turno.",
+    "text": "Anche l'inferno, a volte, tace per un turno. Nessun effetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -181,7 +181,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Tranelli, inganni, patti ingannevoli.",
+    "text": "Una tentatrice offre inganni e patti loschi in cambio di favori. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -192,7 +192,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Attacco diretto, forza bruta.",
+    "text": "Un bruto infernale attacca con forza bruta diretta. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -214,7 +214,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Un gruppo di diavoletti minori assale in massa.",
+    "text": "Un gruppo di diavoletti minori assale in massa. Scontro di Forza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -225,7 +225,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "ricompensa",
-    "text": "Un oggetto strappato a un demone sconfitto da altri viandanti.",
+    "text": "Un oggetto strappato a un demone sconfitto da altri viandanti. Ricompensa: pesca un oggetto.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -236,7 +236,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "check",
-    "text": "Una voce promette scorciatoie.",
+    "text": "Una voce promette scorciatoie, ma inganna. Check di Intelletto: se fallito, perdita del turno.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -247,7 +247,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Un demone maggiore sorveglia il passaggio.",
+    "text": "Un demone maggiore sorveglia il passaggio. Scontro forte di Forza (valore nemico = girone +1).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -258,7 +258,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "check",
-    "text": "Il fuoco infernale non si spegne mai.",
+    "text": "Il fuoco infernale non si spegne mai e logora chi lo attraversa. Check di Forza: se fallito, depotenziamento temporaneo a una caratteristica casuale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -269,7 +269,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "ricompensa",
-    "text": "Un demone offre un oggetto raro per risorsa planare o 1 Anima.",
+    "text": "Un demone offre un oggetto raro. Ricompensa: paga 1 risorsa planare o 1 Anima → oggetto (oppure rifiuta).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -280,7 +280,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Un'intera legione di demoni minori marcia in massa.",
+    "text": "Un'intera legione di demoni minori marcia in massa. Scontro di Forza (valore nemico = girone +1), persistente (torna anche nei prossimi turni).",
     "manual": false,
     "forte": false,
     "persistent": true
@@ -291,7 +291,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "check",
-    "text": "Il retaggio di un patto non mantenuto perseguita il luogo.",
+    "text": "Il retaggio di un patto non mantenuto perseguita il luogo. Check di Anima: se fallito, -1 Anima (rischio Corruzione).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -313,7 +313,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza, difficoltà normale.",
+    "text": "Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -324,7 +324,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Risucchia la forza vitale e paralizza col terrore. Scontro di Intelletto, difficoltà normale.",
+    "text": "Risucchia la forza vitale e paralizza col terrore. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -335,7 +335,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza, difficoltà ridotta.",
+    "text": "Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -368,7 +368,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto, difficoltà aumentata.",
+    "text": "Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto (valore nemico = girone +1).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -379,7 +379,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza, difficoltà normale, persistente (torna anche nei prossimi turni).",
+    "text": "Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente (torna anche nei prossimi turni).",
     "manual": false,
     "forte": false,
     "persistent": true
@@ -412,7 +412,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita, difficoltà normale.",
+    "text": "Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -445,7 +445,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Il proprio riflesso sfida in una Contesa. Scontro su una caratteristica a scelta (Forza, Intelletto o Destrezza), difficoltà normale.",
+    "text": "Il proprio riflesso sfida in una Contesa. Scontro su una caratteristica a scelta (Forza, Intelletto o Destrezza), valore nemico 2.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -500,7 +500,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Una presenza potente e aliena si manifesta. Scontro forte di Intelletto, difficoltà aumentata.",
+    "text": "Una presenza potente e aliena si manifesta. Scontro forte di Intelletto (valore nemico 3).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -555,7 +555,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza, difficoltà normale (danno passante: perdita anche del turno).",
+    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: perdita anche del turno).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -566,7 +566,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale, difficoltà normale (danno passante: depotenziamento temporaneo anche a San).",
+    "text": "Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -577,7 +577,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta, difficoltà aumentata.",
+    "text": "Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta (valore nemico 3).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -632,7 +632,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Un guardiano purificatore attacca chiunque si trovi nel gruppo. Scontro di Forza, difficoltà normale.",
+    "text": "Un guardiano purificatore attacca chiunque si trovi nel gruppo. Scontro di Forza (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -643,7 +643,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Un costrutto meccanico attacca con precisione glaciale. Scontro di Destrezza, difficoltà normale.",
+    "text": "Un costrutto meccanico attacca con precisione glaciale. Scontro di Destrezza (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -698,7 +698,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
+    "text": "Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano (valore nemico 3).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -709,7 +709,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "incontro",
-    "text": "Una luce di giudizio rivela ogni colpa. Scontro di Anima, difficoltà normale.",
+    "text": "Una luce di giudizio rivela ogni colpa. Scontro di Anima (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -775,7 +775,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità di puro Caos attacca su una statistica casuale. Scontro di difficoltà normale (danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",
+    "text": "Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -808,7 +808,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto, difficoltà normale (danno passante: perdita anche del turno).",
+    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: perdita anche del turno).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -841,7 +841,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale, difficoltà normale (danno passante: depotenziamento temporaneo anche a San).",
+    "text": "Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -863,7 +863,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Incarna la rovina stessa. Scontro forte sulla statistica nativa del piano, difficoltà aumentata.",
+    "text": "Incarna la rovina stessa. Scontro forte sulla statistica nativa del piano (valore nemico 3).",
     "manual": false,
     "forte": true,
     "persistent": false
@@ -896,7 +896,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Una creatura nata dalla decomposizione attacca. Scontro di Forza, difficoltà normale.",
+    "text": "Una creatura nata dalla decomposizione attacca. Scontro di Forza (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
