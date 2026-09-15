@@ -247,7 +247,7 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
 
 const STATS = ["for","int","des","pv","san","anima"];
 const STAT_LABEL = {for:"Forza",int:"Intelletto",des:"Destrezza",pv:"Punti Vita",san:"Sanità Mentale",anima:"Anima"};
-const STAT_ICON = {for:"💪",int:"🧠",des:"🤸",pv:"❤️",san:"🌙",anima:"🕯️"};
+const STAT_ICON = {for:"💪",int:"🧠",des:"🏃",pv:"❤️",san:"🌀",anima:"🕯️"};
 
 /* ---------------- CLASSES ---------------- */
 const CLASSES = {
@@ -261,7 +261,7 @@ const CLASSES = {
     desc:"Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza a Eterei + Entropia."},
   mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["elementare"],special:"dardo",
     desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."},
-  chierico:{name:"Chierico",icon:"✨",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_bonus",
+  chierico:{name:"Chierico",icon:"🙏",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_bonus",
     desc:"Abilità: il primo Flusso lanciato su un compagno dopo l'attivazione cura anche 1 PV extra (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."},
   druido:{name:"Druido",icon:"🌿",for:2,int:3,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["terrestre"],special:"forma_selvatica",waterOk:true,exitPlane:"flora_aliena",
     desc:"Forma Selvatica: scambia temporaneamente due caratteristiche (ricarica a Recupero). A proprio agio in acqua. Uscita personale: Flora Aliena."},
@@ -269,11 +269,11 @@ const CLASSES = {
     desc:"Evoca un demone minore come compagno personale (valore 1, ricarica a Recupero). Resistenza Demoniaco."},
   negromante:{name:"Negromante",icon:"☠️",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{flusso:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["nonmorti"],special:"resurrezione",
     desc:"Se muore, una sola volta a partita torna in vita come non-morto con 1 PV. Resistenza Non-morti."},
-  sciamano:{name:"Sciamano",icon:"🌀",for:1,int:3,des:3,pv:4,san:5,anima:5,affinity:{essenza:1,divinazione:1,flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["elementare"],waterOk:true,exitPlane:"eta_terra_antica",
+  sciamano:{name:"Sciamano",icon:"🏔️",for:1,int:3,des:3,pv:4,san:5,anima:5,affinity:{essenza:1,divinazione:1,flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["elementare"],waterOk:true,exitPlane:"eta_terra_antica",
     desc:"Generalista, un piede in ogni scuola. A proprio agio in acqua. Uscita personale: Età della Terra Antica. Resistenza Elementare."},
   saltimbanco:{name:"Saltimbanco",icon:"🎭",for:2,int:2,des:3,pv:4,san:5,anima:5,affinity:{},reroll:3,rerollLvl:2,weapons:"light",resistance:[],stealth:true,
     desc:"Nessuno spell: 3 reroll fissi (+2 per livello). Furtività come il Ladro."},
-  monaco:{name:"Monaco",icon:"🧘",for:3,int:2,des:3,pv:4,san:6,anima:6,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],waterOk:true,special:"resistenza_universale",
+  monaco:{name:"Monaco",icon:"👊",for:3,int:2,des:3,pv:4,san:6,anima:6,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],waterOk:true,special:"resistenza_universale",
     desc:"San e Anima iniziali 6. Classe ibrida: 1 reroll fisso. Una volta per carica, annulla del tutto un danno su una qualsiasi caratteristica (ricarica a Recupero)."},
   paladino:{name:"Paladino",icon:"🛡️",for:3,int:2,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"heavy",resistance:["armonia"],special:"paladino_extra",
     desc:"Armi e armature pesanti pur avendo un'affinità. A ogni avanzamento pesca anche una carta Flusso extra. Resistenza Armonia."},

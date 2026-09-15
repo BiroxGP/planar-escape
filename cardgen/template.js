@@ -37,7 +37,7 @@ const CLASS_ACCENT = '#7a2f3d';
 
 const WEAPONS_LABEL = { heavy: 'Armi pesanti', light: 'Armi leggere', none: "Nessun'arma" };
 
-const STAT_ICON = { for:'💪', int:'🧠', des:'🤸', pv:'❤️', san:'🌙', anima:'🕯️' };
+const STAT_ICON = { for:'💪', int:'🧠', des:'🏃', pv:'❤️', san:'🌀', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
 
 function checkBadge(check) {

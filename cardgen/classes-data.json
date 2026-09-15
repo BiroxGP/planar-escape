@@ -125,7 +125,7 @@
   {
     "id": "chierico",
     "name": "Chierico",
-    "icon": "✨",
+    "icon": "🙏",
     "stats": {
       "for": 2,
       "int": 3,
@@ -146,7 +146,7 @@
       "flusso": 3
     },
     "exitPlane": null,
-    "desc": "Ogni Flusso lanciato su un compagno cura anche 1 PV extra. Anima iniziale 6. Resistenza Armonia."
+    "desc": "Abilità: il primo Flusso lanciato su un compagno dopo l'attivazione cura anche 1 PV extra (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."
   },
   {
     "id": "druido",
@@ -230,7 +230,7 @@
   {
     "id": "sciamano",
     "name": "Sciamano",
-    "icon": "🌀",
+    "icon": "🏔️",
     "stats": {
       "for": 1,
       "int": 3,
@@ -280,7 +280,7 @@
   {
     "id": "monaco",
     "name": "Monaco",
-    "icon": "🧘",
+    "icon": "👊",
     "stats": {
       "for": 3,
       "int": 2,
