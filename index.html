@@ -2195,7 +2195,7 @@ function renderRewardPanel(card, acts){
     case 'sanheal': return `<div>${acts.map(c=>`<button class="small" data-sanheal="${c.id}">+1 San a ${c.name}</button>`).join(' ')}</div>`;
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
     case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button></span>`).join('')}</div>`;
-    case 'choice3': return `<button class="primary" id="btnApplyReward">Applica: Resistenza gruppo + guarda 2 carte, scegline 1 in cima + o rimescola (scegli quale al tavolo)</button>`;
+    case 'choice3': return `<div>${acts.length?`<button class="small" data-choice3="resistance">🛡️ Resistenza per tutto il gruppo (prossimo piano)</button>`:''}<button class="small" data-choice3="peek">👁️ Guarda 2 carte in cima al mazzo Piani, scegli quale resta in cima</button><button class="small" data-choice3="reshuffle">🔀 Rimescola il mazzo Piani</button></div>`;
     case 'itemPlusCheck': return `<button class="primary" id="btnApplyReward">Pesca oggetto (check San a parte, manuale)</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
     case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
@@ -2217,7 +2217,6 @@ function bindRewardPanel(card, acts){
     if(r.type==='spellBoost'){ if(acts[0]){ acts[0].nextSpellBoost=true; logMsg(`✨ Il prossimo spell di ${acts[0].name} è potenziato.`);} }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); if(acts[0]){ const d=activeTempDebuffs(acts[0])[0]; if(d) cureOneDebuff(acts[0],d);} }
-    if(r.type==='choice3'){ logMsg('🎁 Beneficio del viaggiatore applicato a scelta del tavolo.'); }
     if(r.type==='itemPlusCheck'){ const it=drawOggetto(); if(it&&acts[0]) acts[0].inventory.push(it); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
@@ -2229,6 +2228,12 @@ function bindRewardPanel(card, acts){
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
   document.querySelectorAll('[data-lose]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.lose.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length){ c.inventory.pop(); } done(); });
+  document.querySelectorAll('[data-choice3]').forEach(b=>b.onclick=()=>{
+    const mode=b.dataset.choice3;
+    if(mode==='resistance'){ acts.forEach(c=>{ c.wildcardResistance=true; }); logMsg('🛡️ Il gruppo ottiene Resistenza universale per il prossimo piano (para il primo danno d\'ingresso, qualunque famiglia).','good'); done(); }
+    else if(mode==='reshuffle'){ reshuffleMazzoPiani(); done(); }
+    else if(mode==='peek'){ showPeekModal({type:'peek', n:2, chooseBottom:true}); }
+  });
   const declineBtn=document.getElementById('btnDeclineReward');
   if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo rinuncia alla ricompensa: nessun sacrificio, nessuna risorsa.'); done(); };
   document.querySelectorAll('[data-sacrifice]').forEach(b=>b.onclick=()=>{
@@ -2292,7 +2297,7 @@ function showPeekModal(r, usedRedraw){
     const i=+b.dataset.sendbottom;
     const id = state.mazzoPiani.splice(i,1)[0];
     state.mazzoPiani.push(id);
-    logMsg('🔮 Una delle 3 carte viste viene mandata in fondo al mazzo; le altre due restano in cima.');
+    logMsg(`🔮 Una delle ${cards.length} carte viste viene mandata in fondo al mazzo; le altre restano in cima.`);
     closeModal(); finishIncontro();
   });
 }
