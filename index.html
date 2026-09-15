@@ -382,14 +382,14 @@ const INCONTRI = {
     C("nm_appestato","Appestato","incontro","Contagia malattie ed effetti negativi al contatto.",{check:"for",gravity:"level"}),
     C("nm_spettro","Spettro","incontro","Risucchia forza vitale e paralizza con il terrore.",{check:"int",gravity:"level",damageStat:"pv"}),
     C("nm_nugolo","Nugolo necrotico","incontro","Sciame di ratti o insetti.",{check:"des",gravity:"level-1",swarm:"auto"}),
-    C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta: oggetto o rischio.",{manual:true}),
+    C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta. Check di Destrezza: se superato, trovi un oggetto; se fallito, una trappola ti ferisce (-1 PV).",{check:"des",onFail:{type:"damage",n:1},onSuccess:{type:"item"}}),
     C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
     C("nm_lich","Lich minore","incontro","Non-morto senziente capace di un piccolo incantesimo ostile.",{check:"int",gravity:"level+1",forte:true}),
     C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca.",{check:"for",gravity:"level",persistent:true}),
     C("nm_reliquia","Reliquia protettiva","ricompensa","Un amuleto: il prossimo scontro con un non-morto para il primo danno.",{reward:{type:"item"}}),
     C("nm_eco","Eco di un caduto","check","La disperazione di un'anima perduta intacca la mente.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
     C("nm_mano","Mano Putrescente","incontro","Un arto in decomposizione emerge dal terreno e afferra alla cieca.",{check:"pv",gravity:0}),
-    C("nm_cripta","Cripta Sigillata","check","Una cripta ancora intatta: oggetto o rischio.",{manual:true}),
+    C("nm_cripta","Cripta Sigillata","check","Una cripta sigillata da un rito antico. Check di Anima: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",{check:"anima",onFail:{type:"animaLoss",n:1},onSuccess:{type:"item"}}),
   ],
   eterei:[
     C("et_nessuno","Nessun evento","nessun","Un momento di quiete irreale."),
@@ -1798,7 +1798,8 @@ function renderIncontroAction(){
     }
     const checkStat = card.check==='native' ? nativeStatFor(plane) : card.check;
     const failHint = consequenceLabel(card.onFail, plane);
-    el.innerHTML = (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
+    const successHint = card.onSuccess?.type==='item' ? 'trovi un oggetto' : null;
+    el.innerHTML = (successHint?`<p class="hint">✨ Se superi: ${successHint}.</p>`:'') + (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
     let done=0;
     el.querySelectorAll('[data-checkchar]').forEach(b=>{
       b.onclick=()=>{
@@ -1807,6 +1808,7 @@ function renderIncontroAction(){
         document.getElementById('res_'+c.id).innerHTML = `<span class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${r.success?'OK':'Fallito'}</span>`;
         b.disabled=true;
         if(!r.success && card.onFail) applyConsequence(card.onFail, [c], plane);
+        if(r.success && card.onSuccess?.type==='item'){ const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); } }
         done++; if(done>=acts.length){ document.getElementById('btnResolveDone').disabled=false; }
       };
     });
