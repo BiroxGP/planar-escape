@@ -2266,19 +2266,24 @@ function grantCombatReward(plane, card, acts, cb){
     acts[0].resources += 1;
     logMsg(`🔮 Drenaggio d'Essenza: ${acts[0].name} ottiene anche 1 risorsa planare extra.`,'good');
   }
-  const type = plane.type || FAMILIES[plane.family]?.type;
-  if(type==='fisico'){
-    const it = drawOggetto();
-    if(it && acts.length){ const who=acts[Math.floor(Math.random()*acts.length)]; who.inventory.push(it); logMsg(`🎁 ${who.name} trova ${OGGETTI_BY_ID[it].name}.`); }
-  } else {
-    const stat = nativeStatFor(plane);
-    // "permanente contro un'entità boss (gravità 3 o superiore)", non legato al flag "forte"
-    const permanent = cb && cb.entities.some(e=>(e.value||0)>=3);
-    const minVal = Math.min(...acts.map(c=>c.stats[stat]));
-    acts.filter(c=>c.stats[stat]===minVal).forEach(c=>{
-      if(permanent){ c.stats[stat]=Math.min(6,c.stats[stat]+1); c.start[stat]=Math.max(c.start[stat],c.stats[stat]); logMsg(`🎁 ${c.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (boss sconfitto).`); }
-      else applyTempBonus(c, stat, 1);
-    });
+  // Bottino legato alla forza del mostro/i (valore = gravità, 2+scostamento): più è tosto
+  // lo scontro, migliore la ricompensa — e va sempre a UN solo membro scelto a caso, non a tutti.
+  if(acts.length){
+    const value = cb && cb.entities.length ? Math.max(...cb.entities.map(e=>e.value||0)) : 2;
+    const who = acts[Math.floor(Math.random()*acts.length)];
+    if(value<=2){
+      const stat = nativeStatFor(plane);
+      applyTempBonus(who, stat, 1);
+      logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} ottiene +1 temporaneo a ${STAT_LABEL[stat]}.`,'good');
+    } else if(value===3){
+      const it = drawOggetto();
+      if(it){ who.inventory.push(it); logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); }
+    } else {
+      const r=d6();
+      const school = r<=2?'flusso':r<=4?'essenza':'divinazione';
+      const sp = drawSpell(school);
+      if(sp){ who.spells.push(sp); logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} impara ${SPELLS_BY_ID[sp].name} (${school}).`,'good'); }
+    }
   }
   if(state.pattoOnoreActive && plane.family==='entropia' && acts.length){
     const it = drawOggetto();
