@@ -2333,6 +2333,24 @@ function bindRewardPanel(card, acts){
     done();
   });
 }
+function openRemovePermModal(c){
+  const stats = STATS.filter(s=>s!=='pv' && c.permDebuffN[s]>0);
+  if(stats.length===0){
+    logMsg(`✨ ${c.name} non ha alcun depotenziamento permanente da rimuovere: l'archivio non trova nulla da restituire.`);
+    finishIncontro();
+    return;
+  }
+  openModal(`<h3>📜 Custode di Eternità</h3><p>Scegli quale depotenziamento permanente rimuovere a ${escapeHtml(c.name)}:</p>
+    <div class="row">${stats.map(s=>`<button class="small" data-rmpermstat="${s}">${STAT_LABEL[s]} (-${c.permDebuffN[s]} attuale)</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-rmpermstat]').forEach(b=>b.onclick=()=>{
+    const stat=b.dataset.rmpermstat;
+    c.permDebuffN[stat]--;
+    c.stats[stat]=Math.min(c.start[stat], c.stats[stat]+1);
+    logMsg(`✨ ${c.name}: un depotenziamento permanente a ${STAT_LABEL[stat]} viene rimosso.`,'good');
+    closeModal();
+    finishIncontro();
+  });
+}
 function showPeekModal(r, usedRedraw){
   const n = r.n||1;
   const top = state.mazzoPiani.slice(-n).reverse(); // deck stored with next-draw at index0 via shift, so top = index0.. wait we shift from front
