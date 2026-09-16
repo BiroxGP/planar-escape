@@ -2266,23 +2266,37 @@ function grantCombatReward(plane, card, acts, cb){
     acts[0].resources += 1;
     logMsg(`🔮 Drenaggio d'Essenza: ${acts[0].name} ottiene anche 1 risorsa planare extra.`,'good');
   }
-  // Bottino legato alla forza del mostro/i (valore = gravità, 2+scostamento): più è tosto
-  // lo scontro, migliore la ricompensa — e va sempre a UN solo membro scelto a caso, non a tutti.
+  // Bottino: piani fisici → oggetto/i (2 invece di 1 contro un mostro di caratteristica 3+),
+  // dato a chi ne ha meno (a caso se pari — al tavolo decidono comunque i giocatori). Piani
+  // eterei → +1 alla caratteristica nativa del piano, a chi ce l'ha più bassa (a caso se pari),
+  // permanente invece che temporaneo se il mostro/boss ha caratteristica 3+.
   if(acts.length){
+    const type = plane.type || FAMILIES[plane.family]?.type;
     const value = cb && cb.entities.length ? Math.max(...cb.entities.map(e=>e.value||0)) : 2;
-    const who = acts[Math.floor(Math.random()*acts.length)];
-    if(value<=2){
-      const stat = nativeStatFor(plane);
-      applyTempBonus(who, stat, 1);
-      logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} ottiene +1 temporaneo a ${STAT_LABEL[stat]}.`,'good');
-    } else if(value===3){
-      const it = drawOggetto();
-      if(it){ who.inventory.push(it); logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); }
+    if(type==='fisico'){
+      const n = value>=3 ? 2 : 1;
+      for(let i=0;i<n;i++){
+        const it = drawOggetto();
+        if(!it) break;
+        const minN = Math.min(...acts.map(c=>c.inventory.length));
+        const candidates = acts.filter(c=>c.inventory.length===minN);
+        const who = candidates[Math.floor(Math.random()*candidates.length)];
+        who.inventory.push(it);
+        logMsg(`🎁 ${who.name} trova ${OGGETTI_BY_ID[it].name}.`,'good');
+      }
     } else {
-      const r=d6();
-      const school = r<=2?'flusso':r<=4?'essenza':'divinazione';
-      const sp = drawSpell(school);
-      if(sp){ who.spells.push(sp); logMsg(`🎁 Bottino (mostro valore ${value}): ${who.name} impara ${SPELLS_BY_ID[sp].name} (${school}).`,'good'); }
+      const stat = nativeStatFor(plane);
+      const permanent = value>=3;
+      const minVal = Math.min(...acts.map(c=>c.stats[stat]));
+      const candidates = acts.filter(c=>c.stats[stat]===minVal);
+      const who = candidates[Math.floor(Math.random()*candidates.length)];
+      if(permanent){
+        who.stats[stat]=Math.min(6,who.stats[stat]+1);
+        who.start[stat]=Math.max(who.start[stat],who.stats[stat]);
+        logMsg(`🎁 ${who.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (boss sconfitto).`,'good');
+      } else {
+        applyTempBonus(who, stat, 1);
+      }
     }
   }
   if(state.pattoOnoreActive && plane.family==='entropia' && acts.length){
