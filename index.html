@@ -1668,16 +1668,24 @@ function applySanLoss(c,n){
   }
 }
 function triggerFollia(c){
+  const check = checkRoll(c,'san');
+  logMsg(`🎲 ${c.name}: check di Sanità contro la Follia: ${check.roll} vs ${check.val} → ${check.success?'superato, nessun effetto':'FALLITO'}.`, check.success?'good':'warn');
+  if(check.success) return;
   const r=d6();
-  if(r<=2){ logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
-  if(r<=4){ c.pendingFollia='salto'; logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno si lancerà da solo in un portale casuale.`, 'warn'); return; }
+  // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
+  if(r>=5){ logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
+  if(r>=3){ c.pendingFollia='salto'; logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno si lancerà da solo in un portale casuale.`, 'warn'); return; }
   c.pendingFollia='trascina';
   logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza).`, 'warn');
 }
 function triggerCorruzione(c){
+  const check = checkRoll(c,'anima');
+  logMsg(`🎲 ${c.name}: check di Anima contro la Corruzione: ${check.roll} vs ${check.val} → ${check.success?'superato, nessun effetto':'FALLITO'}.`, check.success?'good':'warn');
+  if(check.success) return;
   const r=d6();
-  if(r<=2){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
-  if(r<=4){ c.pendingCorruzione='contrario'; logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno farà il contrario del resto del gruppo.`, 'warn'); return; }
+  // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
+  if(r>=5){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
+  if(r>=3){ c.pendingCorruzione='contrario'; logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno farà il contrario del resto del gruppo.`, 'warn'); return; }
   if(c.sigilloActive){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): agirebbe contro il team, ma il Sigillo lo impedisce.`, 'good'); return; }
   c.pendingCorruzione='ostile';
   logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno agirà contro il team.`, 'warn');
