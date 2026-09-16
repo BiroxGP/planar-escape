@@ -1878,7 +1878,16 @@ function renderIncontroAction(){
   if(card.type==='incontro'){
     const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
     const decided = state.currentDraw.stealthDecided||{};
-    const stealthEligible = stealthAllowed ? acts.filter(c=>CLASSES[c.cls].stealth && !decided[c.id]) : [];
+    // la Furtività ha senso solo se, restando nascosto, l'entità ha qualcun altro su cui
+    // concentrarsi al posto tuo: un altro PG presente, oppure un compagno che si metta
+    // davanti. Da soli senza compagno non c'è nessun bersaglio alternativo, niente da tentare.
+    const stealthCapable = stealthAllowed ? acts.filter(c=>CLASSES[c.cls].stealth && !decided[c.id]) : [];
+    const stealthEligible = stealthCapable.filter(c=>acts.length>1 || c.companion);
+    const stealthBlocked = stealthCapable.filter(c=>!(acts.length>1 || c.companion));
+    if(stealthBlocked.length && !state.currentDraw.stealthBlockedLogged){
+      state.currentDraw.stealthBlockedLogged = true;
+      stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, niente da tentare.`));
+    }
     if(stealthEligible.length){
       el.innerHTML = renderStealthPanel(stealthEligible);
       bindStealthPanel(stealthEligible);
