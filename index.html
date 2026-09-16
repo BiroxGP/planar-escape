@@ -1144,7 +1144,11 @@ function renderGroupPicker(){
   if(groups.length===0) return '';
   const isSplit = groups.length>1;
   return `<div class="panel center">
-    <h2>${isSplit?'Il portale attende — il gruppo è separato':'Il gruppo è davanti al portale'}</h2>
+    ${isSplit?`<h2>Il portale attende — il gruppo è separato</h2>`:`<div class="plane-hero">
+      <img src="assets/cards/portale_gruppo.jpg" alt="Il gruppo davanti al portale" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="plane-hero-fallback" style="display:none;"><div class="ic">🌀</div></div>
+      <div class="plane-hero-caption"><h2>Il gruppo è davanti al portale</h2></div>
+    </div>`}
     <p class="hint">${isSplit?'Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
     ${groups.map(({g,members})=>{
       const waiting = isSplit && !!state.jumpedThisRound[g.id];
