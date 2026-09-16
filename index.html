@@ -449,19 +449,19 @@ const INCONTRI = {
   ],
   generico:[
     C("ge_nessuno","Nessun evento","nessun","Un turno di viaggio senza incidenti."),
-    C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti.",{reward:{type:"choice3"}}),
-    C("ge_mercante","Mercante planare","ricompensa","Un mercante offre oggetti rari in cambio di risorse planari.",{reward:{type:"tradeResourceForItem"}}),
-    C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta.",{reward:{type:"sanheal",n:1}}),
-    C("ge_stranezza","Stranezza del portale","check","Il portale ha uno strano sussulto.",{check:"int",onFail:{type:"minor"}}),
-    C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma la scoperta turba la mente: check di Sanità, se fallito depotenziamento temporaneo.",{reward:{type:"itemPlusCheck"}}),
-    C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque.",{check:"choice",gravity:0}),
-    C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani.",{bivioCard:true}),
-    C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato.",{reward:{type:"syncJump"}}),
-    C("ge_cacciatore","Cacciatore di taglie planare","incontro","Dà la caccia a chi porta più oggetti nel gruppo.",{check:"choice",gravity:0}),
-    C("ge_anomalia","Anomalia temporale","check","Automatico: il tempo si comporta in modo strano (tira un d6 per l'effetto).",{anomaliaCard:true}),
-    C("ge_randagio","Randagio planare","incontro","Una creatura minore, spaventata, attacca solo se minacciata.",{check:"for",gravity:-1,forceBase2:true}),
-    C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta del Viandante smarrito.",{reward:{type:"choice3"}}),
-    C("ge_legame","Legame a distanza","ricompensa","Il prossimo salto sarà lo stesso per tutti i separati.",{reward:{type:"syncJump"}}),
+    C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo al prossimo piano, guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",{reward:{type:"choice3"}}),
+    C("ge_mercante","Mercante planare","ricompensa","Un mercante offre a chi vuole un oggetto casuale in cambio di 1 risorsa planare.",{reward:{type:"tradeResourceForItem"}}),
+    C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta: +1 Sanità Mentale a un personaggio a scelta.",{reward:{type:"sanheal",n:1}}),
+    C("ge_stranezza","Stranezza del portale","check","Il portale ha uno strano sussulto. Check di Intelletto: se fallito, un piccolo effetto negativo a discrezione del tavolo.",{check:"int",onFail:{type:"minor"}}),
+    C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma la scoperta turba la mente. Check di Sanità: se fallito, depotenziamento temporaneo a Sanità.",{reward:{type:"itemPlusCheck"}}),
+    C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
+    C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani: diventerà la prossima destinazione.",{bivioCard:true}),
+    C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
+    C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
+    C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno; 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
+    C("ge_randagio","Randagio planare","incontro","Una creatura minore e spaventata. Scontro di Forza (valore nemico 1, fisso indipendentemente dal girone).",{check:"for",gravity:-1,forceBase2:true}),
+    C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
+    C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
   ],
 };
 // sanity: attach family key to every card
@@ -1754,7 +1754,7 @@ function renderDrawFlow(){
 
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
-const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce']);
+const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce','ge_nessuno','ge_viandante','ge_mercante','ge_ecocasa','ge_stranezza','ge_relitto','ge_predatore','ge_bivio','ge_segnale','ge_cacciatore','ge_anomalia','ge_randagio','ge_superstite','ge_legame']);
 function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">

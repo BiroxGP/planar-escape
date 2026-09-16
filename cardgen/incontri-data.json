@@ -940,7 +940,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un altro viaggiatore offre una scelta fra tre aiuti.",
+    "text": "Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo al prossimo piano, guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -951,7 +951,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un mercante offre oggetti rari in cambio di risorse planari.",
+    "text": "Un mercante offre a chi vuole un oggetto casuale in cambio di 1 risorsa planare.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -962,7 +962,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un ricordo di casa conforta.",
+    "text": "Un ricordo di casa conforta: +1 Sanità Mentale a un personaggio a scelta.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -973,7 +973,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "check",
-    "text": "Il portale ha uno strano sussulto.",
+    "text": "Il portale ha uno strano sussulto. Check di Intelletto: se fallito, un piccolo effetto negativo a discrezione del tavolo.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -984,7 +984,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un oggetto utile, ma la scoperta turba la mente: check di Sanità, se fallito depotenziamento temporaneo.",
+    "text": "Un oggetto utile, ma la scoperta turba la mente. Check di Sanità: se fallito, depotenziamento temporaneo a Sanità.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -995,7 +995,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "incontro",
-    "text": "Una creatura adattata a vivere tra i piani, ostile ovunque.",
+    "text": "Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro su una caratteristica a scelta (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1006,7 +1006,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "check",
-    "text": "Una scelta alla cieca fra le prime tre carte del mazzo Piani.",
+    "text": "Una scelta alla cieca fra le prime tre carte del mazzo Piani: diventerà la prossima destinazione.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1017,7 +1017,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Si intercetta un segnale per ritrovare un compagno separato.",
+    "text": "Si intercetta un segnale per ritrovare un compagno separato: il prossimo salto riunirà automaticamente tutti i gruppi separati.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1028,7 +1028,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "incontro",
-    "text": "Dà la caccia a chi porta più oggetti nel gruppo.",
+    "text": "Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1039,7 +1039,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "check",
-    "text": "Automatico: il tempo si comporta in modo strano (tira un d6 per l'effetto).",
+    "text": "Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno; 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1050,7 +1050,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "incontro",
-    "text": "Una creatura minore, spaventata, attacca solo se minacciata.",
+    "text": "Una creatura minore e spaventata. Scontro di Forza (valore nemico 1, fisso indipendentemente dal girone).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1061,7 +1061,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un superstite offre la stessa scelta del Viandante smarrito.",
+    "text": "Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1072,7 +1072,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Il prossimo salto sarà lo stesso per tutti i separati.",
+    "text": "Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",
     "manual": false,
     "forte": false,
     "persistent": false
