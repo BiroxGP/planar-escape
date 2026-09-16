@@ -29,7 +29,7 @@ if (idx === -1) {
 
 const scriptStart = src.indexOf('<script>') + '<script>'.length;
 let code = src.slice(scriptStart, idx);
-code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES, INCONTRI: INCONTRI };\n';
+code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES, INCONTRI: INCONTRI, SPELLS: SPELLS };\n';
 
 const sandbox = {};
 vm.createContext(sandbox);
@@ -49,6 +49,10 @@ if (!sandbox.__DATA__.CLASSES || typeof sandbox.__DATA__.CLASSES !== 'object') {
 }
 if (!sandbox.__DATA__.INCONTRI || typeof sandbox.__DATA__.INCONTRI !== 'object') {
   console.error('Estrazione fallita: INCONTRI non trovato.');
+  process.exit(1);
+}
+if (!sandbox.__DATA__.SPELLS || typeof sandbox.__DATA__.SPELLS !== 'object') {
+  console.error('Estrazione fallita: SPELLS non trovato.');
   process.exit(1);
 }
 
@@ -110,3 +114,19 @@ for (const [deckKey, cards] of Object.entries(sandbox.__DATA__.INCONTRI)) {
 }
 fs.writeFileSync(path.join(__dirname, 'incontri-data.json'), JSON.stringify(incontri, null, 2));
 console.log(`OK — ${incontri.length} carte Incontro scritte in incontri-data.json`);
+
+// SPELLS è {scuola: [spell...]}, stessa forma di INCONTRI.
+const spells = [];
+for (const [school, list] of Object.entries(sandbox.__DATA__.SPELLS)) {
+  for (const sp of list) {
+    spells.push({
+      id: sp.id,
+      name: sp.name,
+      school,
+      text: sp.text,
+      cost: sp.cost || 0,
+    });
+  }
+}
+fs.writeFileSync(path.join(__dirname, 'spells-data.json'), JSON.stringify(spells, null, 2));
+console.log(`OK — ${spells.length} spell scritti in spells-data.json`);

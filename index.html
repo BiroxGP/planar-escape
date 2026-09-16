@@ -545,7 +545,7 @@ const SPELLS = {
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{drenaggioSpell:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
-    S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{blockNextHit:true}),
+    S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{sagomaSpell:true}),
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{trasmutazioneSpell:true}),
     S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
@@ -553,7 +553,7 @@ const SPELLS = {
   ],
   flusso:[
     S("sp_manirisan","Mani Risananti","Cura 2 PV a un compagno.",{reward:{type:"healOther",n:2}}),
-    S("sp_tempra","Tempra","Il primo danno subito dal bersaglio nella prossima Contesa è sempre parato.",{blockNextHit:true}),
+    S("sp_tempra","Tempra","Il primo danno subito dal bersaglio nella prossima Contesa è sempre parato.",{tempraSpell:true}),
     S("sp_benedizione","Benedizione","Un personaggio a scelta infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza.",{benedizioneSpell:true}),
     S("sp_paroladiconforto","Parola di Conforto","Ripristina 1 Sanità Mentale a un compagno.",{reward:{type:"healOther",n:1,stat:"san"}}),
     S("sp_assoluzione","Assoluzione","Ripristina 1 Anima a un compagno.",{reward:{type:"healOther",n:1,stat:"anima"}}),
@@ -695,7 +695,10 @@ function makeChar(name, clsKey, bonus){
     pendingFollia:null, // 'salto' | 'trascina' — azione dovuta al prossimo turno
     pendingCorruzione:null, // 'contrario' | 'ostile' — azione dovuta al prossimo turno
     dardoReady:false, // Mago: prossima Contesa infligge 2 danni sicuri
+    manoFantasmaReady:0, // Mano Fantasma: prossima Contesa mette a segno un colpo automatico da N danni (valore dello spell)
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
+    tempraReady:false, // Tempra: para il prossimo danno subito, qualsiasi tipo
+    sagomaReady:false, // Sagoma Illusoria: assorbe il prossimo colpo a segno subito, poi svanisce
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
@@ -742,6 +745,16 @@ function applyDamage(c, stat, n, ctx){
   if(n>0 && c.egidaReady && ctx.type==='fisico'){
     c.egidaReady=false;
     logMsg(`🛡️ ${c.name} para il colpo grazie a Egida.`);
+    return;
+  }
+  if(n>0 && c.tempraReady){
+    c.tempraReady=false;
+    logMsg(`🛡️ ${c.name} para il colpo grazie a Tempra.`);
+    return;
+  }
+  if(n>0 && c.sagomaReady){
+    c.sagomaReady=false;
+    logMsg(`👤 ${c.name} assorbe il colpo con Sagoma Illusoria, che poi svanisce.`);
     return;
   }
   // resistenza: block first hit of the plane-entry if applicable and physical/type match
@@ -1530,6 +1543,11 @@ function resolveAttack(c, stat){
     c.dardoReady=false;
     return {roll:null, hit:true, dmg:2, dardo:true};
   }
+  if(c.manoFantasmaReady && ['for','int','des'].includes(stat)){
+    const dmg = c.manoFantasmaReady;
+    c.manoFantasmaReady = 0;
+    return {roll:null, hit:true, dmg, manoFantasma:true};
+  }
   const r=checkRoll(c,stat);
   const isCrit = r.roll===6;
   const hit = r.roll<=r.val || isCrit;
@@ -2204,7 +2222,7 @@ function fightRound(plane, card, acts, cb){
     if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
     const a=resolveAttack(c,stat);
     teamDmg+=a.dmg;
-    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo});
+    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo, manoFantasma:a.manoFantasma});
   });
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
@@ -2231,7 +2249,8 @@ function fightRound(plane, card, acts, cb){
   logMsg(`⚔️ Giro ${cb.rounds}: team infligge ${teamDmg} danni; entità infliggono ${entityDmg} (passano ${passThrough}).`);
   log.forEach(l=>{
     if(l.frozen){ logMsg(`　 ❄️ Le entità non mettono a segno colpi questo giro (Scettro di Congelamento).`); return; }
-    logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: tiro ${l.roll} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
+    const rollLabel = l.dardo?'Dardo Incantato':l.manoFantasma?'Mano Fantasma':'tiro '+l.roll;
+    logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
   });
   if(passThrough>0){
     let dmgStat = card.damageStat||'pv';
@@ -3179,6 +3198,21 @@ function useSpell(c, idx){
   if(sp.egidaSpell){
     return openEgidaTargetModal(c, idx);
   }
+  if(sp.tempraSpell){
+    return openTempraTargetModal(c, idx);
+  }
+  if(sp.sagomaSpell){
+    c.sagomaReady = true;
+    logMsg(`👤 ${c.name} lancia ${sp.name}: assorbirà il prossimo colpo a segno subito, poi svanisce.`,'good');
+    c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.combatHelper){
+    c.manoFantasmaReady = sp.combatHelper;
+    logMsg(`👻 ${c.name} lancia ${sp.name}: nella prossima Contesa mette a segno un colpo automatico da ${sp.combatHelper} danni.`,'good');
+    c.spells.splice(idx,1);
+    return;
+  }
   if(sp.drenaggioSpell){
     if(!state.currentDraw){ logMsg(`⚠️ ${sp.name}: si usa mentre si è in un piano.`,'warn'); return; }
     state.currentDraw.drenaggioActive = true;
@@ -3216,7 +3250,7 @@ function useSpell(c, idx){
     }
     else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
     else if(r.type==='healOther'){ return openHealOtherModal(c, idx, sp, r, boosted?2:1); }
-    else if(r.type==='grantReroll'){ logMsg(`🍀 ${c.name} lancia Buona Sorte: assegna manualmente +1 reroll a un compagno.`); }
+    else if(r.type==='grantReroll'){ return openGrantRerollModal(c, idx, sp, r); }
   } else if(sp.selfRecupero){
     recuperoFor(c);
     logMsg(`🛌 ${sp.name}: il piano corrente diventa Recupero solo per ${c.name}.`);
@@ -3257,6 +3291,19 @@ function openEgidaTargetModal(caster, idx){
     const t=targets.find(x=>x.id===b.dataset.egida);
     t.egidaReady = true;
     logMsg(`🛡️ ${caster.name} lancia Egida su ${t.name}.`,'good');
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+  return true;
+}
+function openTempraTargetModal(caster, idx){
+  const targets = activeChars();
+  openModal(`<h3>🛡️ Tempra</h3><p>Scegli il bersaglio: il primo danno subito nella prossima Contesa (qualsiasi tipo) è sempre parato.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-tempra="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-tempra]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.tempra);
+    t.tempraReady = true;
+    logMsg(`🛡️ ${caster.name} lancia Tempra su ${t.name}.`,'good');
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
@@ -3374,9 +3421,15 @@ function showSpellInfoModal(id){
   const sp = SPELLS_BY_ID[id]; if(!sp) return;
   const school = spellSchoolOf(id);
   const icon = SPELL_SCHOOL_ICON[school]||'📖';
+  // Come le carte Piani/Incontri/Classi: se l'immagine composta da cardgen c'è, nome e
+  // testo sono già incollati nei suoi pixel — il card-body sotto serve solo da fallback
+  // testuale per quando l'immagine manca ancora, non va mostrato in duplicato.
   openModal(`<div class="card-display">
-      ${cardArt(sp.id, icon, sp.name, 'fam-spell')}
-      <div class="card-body">
+      <div class="card-art-wrap fam-spell">
+        <img src="assets/cards/${sp.id}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; document.getElementById('spellInfoBody').style.display='block';">
+        <div class="card-art-fallback" style="display:none;"><div class="ic">${icon}</div><div class="nm">${escapeHtml(sp.name)}</div></div>
+      </div>
+      <div class="card-body" id="spellInfoBody" style="display:none;">
         <h3>${escapeHtml(sp.name)}</h3>
         <div class="tags"><span class="badge">${escapeHtml(school||'')}</span>${sp.cost?`<span class="badge">costo ${sp.cost} risorsa/e</span>`:''}</div>
         <p>${escapeHtml(sp.text||'')}</p>
@@ -3401,6 +3454,23 @@ function openHealOtherModal(caster, idx, sp, r, mult){
       caster.curaBonusReady=false;
       logMsg(`✨ ${caster.name}: l'abilità del Chierico attivata cura anche 1 PV extra a ${t.name} (consumata, ricarica a Recupero).`,'good');
     }
+    caster.spells.splice(idx,1);
+    closeModal(); render();
+  });
+  return true;
+}
+function openGrantRerollModal(caster, idx, sp, r){
+  const targets = activeChars().filter(x=>x.id!==caster.id);
+  if(targets.length===0){
+    logMsg(`⚠️ ${sp.name}: nessun compagno presente a cui concedere il reroll — lo spell non si consuma.`,'warn');
+    return true;
+  }
+  openModal(`<h3>🍀 ${escapeHtml(sp.name)}</h3><p>Scegli chi riceve +${r.n||1} reroll (non ricaricabile):</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-grantreroll="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-grantreroll]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.grantreroll);
+    t.rerolls += (r.n||1);
+    logMsg(`🍀 ${caster.name} lancia ${sp.name}: ${t.name} ottiene +${r.n||1} reroll.`,'good');
     caster.spells.splice(idx,1);
     closeModal(); render();
   });

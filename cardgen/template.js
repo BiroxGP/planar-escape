@@ -37,6 +37,12 @@ const CLASS_ACCENT = '#7a2f3d';
 
 const WEAPONS_LABEL = { heavy: 'Armi pesanti', light: 'Armi leggere', none: "Nessun'arma" };
 
+// Spell: un accento per scuola invece che per Famiglia, coordinato col colore del
+// sigillo luminoso (icona) di quella scuola, cosi' badge/nastro e sigillo si intonano.
+const SCHOOL_ACCENT = { essenza: '#a855e0', flusso: '#d9924a', divinazione: '#7c7fe0' };
+const SCHOOL_LABEL = { essenza: 'Essenza', flusso: 'Flusso', divinazione: 'Divinazione' };
+const SCHOOL_EMOJI = { essenza: '🪄', flusso: '✨', divinazione: '🔮' };
+
 const STAT_ICON = { for:'💪', int:'🧠', des:'🏃', pv:'❤️', san:'🌀', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
 
@@ -91,6 +97,70 @@ function artLayer(item, artDir, accent, emoji) {
     <div class="placeholder-emoji">${emoji}</div>
     <div class="placeholder-label">immagine mancante<br>${esc(item.id)}.${exts[0].slice(1)}</div>
   </div>`;
+}
+
+function schoolBadgeLayer(school, artDir) {
+  // il sigillo (icona) di scuola: file condiviso fra tutti gli spell della stessa scuola,
+  // non specifico della singola carta — cercato come "icon_<school>.*" invece di "<id>.*".
+  const exts = ['.png', '.jpg', '.jpeg', '.webp'];
+  let found = null;
+  if (artDir) {
+    for (const ext of exts) {
+      const p = path.join(artDir, 'icon_' + school + ext);
+      if (fs.existsSync(p)) { found = p; break; }
+    }
+  }
+  if (!found) return '';
+  const fileUrl = pathToFileURL(found).href;
+  return `<div class="school-badge"><img src="${fileUrl}"></div>`;
+}
+
+function spellCardHtml(spell, flavor, artDir, school) {
+  const accent = SCHOOL_ACCENT[school] || '#7a6f5e';
+  const emoji = SCHOOL_EMOJI[school] || '📖';
+  return `
+  <div class="card card-portrait" id="card-${spell.id}" data-id="${spell.id}" style="--fam:${accent};">
+    ${artLayer(spell, artDir, accent, emoji)}
+    ${schoolBadgeLayer(school, artDir)}
+    <div class="top-strip"></div>
+    <div class="panel spell-panel">
+      <div class="name-row">
+        <div class="name-block">
+          <div class="name spell-name">${esc(spell.name)}</div>
+        </div>
+        <div class="badges">
+          <span class="badge"><span class="badge-icon">${emoji}</span>${esc(SCHOOL_LABEL[school]||school)}</span>
+          ${spell.cost ? `<span class="badge cost-badge"><span class="badge-icon">◆</span>Costo ${spell.cost}</span>` : ''}
+        </div>
+      </div>
+      <div class="flavor">${esc(flavor || '')}</div>
+      <div class="rule-text spell-text">${esc(spell.text)}</div>
+    </div>
+  </div>`;
+}
+
+function spellPageHtml(spells, flavors, artDir) {
+  const cards = spells.map(s => spellCardHtml(s, flavors[s.id], artDir, s.school)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>${sharedCardCss()}
+  .school-badge{
+    position:absolute; top:26px; left:26px; z-index:4;
+    width:130px; height:130px; border-radius:50%;
+    background:radial-gradient(circle, rgba(8,6,12,.92) 0%, rgba(8,6,12,.72) 60%, rgba(8,6,12,0) 100%);
+    box-shadow:0 0 24px 7px var(--fam), 0 0 50px 16px var(--fam);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .school-badge img{ width:90%; height:90%; object-fit:contain; mix-blend-mode:screen; filter:drop-shadow(0 0 10px var(--fam)); }
+  .spell-panel{ height:42%; padding:16px 26px 24px; }
+  .spell-name{ font-size:32px; }
+  .cost-badge{ background:rgba(217,146,74,.18); border-color:rgba(217,146,74,.55); color:#f0c396; }
+  .spell-text{ font-size:16px; line-height:1.35; }
+</style></head>
+<body><div class="stage">
+${cards}
+</div></body></html>`;
 }
 
 function cardHtml(plane, flavor, artDir) {
@@ -333,4 +403,4 @@ ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
+module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, spellPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };

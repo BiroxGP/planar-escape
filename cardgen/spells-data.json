@@ -1,0 +1,219 @@
+[
+  {
+    "id": "sp_analisi",
+    "name": "Analisi Planare",
+    "school": "essenza",
+    "text": "Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare.",
+    "cost": 1
+  },
+  {
+    "id": "sp_convulsione",
+    "name": "Convulsione Planare",
+    "school": "essenza",
+    "text": "Raro: rimescola per intero il mazzo Piani.",
+    "cost": 1
+  },
+  {
+    "id": "sp_manofantasma",
+    "name": "Mano Fantasma",
+    "school": "essenza",
+    "text": "Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",
+    "cost": 0
+  },
+  {
+    "id": "sp_veloillusorio",
+    "name": "Velo Illusorio",
+    "school": "essenza",
+    "text": "Invisibilità a una singola entità per un turno.",
+    "cost": 0
+  },
+  {
+    "id": "sp_sfera",
+    "name": "Sfera Antiplanare",
+    "school": "essenza",
+    "text": "Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",
+    "cost": 0
+  },
+  {
+    "id": "sp_teletrasporto",
+    "name": "Teletrasporto Planare",
+    "school": "essenza",
+    "text": "Teletrasporta il gruppo nel piano di un altro giocatore.",
+    "cost": 0
+  },
+  {
+    "id": "sp_drenaggio",
+    "name": "Drenaggio d'Essenza",
+    "school": "essenza",
+    "text": "Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",
+    "cost": 0
+  },
+  {
+    "id": "sp_estrazione",
+    "name": "Estrazione Arcana",
+    "school": "essenza",
+    "text": "Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",
+    "cost": 0
+  },
+  {
+    "id": "sp_sagoma",
+    "name": "Sagoma Illusoria",
+    "school": "essenza",
+    "text": "Assorbe il prossimo colpo a segno subito, poi svanisce.",
+    "cost": 0
+  },
+  {
+    "id": "sp_charme",
+    "name": "Charme",
+    "school": "essenza",
+    "text": "Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",
+    "cost": 0
+  },
+  {
+    "id": "sp_trasmutazione",
+    "name": "Trasmutazione Minore",
+    "school": "essenza",
+    "text": "Trasforma oggetti in altrettante risorse planari equivalenti.",
+    "cost": 0
+  },
+  {
+    "id": "sp_veloint",
+    "name": "Velo Interplanare",
+    "school": "essenza",
+    "text": "Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",
+    "cost": 0
+  },
+  {
+    "id": "sp_ecofondo",
+    "name": "Eco dal Fondo",
+    "school": "essenza",
+    "text": "Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",
+    "cost": 1
+  },
+  {
+    "id": "sp_manirisan",
+    "name": "Mani Risananti",
+    "school": "flusso",
+    "text": "Cura 2 PV a un compagno.",
+    "cost": 0
+  },
+  {
+    "id": "sp_tempra",
+    "name": "Tempra",
+    "school": "flusso",
+    "text": "Il primo danno subito dal bersaglio nella prossima Contesa è sempre parato.",
+    "cost": 0
+  },
+  {
+    "id": "sp_benedizione",
+    "name": "Benedizione",
+    "school": "flusso",
+    "text": "Un personaggio a scelta infligge 2 danni extra su ogni colpo a segno, per tutta la permanenza.",
+    "cost": 0
+  },
+  {
+    "id": "sp_paroladiconforto",
+    "name": "Parola di Conforto",
+    "school": "flusso",
+    "text": "Ripristina 1 Sanità Mentale a un compagno.",
+    "cost": 0
+  },
+  {
+    "id": "sp_assoluzione",
+    "name": "Assoluzione",
+    "school": "flusso",
+    "text": "Ripristina 1 Anima a un compagno.",
+    "cost": 0
+  },
+  {
+    "id": "sp_manobenedetta",
+    "name": "Mano Benedetta",
+    "school": "flusso",
+    "text": "Trascina via un compagno non consenziente senza Contesa di Forza.",
+    "cost": 0
+  },
+  {
+    "id": "sp_cerchio",
+    "name": "Cerchio di Protezione",
+    "school": "flusso",
+    "text": "Il gruppo para il primo danno subito in questo piano, per un turno.",
+    "cost": 0
+  },
+  {
+    "id": "sp_fiammapurif",
+    "name": "Fiamma Purificatrice",
+    "school": "flusso",
+    "text": "2 danni diretti a tutte le entità non-morte/demoniache in una Contesa.",
+    "cost": 0
+  },
+  {
+    "id": "sp_ristoro",
+    "name": "Ristoro",
+    "school": "flusso",
+    "text": "Trasforma il piano corrente in Recupero per un turno, solo per chi lo lancia.",
+    "cost": 0
+  },
+  {
+    "id": "sp_sigillo",
+    "name": "Sigillo",
+    "school": "flusso",
+    "text": "Impedisce a un compagno di agire ostilmente contro il gruppo, finché si resta nel piano.",
+    "cost": 0
+  },
+  {
+    "id": "sp_rinascita",
+    "name": "Rinascita",
+    "school": "flusso",
+    "text": "Una volta per partita: se un compagno sviene a 0 PV, lo rimette in piedi con 1 PV.",
+    "cost": 0
+  },
+  {
+    "id": "sp_egida",
+    "name": "Egida",
+    "school": "flusso",
+    "text": "Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",
+    "cost": 0
+  },
+  {
+    "id": "sp_sguardo",
+    "name": "Sguardo Fugace",
+    "school": "divinazione",
+    "text": "Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",
+    "cost": 0
+  },
+  {
+    "id": "sp_occhiodestino",
+    "name": "Occhio del Destino",
+    "school": "divinazione",
+    "text": "Raro: rimescola per intero il mazzo Piani (gratis).",
+    "cost": 0
+  },
+  {
+    "id": "sp_terzocchio",
+    "name": "Terzo Occhio",
+    "school": "divinazione",
+    "text": "Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",
+    "cost": 0
+  },
+  {
+    "id": "sp_vaticinio",
+    "name": "Vaticinio",
+    "school": "divinazione",
+    "text": "Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",
+    "cost": 0
+  },
+  {
+    "id": "sp_buonasorte",
+    "name": "Buona Sorte",
+    "school": "divinazione",
+    "text": "Concede a un compagno 1 reroll, non ricaricabile.",
+    "cost": 0
+  },
+  {
+    "id": "sp_richiamofondo",
+    "name": "Richiamo dal Fondo",
+    "school": "divinazione",
+    "text": "Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Gratuito. Rischio: può essere una destinazione epica del Piano Terreno.",
+    "cost": 0
+  }
+]
