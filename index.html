@@ -842,7 +842,14 @@ function handlePvThreshold(c){
         c.stats.pv=1;
         logMsg(`✨ Rinascita (in mano a ${savior.name}) scatta: ${c.name} torna in piedi con 1 PV invece di svenire.`,'good');
       } else {
-        c.status='unconscious'; logMsg(`😵 ${c.name} sviene a 0 Punti Vita.`,'bad');
+        const group = groupOf(c);
+        const companions = group ? group.memberIds.filter(id=>id!==c.id).map(id=>state.players.find(p=>p.id===id)).filter(isConscious) : [];
+        if(companions.length===0){
+          c.status='dead';
+          logMsg(`💀 ${c.name} sviene a 0 Punti Vita da solo, senza nessuno che possa portarlo via: muore.`,'bad');
+        } else {
+          c.status='unconscious'; logMsg(`😵 ${c.name} sviene a 0 Punti Vita. Il gruppo può portarlo con sé.`,'bad');
+        }
       }
     }
   }
@@ -911,8 +918,19 @@ function activeTempDebuffs(c){ return STATS.filter(s=>s!=='pv'&&c.tempDebuff[s])
 function checkRoll(c, stat, opts){
   opts=opts||{};
   const val = effectiveStat(c,stat);
-  const roll = d6();
-  const success = roll<=val || roll===6;
+  if(c.status==='unconscious'){
+    // uno svenuto non può agire: qualsiasi check tentato fallisce automaticamente, senza nemmeno tirare.
+    return {roll:null, val, success:false};
+  }
+  let roll = d6();
+  let success = roll<=val || roll===6;
+  while(!success && c.rerolls>0){
+    if(!confirm(`${c.name}: check di ${STAT_LABEL[stat]} fallito (${roll} vs ${val}). Usare 1 reroll? (${c.rerolls} disponibile/i)`)) break;
+    c.rerolls--;
+    roll = d6();
+    success = roll<=val || roll===6;
+    logMsg(`🔁 ${c.name} usa un reroll sul check di ${STAT_LABEL[stat]}: nuovo tiro ${roll} vs ${val} → ${success?'superato':'ancora fallito'} (${c.rerolls} reroll rimasti).`);
+  }
   return {roll, val, success};
 }
 function effectiveStat(c, stat){
@@ -2150,9 +2168,20 @@ function bindCombatPanel(plane, card, acts){
   };
   const flee = document.getElementById('btnFlee');
   if(flee) flee.onclick=()=>{
-    logMsg('↩️ Il gruppo si ritira nel portale, interrompendo lo scontro.');
-    if(card.persistent){ persistCombat(plane, cb); }
-    finishIncontro();
+    const minDes = Math.min(...acts.map(c=>effectiveStat(c,'des')));
+    const roll = d6();
+    const success = roll<=minDes || roll===6;
+    logMsg(`↩️ Il gruppo tenta la ritirata verso il portale: check di gruppo su Destrezza (vale la più bassa presente, ${minDes}) — ${roll} vs ${minDes} → ${success?'RIUSCITA':'FALLITA'}.`, success?'good':'warn');
+    if(success){
+      logMsg('↩️ Il gruppo raggiunge il portale e interrompe lo scontro.','good');
+      if(card.persistent){ persistCombat(plane, cb); }
+      finishIncontro();
+    } else {
+      logMsg('↩️ La ritirata fallisce: le entità hanno un altro giro per colpire prima di poter riprovare a scappare.','warn');
+      fightRound(plane, card, acts, cb);
+      render();
+      setTimeout(renderIncontroAction,0);
+    }
   };
 }
 function fightRound(plane, card, acts, cb){
