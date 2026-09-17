@@ -539,7 +539,7 @@ const SPELLS = {
   essenza:[
     S("sp_analisi","Analisi Planare","Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare.",{reward:{type:"peek",n:1,discard:true},cost:1}),
     S("sp_convulsione","Convulsione Planare","Raro: rimescola per intero il mazzo Piani.",{reward:{type:"reshuffle"},cost:1}),
-    S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",{combatHelper:2}),
+    S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che si lega al lanciatore come un compagno (valore 2): aiuta nei check e assorbe i colpi negli scontri finché non si distrugge.",{summonCompanion:2}),
     S("sp_veloillusorio","Velo Illusorio","Invisibilità a una singola entità per un turno.",{stealthLikeSpell:true}),
     S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{sferaSpell:true}),
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
@@ -695,7 +695,6 @@ function makeChar(name, clsKey, bonus){
     pendingFollia:null, // 'salto' | 'trascina' — azione dovuta al prossimo turno
     pendingCorruzione:null, // 'contrario' | 'ostile' — azione dovuta al prossimo turno
     dardoReady:false, // Mago: prossima Contesa infligge 2 danni sicuri
-    manoFantasmaReady:0, // Mano Fantasma: prossima Contesa mette a segno un colpo automatico da N danni (valore dello spell)
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
     tempraReady:false, // Tempra: para il prossimo danno subito, qualsiasi tipo
     sagomaReady:false, // Sagoma Illusoria: assorbe il prossimo colpo a segno subito, poi svanisce
@@ -1635,11 +1634,6 @@ function resolveAttack(c, stat){
     c.dardoReady=false;
     return {roll:null, hit:true, dmg:2, dardo:true};
   }
-  if(c.manoFantasmaReady && ['for','int','des'].includes(stat)){
-    const dmg = c.manoFantasmaReady;
-    c.manoFantasmaReady = 0;
-    return {roll:null, hit:true, dmg, manoFantasma:true};
-  }
   const r=checkRoll(c,stat);
   const isCrit = r.roll===6;
   const hit = r.roll<=r.val || isCrit;
@@ -2338,7 +2332,7 @@ function fightRound(plane, card, acts, cb){
     if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
     const a=resolveAttack(c,stat);
     teamDmg+=a.dmg;
-    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo, manoFantasma:a.manoFantasma});
+    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo});
   });
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
@@ -2365,7 +2359,7 @@ function fightRound(plane, card, acts, cb){
   logMsg(`⚔️ Giro ${cb.rounds}: team infligge ${teamDmg} danni; entità infliggono ${entityDmg} (passano ${passThrough}).`);
   log.forEach(l=>{
     if(l.frozen){ logMsg(`　 ❄️ Le entità non mettono a segno colpi questo giro (Scettro di Congelamento).`); return; }
-    const rollLabel = l.dardo?'Dardo Incantato':l.manoFantasma?'Mano Fantasma':'tiro '+l.roll;
+    const rollLabel = l.dardo?'Dardo Incantato':'tiro '+l.roll;
     logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
   });
   if(passThrough>0){
@@ -3435,9 +3429,8 @@ function useSpell(c, idx){
     c.spells.splice(idx,1);
     return;
   }
-  if(sp.combatHelper){
-    c.manoFantasmaReady = sp.combatHelper;
-    logMsg(`👻 ${c.name} lancia ${sp.name}: nella prossima Contesa mette a segno un colpo automatico da ${sp.combatHelper} danni.`,'good');
+  if(sp.summonCompanion){
+    grantCompanion(c, sp.name, sp.summonCompanion);
     c.spells.splice(idx,1);
     return;
   }

@@ -17,7 +17,7 @@
     "id": "sp_manofantasma",
     "name": "Mano Fantasma",
     "school": "essenza",
-    "text": "Evoca una mano spettrale che combatte al posto di chi lancia (valore 2 fisso).",
+    "text": "Evoca una mano spettrale che si lega al lanciatore come un compagno (valore 2): aiuta nei check e assorbe i colpi negli scontri finché non si distrugge.",
     "cost": 0
   },
   {
