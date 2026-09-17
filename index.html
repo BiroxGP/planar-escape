@@ -310,7 +310,7 @@ const PIANI = [
   P("cristallo","Cristallo","elementare","san",false,"Amplifica tutto: incantesimi e danni fisici subiti qui valgono il doppio (+100% entrambi)."),
   P("luce","Luce","eterei","int",false,"Accecante: chi fallisce un check di Intelletto subisce -1 a Forza, Destrezza e Intelletto per tutta la permanenza (nessuna perdita del turno)."),
   P("tenebre","Tenebre","eterei",null,false,"Buio totale: appena si entra, -1 automatico a Forza, Destrezza e Intelletto per tutta la permanenza. Nessun check da tirare."),
-  P("sogno","Sogno","eterei","int",false,"Illusioni: chi fallisce un check di Intelletto perde il turno e ripete il check a ogni turno finché non lo supera. Si salta insieme solo quando nessuno è più sotto illusione."),
+  P("sogno","Sogno","eterei","int",false,"Illusioni: chi fallisce un check di Intelletto resta intrappolato e non partecipa all'Incontro di questo turno, sia esso uno scontro o altro. Chi lo supera affronta l'Incontro normalmente."),
   P("specchi","Specchi","eterei","choice",false,"Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla (Forza, Intelletto o Destrezza) — chi perde subisce un depotenziamento temporaneo su quella stessa caratteristica."),
   P("astrale","Astrale","eterei",null,true,"Nessun pericolo attivo: solo quiete, e un tempo che scorre in modo incerto."),
   P("ordine","Ordine","armonia","pv",true,"Si può riportare una qualsiasi propria caratteristica al valore di partenza di 1° livello, cancellando ogni effetto accumulato su di essa, nel bene e nel male."),
@@ -1274,8 +1274,8 @@ function doJump(){
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
-  processLevelUpQueue();
   if(drawnId==='__PT__'){
+    processLevelUpQueue();
     resolvePianoTerreno();
     return;
   }
@@ -1304,8 +1304,51 @@ function doJump(){
     state.turnConsecutive={};
   }
   logMsg(`🚪 Il gruppo salta: <strong>${plane.name}</strong>.`);
-  applyPlaneIntrinsic(plane);
-  render();
+  // eventuali passaggi di livello vanno confermati PRIMA di offrire la protezione pre-piano:
+  // altrimenti la modale di livello verrebbe sovrascritta da quella di Cerchio/Egida appena
+  // aperta, senza che il giocatore abbia fatto in tempo a vederla.
+  processLevelUpQueue(()=>openPrePlaneProtectionModal(plane, jumpers));
+}
+function openPrePlaneProtectionModal(plane, jumpers){
+  // Cerchio di Protezione ed Egida proteggono dal PROSSIMO danno subito, ma se si potessero
+  // lanciare solo dal pannello Gestisci non ci sarebbe mai una vera finestra utile: l'effetto
+  // d'ingresso del piano (es. il danno di Fuoco) scatterebbe già prima che il giocatore possa
+  // reagire. Qui, appena il gruppo sa su che piano è atterrato ma prima che l'effetto
+  // d'ingresso si applichi, si offre la scelta a chi ha uno dei due spell in mano.
+  const holders = [];
+  jumpers.forEach(c=>{
+    c.spells.forEach((spId,idx)=>{ if(spId==='sp_cerchio'||spId==='sp_egida') holders.push({c, idx, spId}); });
+  });
+  if(holders.length===0){ applyPlaneIntrinsic(plane); render(); return; }
+  openModal(`<h3>🛡️ Prima che ${escapeHtml(plane.name)} faccia effetto</h3>
+    <p>Il gruppo è arrivato su <strong>${escapeHtml(plane.name)}</strong>. C'è ancora un istante per lanciare una protezione prima che l'effetto d'ingresso del piano si applichi — dopo non si può più tornare indietro.</p>
+    <div class="row">${holders.map(({c,idx,spId})=>`<button class="small" data-preplane="${c.id}::${idx}::${spId}">${escapeHtml(SPELLS_BY_ID[spId].name)} (${escapeHtml(c.name)})</button>`).join('')}</div>
+    <div class="row mt1"><button class="primary" id="btnPreplaneContinue">Continua, non usare nulla</button></div>`);
+  document.querySelectorAll('[data-preplane]').forEach(b=>b.onclick=()=>{
+    const [cid,idxStr,spId] = b.dataset.preplane.split('::');
+    const c = jumpers.find(x=>x.id===cid); const idx=+idxStr;
+    if(spId==='sp_cerchio'){
+      state.currentDraw.cerchioActive = true;
+      c.spells.splice(idx,1);
+      logMsg(`🛡️ ${c.name} lancia Cerchio di Protezione prima che ${plane.name} faccia effetto: il gruppo parerà il primo danno.`,'good');
+      closeModal();
+      applyPlaneIntrinsic(plane);
+      render();
+    } else {
+      openModal(`<h3>🛡️ Egida</h3><p>Scegli il bersaglio: parerà sempre il primo danno di Tipo Fisico subito, fino al prossimo salto.</p>
+        <div class="row">${jumpers.map(t=>`<button class="small" data-preplaneegida="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+      document.querySelectorAll('[data-preplaneegida]').forEach(bb=>bb.onclick=()=>{
+        const t=jumpers.find(x=>x.id===bb.dataset.preplaneegida);
+        t.egidaReady = true;
+        c.spells.splice(idx,1);
+        logMsg(`🛡️ ${c.name} lancia Egida su ${t.name} prima che ${plane.name} faccia effetto.`,'good');
+        closeModal();
+        applyPlaneIntrinsic(plane);
+        render();
+      });
+    }
+  });
+  document.getElementById('btnPreplaneContinue').onclick=()=>{ closeModal(); applyPlaneIntrinsic(plane); render(); };
 }
 function startJump(){
   // "Party al completo, tutti per la manina": SOLO se il gruppo che salta comprende
@@ -1337,14 +1380,14 @@ function checkLevelUp(c){
     state.pendingLevelUps.push(c.id);
   }
 }
-function processLevelUpQueue(){
-  if(!state.pendingLevelUps || state.pendingLevelUps.length===0) return;
+function processLevelUpQueue(onDone){
+  if(!state.pendingLevelUps || state.pendingLevelUps.length===0){ if(onDone) onDone(); return; }
   const id = state.pendingLevelUps.shift();
   const c = state.players.find(p=>p.id===id);
-  if(!c){ processLevelUpQueue(); return; }
-  openLevelUpModal(c);
+  if(!c){ processLevelUpQueue(onDone); return; }
+  openLevelUpModal(c, onDone);
 }
-function openLevelUpModal(c){
+function openLevelUpModal(c, onDone){
   const cls=CLASSES[c.cls];
   openModal(`<div class="lvlup-star">⭐</div>
     <div class="lvlup-portrait"><img src="assets/cards/${c.cls}.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="lvlup-fallback" style="display:none;">${cls.icon}</div></div>
@@ -1358,7 +1401,7 @@ function openLevelUpModal(c){
     b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('primary'));
     b.classList.add('primary');
   });
-  document.getElementById('lvlConfirm').onclick=()=>{ applyClassProgress(c); closeModal(); render(); processLevelUpQueue(); };
+  document.getElementById('lvlConfirm').onclick=()=>{ applyClassProgress(c); closeModal(); render(); processLevelUpQueue(onDone); };
 }
 function classProgressText(clsKey){
   const map={
@@ -1484,6 +1527,24 @@ function applyPlaneIntrinsic(plane){
     logMsg("🪞 Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla, prima di affrontare l'Incontro del turno.",'warn');
     render();
     return;
+  } else if(plane.id==='aria' && acts.length){
+    // Chi viene sbalzato via affronta subito un Incontro extra da solo; SOLO dopo che
+    // quello è stato risolto per intero (finishIncontro, non qui) il gruppo riunito ne
+    // affronta un secondo — prima i due pescavano entrambi qui, nello stesso istante:
+    // il secondo sovrascriveva il primo prima ancora che il giocatore potesse vederlo.
+    const scattered=[];
+    acts.forEach(c=>{
+      const r=checkRoll(c,'des');
+      logMsg(`💨 ${c.name} check Destrezza: ${r.roll} vs ${r.val} → ${r.success?'ok':'sbalzato via'}.`);
+      if(!r.success) scattered.push(c);
+    });
+    if(scattered.length){
+      logMsg(`💨 ${scattered.map(c=>c.name).join(', ')} affronta un Incontro extra da solo; poi tutto il gruppo riunito ne affronta un secondo.`);
+      drawIncontroForPlane(plane, null, scattered);
+      if(state.currentDraw) state.currentDraw.pendingReunionPlaneId = plane.id;
+      return;
+    }
+    // nessuno sbalzato via: un solo Incontro per tutti, come da flusso normale sotto.
   } else {
     const fn = PLANE_EFFECTS[plane.effectKey];
     if(fn) fn(plane, acts, ctx);
@@ -1493,9 +1554,17 @@ function applyPlaneIntrinsic(plane){
     logMsg(`🛌 ${plane.name} è un piano di Recupero: il gruppo presente riposa automaticamente.`,'good');
     acts.forEach(c=>recuperoFor(c));
   }
+  // Sogno: chi fallisce il check di Intelletto resta intrappolato nell'illusione e non
+  // partecipa all'Incontro di questo turno — né scontro né altro, viene tolto dai target
+  // prima ancora di pescare la carta (non solo escluso dal combattimento come la Furtività).
+  let drawTargets = null;
+  if(plane.id==='sogno'){
+    const dreaming = state.currentDraw.dreamers || [];
+    drawTargets = acts.filter(c=>!dreaming.includes(c.id));
+  }
   // draw incontro after intrinsic (unless plane fully occupies the turn, none do per rules: "si pesca comunque, come sempre")
   const forcedFamily = (plane.family==='demoniaco'||plane.family==='nonmorti') ? plane.deck : null;
-  drawIncontroForPlane(plane, forcedFamily);
+  drawIncontroForPlane(plane, forcedFamily, drawTargets);
 }
 function annihilateUndead(acts, planeName){
   acts.forEach(c=>{
@@ -1525,16 +1594,24 @@ const PLANE_EFFECTS = {
     acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`⛰️ ${c.name} check impatto Forza: ${r.roll} vs ${r.val} → ${r.success?'nessun danno':'DANNO'}.`); if(!r.success) applyDamage(c,'pv',1,ctx); });
     logMsg('⛰️ Ora si scava: massimo 3 turni per uscire o il gruppo muore travolto. Gestisci i tentativi di scavo dal pannello Gestisci di ciascun personaggio (check di Forza, +1 con attrezzi).');
   },
-  aria:(p,acts,ctx)=>{
-    const scattered=[]; acts.forEach(c=>{ const r=checkRoll(c,'des'); logMsg(`💨 ${c.name} check Destrezza: ${r.roll} vs ${r.val} → ${r.success?'ok':'sbalzato via'}.`); if(!r.success) scattered.push(c); });
-    if(scattered.length){ logMsg(`💨 ${scattered.map(c=>c.name).join(', ')} affronta un Incontro extra da solo.`); drawIncontroForPlane(p, null, scattered); }
-    logMsg('💨 Dopo di che tutto il gruppo riunito affronta un secondo Incontro.');
-  },
   tempesta:(p,acts,ctx)=>{ logMsg('⚡ Fulmini nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), un fulmine colpirà qualcuno a fine turno.'); },
   cristallo:(p,acts,ctx)=>{ logMsg('💎 Incantesimi e danni fisici raddoppiati (+100%) qui: tienine conto quando applichi danni o spell.'); },
   luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`☀️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name}: -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
   tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
-  sogno:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`💭 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'lucido':'perde il turno (persiste finché non supera il check)'}.`); }); },
+  sogno:(p,acts,ctx)=>{
+    const dreaming=[];
+    acts.forEach(c=>{
+      const r=checkRoll(c,'int');
+      logMsg(`💭 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'lucido':'intrappolato in un sogno a occhi aperti'}.`);
+      if(!r.success) dreaming.push(c.id);
+    });
+    state.currentDraw.dreamers = dreaming;
+    if(dreaming.length){
+      const names = dreaming.map(id=>state.players.find(x=>x.id===id)?.name).filter(Boolean);
+      const plural = names.length>1;
+      logMsg(`💭 ${names.join(', ')} ${plural?'restano':'resta'} intrappolat${plural?'i':'o'} nell'illusione: non partecipa${plural?'no':''} all'Incontro di questo turno, sia esso uno scontro o altro.`,'warn');
+    }
+  },
   ordine:(p,acts,ctx)=>{ logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello (usa Gestisci).'); },
   legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio (baratto forzato, applica manualmente).'); },
   sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
@@ -2374,7 +2451,11 @@ function renderRewardPanel(card, acts){
     case 'peekBottom': return `<button class="primary" id="btnApplyReward">Guarda la carta in fondo al mazzo Piani</button>`;
     case 'spellBoost': return `<button class="primary" id="btnApplyReward">Il prossimo spell di un personaggio è potenziato (+100%, segna manualmente)</button>`;
     case 'restChoice': return `<button class="primary" id="btnApplyReward">Recupero + 1 San o Anima extra a scelta</button>`;
-    case 'groupHealCure': return `<button class="primary" id="btnApplyReward">Applica: +1 PV a tutti, rimuovi 1 depotenziamento a scelta</button>`;
+    case 'groupHealCure': {
+      const debuffed = acts.filter(c=>activeTempDebuffs(c).length>0);
+      if(!debuffed.length) return `<button class="primary" id="btnApplyReward">Applica: +1 PV a tutti (nessun depotenziamento da guarire)</button>`;
+      return `<p class="hint">+1 PV a tutti i presenti. Scegli anche chi guarisce da un depotenziamento temporaneo:</p><div>${debuffed.map(c=>`<button class="small" data-curedebuff="${c.id}">${escapeHtml(c.name)}</button>`).join(' ')}</div>`;
+    }
     case 'removePermDebuff': return `<div>${acts.map(c=>`<button class="small" data-rmperm="${c.id}">Rimuovi 1 depotenz. perm. a ${c.name}</button>`).join(' ')}</div>`;
     case 'sanheal': return `<div>${acts.map(c=>`<button class="small" data-sanheal="${c.id}">+1 San a ${c.name}</button>`).join(' ')}</div>`;
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
@@ -2405,12 +2486,19 @@ function bindRewardPanel(card, acts){
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); return; }
     if(r.type==='spellBoost'){ if(acts[0]){ acts[0].nextSpellBoost=true; logMsg(`✨ Il prossimo spell di ${acts[0].name} è potenziato.`);} }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
-    if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); if(acts[0]){ const d=activeTempDebuffs(acts[0])[0]; if(d) cureOneDebuff(acts[0],d);} }
+    if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
   };
   document.querySelectorAll('[data-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.heal); healStat(c,'pv',r.n); done(); });
+  document.querySelectorAll('[data-curedebuff]').forEach(b=>b.onclick=()=>{
+    acts.forEach(c=>healStat(c,'pv',1));
+    const c=acts.find(x=>x.id===b.dataset.curedebuff);
+    const d=activeTempDebuffs(c)[0];
+    if(d) cureOneDebuff(c,d);
+    done();
+  });
   document.querySelectorAll('[data-giveitem]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.giveitem); const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`);} done(); });
   document.querySelectorAll('[data-rmperm]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.rmperm); openRemovePermModal(c); });
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
@@ -2698,7 +2786,18 @@ function applyFineTurnoIfNeeded(){
 }
 function finishIncontro(){
   if(!state.currentDraw || !state.currentDraw.skipFineTurno) applyFineTurnoIfNeeded();
+  const reunionPlaneId = state.currentDraw && state.currentDraw.pendingReunionPlaneId;
   state.currentDraw = null;
+  if(reunionPlaneId){
+    // Aria: l'Incontro extra di chi era stato sbalzato via è stato risolto per intero —
+    // solo ORA il gruppo riunito affronta davvero il secondo Incontro promesso dal testo.
+    const plane = PIANI_BY_ID[reunionPlaneId];
+    if(plane && activeChars().length){
+      logMsg(`💨 Il gruppo si riunisce: tutti insieme affrontano un secondo Incontro su ${plane.name}.`);
+      drawIncontroForPlane(plane, null);
+      return;
+    }
+  }
   render();
 }
 
@@ -2991,7 +3090,7 @@ function openCharManageModal(id){
       return `<div class="card-row">
         ${cardThumb(it.id, OGGETTO_CAT_ICON[it.cat]||'🃏','fam-oggetto')}
         <div class="info">
-          <div class="title">${escapeHtml(it.name)} <span class="badge">${escapeHtml(it.cat||'')}</span></div>
+          <div class="title">${escapeHtml(it.name)} <span class="badge">${escapeHtml(OGGETTO_BADGE_LABEL[oggettoBadgeCategory(it)]||it.cat||'')}</span></div>
           <p class="desc">${escapeHtml(it.text||'')}</p>
           <div class="actions"><button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-give-inv="${i}">🤝 Dai</button> <button class="small" data-dropitem="${i}">Scarta</button></div>
         </div>
@@ -3524,16 +3623,34 @@ function openTeleportModal(caster, idx){
   return true;
 }
 const OGGETTO_CAT_ICON = {arma:'⚔️',armatura:'🛡️',anello:'💍',pozione:'🧪',protezione:'🧿',oneshot:'✨',particolare:'🔮'};
+// Stessa tassonomia "di stampa" di cardgen/template.js (badgeCategoryFor): 5 gruppi
+// visivi, distinti dalla categoria meccanica `cat` del gioco — usata solo per l'etichetta
+// di fallback quando l'immagine composta non carica (di norma il testo è già nei pixel).
+const OGGETTO_BADGE_PARTICOLARE_CONSUMABILE = new Set(['o_acquasanta','o_ancoracasa','o_chiaveplanare','o_cimeliodelviandante','o_frammentocristallo']);
+function oggettoBadgeCategory(it){
+  if(it.cat==='armatura' && it.slot==='shield') return 'scudo';
+  if(it.cat==='anello' || it.cat==='protezione') return 'altro';
+  if(it.cat==='pozione' || it.cat==='oneshot') return 'consumabile';
+  if(it.cat==='particolare') return OGGETTO_BADGE_PARTICOLARE_CONSUMABILE.has(it.id) ? 'consumabile' : 'altro';
+  return it.cat;
+}
+const OGGETTO_BADGE_LABEL = {arma:'Arma',armatura:'Armatura',scudo:'Scudo',altro:'Altro',consumabile:'Consumabile',particolare:'Particolare'};
 const SPELL_SCHOOL_ICON = {essenza:'🪄',flusso:'✨',divinazione:'🔮'};
 function spellSchoolOf(id){ return Object.entries(SPELLS).find(([,list])=>list.some(s=>s.id===id))?.[0]; }
 function showOggettoInfoModal(id){
   const it = OGGETTI_BY_ID[id]; if(!it) return;
   const icon = OGGETTO_CAT_ICON[it.cat]||'🃏';
+  const badgeLabel = OGGETTO_BADGE_LABEL[oggettoBadgeCategory(it)] || it.cat || '';
+  // Come Piani/Incontri/Classi/Spell: se l'immagine composta c'è, nome e testo sono già
+  // incollati nei suoi pixel — il card-body sotto è solo un fallback per quando manca.
   openModal(`<div class="card-display">
-      ${cardArt(it.id, icon, it.name, 'fam-oggetto')}
-      <div class="card-body">
+      <div class="card-art-wrap fam-oggetto">
+        <img src="assets/cards/${it.id}.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; document.getElementById('itemInfoBody').style.display='block';">
+        <div class="card-art-fallback" style="display:none;"><div class="ic">${icon}</div><div class="nm">${escapeHtml(it.name)}</div></div>
+      </div>
+      <div class="card-body" id="itemInfoBody" style="display:none;">
         <h3>${escapeHtml(it.name)}</h3>
-        <div class="tags"><span class="badge">${escapeHtml(it.cat||'')}</span></div>
+        <div class="tags"><span class="badge">${escapeHtml(badgeLabel)}</span></div>
         <p>${escapeHtml(it.text||'')}</p>
       </div>
     </div>

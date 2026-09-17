@@ -95,7 +95,7 @@
     "family": "eterei",
     "check": "int",
     "recupero": false,
-    "text": "Illusioni: chi fallisce un check di Intelletto perde il turno e ripete il check a ogni turno finché non lo supera. Si salta insieme solo quando nessuno è più sotto illusione.",
+    "text": "Illusioni: chi fallisce un check di Intelletto resta intrappolato e non partecipa all'Incontro di questo turno, sia esso uno scontro o altro. Chi lo supera affronta l'Incontro normalmente.",
     "effectKey": "sogno",
     "deck": "eterei"
   },
