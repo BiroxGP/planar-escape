@@ -351,7 +351,7 @@
     "family": "nonmorti",
     "check": "for_or_int",
     "recupero": false,
-    "text": "Dal 2° turno consecutivo qui, a fine turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",
+    "text": "A fine turno, ogni turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",
     "effectKey": "velo_dei_sussurri",
     "deck": "nonmorti",
     "girone": 2
@@ -362,7 +362,7 @@
     "family": "nonmorti",
     "check": "for_or_int",
     "recupero": false,
-    "text": "Dal 2° turno consecutivo qui, a fine turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",
+    "text": "A fine turno, ogni turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",
     "effectKey": "voragine_della_negativita",
     "deck": "nonmorti",
     "girone": 3
