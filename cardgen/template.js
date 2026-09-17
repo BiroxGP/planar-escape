@@ -218,7 +218,7 @@ function itemPageHtml(items, artDir) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
   .cat-badge{
-    position:absolute; top:24px; right:24px; z-index:4;
+    position:absolute; top:24px; left:24px; z-index:4;
     width:84px; height:84px; border-radius:50%;
     background:radial-gradient(circle, rgba(10,10,12,.72) 0%, rgba(10,10,12,.46) 55%, rgba(10,10,12,0) 100%);
     box-shadow:0 0 10px 2px var(--fam);
