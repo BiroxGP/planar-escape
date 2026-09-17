@@ -205,7 +205,7 @@
     "family": "armonia",
     "check": null,
     "recupero": true,
-    "text": "Nessun danno attivo: qui nulla viene mai consumato né dimenticato.",
+    "text": "Nessun danno attivo all'ingresso. I Punti Vita non scendono mai sotto 1 finché si resta: ci si può ferire, ma non si sviene né si muore.",
     "effectKey": "eternita",
     "deck": "armonia"
   },
