@@ -776,8 +776,12 @@ function applyDamage(c, stat, n, ctx){
   if(n>0 && c.equipped.shield){
     const sh = OGGETTI_BY_ID[c.equipped.shield];
     if(sh && (sh.blockFirstHitAnyType || (sh.blockFirstHitPhysical && ctx.type==='fisico'))){
-      logMsg(`🛡️ ${c.name} para il colpo con ${sh.name}, che poi si rompe.`);
-      c.equipped.shield=null;
+      if(c.equipped.shield===c.protectedItemId){
+        logMsg(`🛡️⏳ ${c.name} para il colpo con ${sh.name}: la Statua di Stasi lo protegge, non si rompe.`,'good');
+      } else {
+        logMsg(`🛡️ ${c.name} para il colpo con ${sh.name}, che poi si rompe.`);
+        c.equipped.shield=null;
+      }
       return;
     }
   }
@@ -1576,6 +1580,16 @@ function setProtectedItem(c, itemId){
   } else {
     logMsg(`⏳ ${c.name}: il tempo si ferma per ${name}. Non potrà più essere perso, rubato o distrutto.`,'good');
   }
+}
+function allOwnedItemIds(c){
+  // tutti gli oggetti posseduti: inventario + equipaggiati — la Statua di Stasi può
+  // proteggere qualsiasi oggetto, non solo quelli ancora liberi nello zaino.
+  const ids = [...c.inventory];
+  if(c.equipped.weapon) ids.push(c.equipped.weapon);
+  if(c.equipped.armor) ids.push(c.equipped.armor);
+  if(c.equipped.shield) ids.push(c.equipped.shield);
+  ids.push(...c.equipped.rings);
+  return ids;
 }
 function pickLosableItemIndex(c){
   // esclude l'oggetto protetto dalla Statua di Stasi da qualsiasi perdita casuale/manuale
@@ -2567,15 +2581,15 @@ function bindOblioCard(acts){
   if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.'); finishIncontro(); };
 }
 function renderStatuaCard(acts){
-  const withItems = acts.filter(c=>c.inventory.length);
+  const withItems = acts.filter(c=>allOwnedItemIds(c).length);
   if(!withItems.length){
     return `<p class="hint">🗿 Nessuno del gruppo ha un oggetto da proteggere: la statua resta dormiente.</p><button class="primary" id="btnResolveDone">Continua</button>`;
   }
   return `<div class="manual-box">
     <h4>⏳ Statua di Stasi</h4>
-    <p style="font-size:.85rem;">Scegli un oggetto: il tempo si ferma per lui e da questo momento non potrà mai più essere perso, rubato o distrutto da nessun effetto, per il resto della partita. Un solo oggetto protetto alla volta: sceglierne uno nuovo (anche più avanti, riaprendo la scheda) toglie la protezione al precedente.</p>
+    <p style="font-size:.85rem;">Scegli un oggetto, anche equipaggiato: il tempo si ferma per lui e da questo momento non potrà mai più essere perso, rubato o distrutto da nessun effetto, per il resto della partita. Un solo oggetto protetto alla volta: sceglierne uno nuovo (anche più avanti, riaprendo la scheda) toglie la protezione al precedente.</p>
     ${withItems.map(c=>`<div style="margin-bottom:.4rem;"><span style="display:block;margin-bottom:.2rem;">${c.name}${c.protectedItemId?` <span class="hint">(protetto: ${OGGETTI_BY_ID[c.protectedItemId]?.name||'?'})</span>`:''}</span>
-      ${c.inventory.map(id=>`<button class="small" data-statua="${c.id}::${id}" ${c.protectedItemId===id?'disabled':''}>${OGGETTI_BY_ID[id]?.name||id}${c.protectedItemId===id?' ✓':''}</button>`).join(' ')}
+      ${allOwnedItemIds(c).map(id=>`<button class="small" data-statua="${c.id}::${id}" ${c.protectedItemId===id?'disabled':''}>${OGGETTI_BY_ID[id]?.name||id}${c.protectedItemId===id?' ✓':''}</button>`).join(' ')}
     </div>`).join('')}
     <button class="primary mt1" id="btnResolveDone">Nessuna protezione, continua</button>
   </div>`;
@@ -2914,9 +2928,9 @@ function openCharManageModal(id){
       ${[['weapon','⚔️ Arma'],['armor','🛡️ Armatura'],['shield','🛡️ Scudo']].map(([slot,label])=>{
         const id=c.equipped[slot];
         if(!id) return `<span class="badge">${label}: nessuna</span>`;
-        return `<span class="badge">${label}: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequip="${slot}">Togli</button></span>`;
+        return `<span class="badge">${label}: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequip="${slot}">Togli</button> <button class="small" data-give-slot="${slot}">🤝 Dai</button></span>`;
       }).join('')}
-      ${c.equipped.rings.map((id,i)=>`<span class="badge">💍 Anello: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequipring="${i}">Togli</button></span>`).join('')}
+      ${c.equipped.rings.map((id,i)=>`<span class="badge">💍 Anello: ${escapeHtml(OGGETTI_BY_ID[id]?.name||id)} <button class="small" data-unequipring="${i}">Togli</button> <button class="small" data-give-ring="${i}">🤝 Dai</button></span>`).join('')}
     </div>
     <h4>Oggetti (${c.inventory.length})</h4>
     <div>${c.inventory.map((id,i)=>{
@@ -2926,7 +2940,7 @@ function openCharManageModal(id){
         <div class="info">
           <div class="title">${escapeHtml(it.name)} <span class="badge">${escapeHtml(it.cat||'')}</span></div>
           <p class="desc">${escapeHtml(it.text||'')}</p>
-          <div class="actions"><button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-dropitem="${i}">Scarta</button></div>
+          <div class="actions"><button class="small" data-useitem="${i}">Usa/Equip</button> <button class="small" data-give-inv="${i}">🤝 Dai</button> <button class="small" data-dropitem="${i}">Scarta</button></div>
         </div>
       </div>`;
     }).join('')||'<span class="hint">Nessuno</span>'}</div>
@@ -2956,6 +2970,9 @@ function openCharManageModal(id){
   document.querySelectorAll('[data-unequip]').forEach(b=>b.onclick=()=>{ unequipSlot(c, b.dataset.unequip); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-unequipring]').forEach(b=>b.onclick=()=>{ unequipRing(c, +b.dataset.unequipring); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-dropitem]').forEach(b=>b.onclick=()=>{ c.inventory.splice(+b.dataset.dropitem,1); render(); openCharManageModal(id); });
+  document.querySelectorAll('[data-give-inv]').forEach(b=>b.onclick=()=>{ openGiveItemModal(c, {type:'inventory', idx:+b.dataset.giveInv}); });
+  document.querySelectorAll('[data-give-slot]').forEach(b=>b.onclick=()=>{ openGiveItemModal(c, {type:'equipped', slot:b.dataset.giveSlot}); });
+  document.querySelectorAll('[data-give-ring]').forEach(b=>b.onclick=()=>{ openGiveItemModal(c, {type:'ring', idx:+b.dataset.giveRing}); });
   document.querySelectorAll('[data-usespell]').forEach(b=>b.onclick=()=>{
     // alcuni spell aprono un modal per scegliere il bersaglio (Sigillo, Egida, Benedizione,
     // Trasmutazione, Vaticinio, Teletrasporto, cure): riaprire subito il pannello Gestisci
@@ -2966,6 +2983,36 @@ function openCharManageModal(id){
     if(!openedOwnModal) openCharManageModal(id);
   });
   document.getElementById('mgrClose').onclick=closeModal;
+}
+function openGiveItemModal(c, source){
+  const itemId = source.type==='inventory' ? c.inventory[source.idx]
+    : source.type==='ring' ? c.equipped.rings[source.idx]
+    : c.equipped[source.slot];
+  if(!itemId) return;
+  // solo a un compagno nello stesso gruppo — non a chi è separato altrove.
+  const mates = groupMembers(groupOf(c)).filter(x=>x.id!==c.id);
+  if(mates.length===0){
+    logMsg(`⚠️ ${c.name} non ha nessun compagno nel proprio gruppo a cui dare oggetti in questo momento.`,'warn');
+    return;
+  }
+  const it = OGGETTI_BY_ID[itemId];
+  openModal(`<h3>🤝 Dai un oggetto</h3><p>A chi vuoi dare <strong>${escapeHtml(it?.name||itemId)}</strong>?</p>
+    <div class="row">${mates.map(t=>`<button class="small" data-giveitemto="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-giveitemto]').forEach(b=>b.onclick=()=>{
+    const t=mates.find(x=>x.id===b.dataset.giveitemto);
+    if(source.type==='inventory') c.inventory.splice(source.idx,1);
+    else if(source.type==='ring') c.equipped.rings.splice(source.idx,1);
+    else c.equipped[source.slot]=null;
+    if(c.protectedItemId===itemId){
+      c.protectedItemId=null;
+      logMsg(`⏳ ${c.name}: la protezione della Statua di Stasi non segue l'oggetto donato, si perde.`,'warn');
+    }
+    t.inventory.push(itemId);
+    logMsg(`🤝 ${c.name} dà ${it?.name||itemId} a ${t.name}.`,'good');
+    closeModal();
+    render();
+    openCharManageModal(c.id);
+  });
 }
 function useClassSpecial(c){
   const cls=CLASSES[c.cls];
