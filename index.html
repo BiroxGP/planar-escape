@@ -321,7 +321,7 @@ const PIANI = [
   P("metallo","Metallo","armonia","des",false,"Chi fallisce un check di Destrezza resta incastrato negli ingranaggi: perde il turno e subisce 1 danno."),
   P("logica","Logica","armonia","int",false,"Nessun reroll è utilizzabile qui, da nessuna fonte. Un 6 naturale resta comunque un successo automatico."),
   P("verita","Verità","armonia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo a Sanità Mentale, travolto dalla perdita di ogni illusione."),
-  P("eternita","Eternità","armonia",null,true,"Nessun danno attivo: qui nulla viene mai consumato né dimenticato."),
+  P("eternita","Eternità","armonia",null,true,"Nessun danno attivo all'ingresso. I Punti Vita non scendono mai sotto 1 finché si resta: ci si può ferire, ma non si sviene né si muore."),
   P("caos","Caos","entropia","random",false,"Ogni check usa una statistica casuale, estratta di nuovo a ogni tiro. Appena si entra, l'intero mazzo Piani viene rimescolato."),
   P("vuoto","Vuoto","entropia",null,false,"Nessun check: a ogni turno si sceglie cosa perdere fra 1 Punto Vita, un oggetto, uno spell o un'abilità."),
   P("sangue","Sangue","entropia","anima",false,"Ogni check o combattimento fallito costa anche 1 Punto Vita. Qualsiasi altra perdita di Punti Vita qui raddoppia."),
@@ -789,6 +789,13 @@ function applyDamage(c, stat, n, ctx){
   let val = before - n;
   const floor = statFloor(stat);
   if(stat==='pv'){
+    // Eternità: "qui nulla viene mai consumato né dimenticato" — si può ancora prendere
+    // danno, ma i PV non scendono mai sotto 1: niente svenimento, niente morte, su questo piano.
+    const p = currentPlane();
+    if(p && p.id==='eternita' && val<1){
+      val = 1;
+      logMsg(`⏳ ${c.name}: l'Eternità non lo lascia scendere sotto 1 Punto Vita.`,'good');
+    }
     if(val<=0 && val>-999){ /* handled below */ }
   } else {
     if(val<floor) val=floor;
@@ -1307,9 +1314,12 @@ function startJump(){
   const isFullParty = activeChars().length>0 && activeChars().length===allActiveChars().length;
   if(!isFullParty){ doJump(); return; }
   const nextId = state.mazzoPiani[0];
-  const label = nextId==='__PT__' ? 'Una destinazione leggendaria del Piano Terreno' : (PIANI_BY_ID[nextId]?.name || '?');
+  const isPT = nextId==='__PT__';
+  const nextPlane = isPT ? null : PIANI_BY_ID[nextId];
+  const label = isPT ? 'Una destinazione leggendaria del Piano Terreno' : (nextPlane?.name || '?');
   openModal(`<h3>🤝 Il gruppo si tiene per mano</h3>
     <p>Uniti, vedete la carta in cima al mazzo Piani prima di saltare — resta quella la destinazione, non è una scelta:</p>
+    ${nextPlane ? planeHeroArt(nextPlane) : ''}
     <p style="font-size:1.3rem;font-family:'Cinzel',serif;text-align:center;margin:1rem 0;">${escapeHtml(label)}</p>
     <div class="row mt1"><button class="primary" id="btnConfirmJump">🌀 Salta</button></div>`);
   const btn=document.getElementById('btnConfirmJump');
@@ -1496,7 +1506,7 @@ function annihilateUndead(acts, planeName){
 }
 const PLANE_EFFECTS = {
   fuoco:(p,acts,ctx)=>{ acts.forEach(c=>applyDamage(c,'pv',1,ctx)); logMsg('🔥 Danno d\'ingresso a tutti (+1 PV danno per ogni turno di permanenza, da applicare manualmente se si resta).'); },
-  veleno:(p,acts,ctx)=>{ logMsg('☠️ Veleno: danno a fine turno (quasi inevitabile) — applicalo manualmente a fine turno se il gruppo non è saltato via.'); },
+  veleno:(p,acts,ctx)=>{ logMsg('☠️ Veleno nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), subirà danno a fine turno.'); },
   acqua:(p,acts,ctx)=>{
     if(acts.length===0) return;
     const best = Math.max(...acts.map(c=>effectiveStat(c,'for')));
@@ -1519,7 +1529,7 @@ const PLANE_EFFECTS = {
     if(scattered.length){ logMsg(`💨 ${scattered.map(c=>c.name).join(', ')} affronta un Incontro extra da solo.`); drawIncontroForPlane(p, null, scattered); }
     logMsg('💨 Dopo di che tutto il gruppo riunito affronta un secondo Incontro.');
   },
-  tempesta:(p,acts,ctx)=>{ if(acts.length){ const v=acts[Math.floor(Math.random()*acts.length)]; logMsg(`⚡ Fulmine a fine turno su ${v.name}.`); applyDamage(v,'pv',1,ctx); } },
+  tempesta:(p,acts,ctx)=>{ logMsg('⚡ Fulmini nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), un fulmine colpirà qualcuno a fine turno.'); },
   cristallo:(p,acts,ctx)=>{ logMsg('💎 Incantesimi e danni fisici raddoppiati (+100%) qui: tienine conto quando applichi danni o spell.'); },
   luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`☀️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name}: -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
   tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
@@ -1847,38 +1857,44 @@ function renderIncontroAction(){
   if(!el || !state.currentDraw) return;
   const plane = currentPlane(); const card = currentIncontro();
   const acts = state.currentDraw.targets.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && (c.status==='active'||c.status==='undead'));
+  // Qualsiasi azione che non sia un semplice check (un'interazione: commerciare, aprire
+  // qualcosa, raccogliere un oggetto...) fa scattare l'effetto di fine turno del piano, se
+  // presente — a differenza di uno scontro (dove si può ancora tentare la fuga) qui non c'è
+  // modo di evitarlo una volta scelto di agire, quindi lo si avvisa prima.
+  const fineTurnoWarning = (FINE_TURNO_PLANES.has(plane.id) && card.type!=='nessun')
+    ? `<p class="hint">⚠️ Agire qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)}.</p>` : '';
   if(card.type==='nessun'){
     el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
     document.getElementById('btnResolveDone').onclick=finishIncontro;
     return;
   }
   if(card.manual){
-    el.innerHTML = renderManualPanel(card, acts);
+    el.innerHTML = fineTurnoWarning + renderManualPanel(card, acts);
     bindManualPanel(card, acts);
     return;
   }
   if(card.pattoSangueCard){
-    el.innerHTML = renderPattoSangueCard(acts);
+    el.innerHTML = fineTurnoWarning + renderPattoSangueCard(acts);
     bindPattoSangueCard(acts);
     return;
   }
   if(card.bivioCard){
-    el.innerHTML = renderBivioCard();
+    el.innerHTML = fineTurnoWarning + renderBivioCard();
     bindBivioCard();
     return;
   }
   if(card.oblioCard){
-    el.innerHTML = renderOblioCard(acts);
+    el.innerHTML = fineTurnoWarning + renderOblioCard(acts);
     bindOblioCard(acts);
     return;
   }
   if(card.statuaCard){
-    el.innerHTML = renderStatuaCard(acts);
+    el.innerHTML = fineTurnoWarning + renderStatuaCard(acts);
     bindStatuaCard(acts);
     return;
   }
   if(card.esattoreCard){
-    el.innerHTML = renderEsattoreCard(acts);
+    el.innerHTML = fineTurnoWarning + renderEsattoreCard(acts);
     bindEsattoreCard(acts, plane);
     return;
   }
@@ -1937,7 +1953,11 @@ function renderIncontroAction(){
     const fighters = acts.filter(c=>!hidden.includes(c.id));
     if(fighters.length===0){
       el.innerHTML = `<p class="hint">🥷 Tutti i presenti sono riusciti a restare nascosti: nessuno scontro, né rischi né ricompense.</p><button class="primary" id="btnResolveDone">Continua</button>`;
-      document.getElementById('btnResolveDone').onclick=finishIncontro;
+      document.getElementById('btnResolveDone').onclick=()=>{
+        // nascosti dall'Incontro: si evitano anche gli effetti di fine turno del piano.
+        state.currentDraw.skipFineTurno = true;
+        finishIncontro();
+      };
       return;
     }
     el.innerHTML = renderCombatPanel(plane, card, fighters);
@@ -1997,7 +2017,7 @@ function renderIncontroAction(){
     return;
   }
   if(card.type==='ricompensa'){
-    el.innerHTML = renderRewardPanel(card, acts);
+    el.innerHTML = fineTurnoWarning + renderRewardPanel(card, acts);
     bindRewardPanel(card, acts);
     return;
   }
@@ -2224,6 +2244,8 @@ function bindCombatPanel(plane, card, acts){
     if(success){
       logMsg('↩️ Il gruppo raggiunge il portale e interrompe lo scontro.','good');
       if(card.persistent){ persistCombat(plane, cb); }
+      // scappati in tempo: si evitano anche gli effetti di fine turno del piano (Veleno/Tempesta).
+      state.currentDraw.skipFineTurno = true;
       finishIncontro();
     } else {
       logMsg('↩️ La ritirata fallisce: le entità hanno un altro giro per colpire prima di poter riprovare a scappare.','warn');
@@ -2644,7 +2666,29 @@ function bindEsattoreCard(acts, plane){
   const btn=document.getElementById('btnResolveDone');
   if(btn) btn.onclick=finishIncontro;
 }
+// Piani con un effetto "a fine turno" invece che d'ingresso: colpiscono solo se il gruppo
+// non è riuscito a evitare del tutto l'Incontro del turno (scontro fuggito con successo, o
+// tutti riusciti a restare nascosti) — in quel caso state.currentDraw.skipFineTurno viene
+// impostato prima di chiamare finishIncontro(). Nessuna gestione di più turni di permanenza:
+// si applica una volta sola, a fine di QUESTO turno.
+const FINE_TURNO_PLANES = new Set(['veleno','tempesta']);
+function applyFineTurnoIfNeeded(){
+  const plane = currentPlane();
+  if(!plane || !FINE_TURNO_PLANES.has(plane.id)) return;
+  const acts = activeChars();
+  if(!acts.length) return;
+  const ctx = {family: plane.family, planeId: plane.id};
+  if(plane.id==='veleno'){
+    acts.forEach(c=>applyDamage(c,'pv',1,ctx));
+    logMsg('☠️ Veleno: il turno finisce senza scampo, il gruppo presente subisce danno.','warn');
+  } else if(plane.id==='tempesta'){
+    const v=acts[Math.floor(Math.random()*acts.length)];
+    applyDamage(v,'pv',1,ctx);
+    logMsg(`⚡ Tempesta: fulmine a fine turno su ${v.name}.`,'warn');
+  }
+}
 function finishIncontro(){
+  if(!state.currentDraw || !state.currentDraw.skipFineTurno) applyFineTurnoIfNeeded();
   state.currentDraw = null;
   render();
 }
