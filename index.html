@@ -360,7 +360,7 @@ const INCONTRI = {
     C("el_guida","Guida elementale","ricompensa","Una creatura minore indica una via d'uscita: guarda la prima carta del mazzo Piani.",{reward:{type:"peek",n:1}}),
     C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: un oggetto in cambio di un nuovo oggetto o di 1 risorsa planare, a scelta.",{reward:{type:"tradeItemForItemOrResource"}}),
     C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
-    C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",{auto:true,onFail:{type:"amplify"}}),
+    C("el_amplificazione","Amplificazione","check","Il piano amplifica ogni spell di danno o cura lanciato qui: +1 all'effetto, finché il gruppo non salta via. Nessun check, effetto automatico.",{auto:true,onFail:{type:"ampSpells"}}),
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta. Al riparo qui: si evita anche l'effetto di fine turno del piano.",{reward:{type:"heal",n:1},safeRespite:true}),
     C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
     C("el_onda","Onda d'Urto","check","Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",{check:"des",onFail:{type:"damage",n:1}}),
@@ -629,6 +629,7 @@ function newGame(){
     pendingSferaAntiplanare:null, // {groupId}: annulla l'effetto intrinseco del prossimo piano in cui questo gruppo entra
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
     pattoOnoreActive:false, // Patto d'Onore: da quando si prende la ricompensa, ogni vittoria in combattimento nell'Entropia frutta un oggetto
+    amplifySpellsActive:false, // Amplificazione: +1 all'effetto di ogni spell di danno o cura lanciato, finché il gruppo non salta via
   };
   render();
 }
@@ -1243,6 +1244,7 @@ function reinsertPianoCard(id){
   state.mazzoPiani.splice(pos,0,id);
 }
 function doJump(){
+  state.amplifySpellsActive = false; // la finestra di Amplificazione si chiude appena si salta via
   if(state.pendingReunion && state.groups.length>1){
     mergeAllGroups();
     state.pendingReunion=false;
@@ -2134,20 +2136,14 @@ function applyConsequence(cons, targets, plane){
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'minor': logMsg(`❓ ${c.name}: effetto minore casuale, risolvilo narrativamente.`); break;
-      case 'amplify': {
-        // Amplificazione: potenzia un beneficio o maleficio elementare GIA' attivo su questo
-        // personaggio — nessuna scelta, si limita ad amplificare ciò che già c'è (se c'è).
-        const boosted = STATS.filter(s=>s!=='pv' && c.tempBonus && c.tempBonus[s]);
-        const debuffed = STATS.filter(s=>s!=='pv' && c.tempDebuff && c.tempDebuff[s]);
-        if(boosted.length){
-          const s=boosted[0]; const before=c.stats[s]; c.stats[s]=Math.min(6,c.stats[s]+1); c.tempBonus[s]+=(c.stats[s]-before);
-          logMsg(`🔥 ${c.name}: il piano amplifica il suo beneficio temporaneo a ${STAT_LABEL[s]} (${before} → ${c.stats[s]}).`,'good');
-        } else if(debuffed.length){
-          const s=debuffed[0];
-          applyTempDebuff(c,s); // se già temporaneo, questo lo aggrava a permanente (comportamento esistente)
-          logMsg(`🔥 ${c.name}: il piano amplifica il suo maleficio a ${STAT_LABEL[s]}.`,'warn');
-        } else {
-          logMsg(`🔥 ${c.name}: nessun beneficio o maleficio elementare attivo da amplificare, nessun effetto.`);
+      case 'ampSpells': {
+        // Amplificazione: prima amplificava un beneficio/maleficio elementare GIA' attivo,
+        // ma quasi sempre non c'era nulla da amplificare — un pescaggio a vuoto la maggior
+        // parte delle volte. Ridisegnata: apre una finestra che potenzia ogni spell di danno
+        // o cura lanciato mentre resta aperta (+1 all'effetto), finché il gruppo non salta via.
+        if(!state.amplifySpellsActive){
+          state.amplifySpellsActive = true;
+          logMsg(`🔥 ${plane.name}: ogni spell di danno o cura lanciato qui ottiene +1 all'effetto, finché il gruppo non salta via.`,'good');
         }
         break;
       }
@@ -3471,7 +3467,11 @@ function useSpell(c, idx){
       return true;
     }
     else if(r.type==='reshuffle'){ reshuffleMazzoPiani(); }
-    else if(r.type==='healOther'){ return openHealOtherModal(c, idx, sp, r, boosted?2:1); }
+    else if(r.type==='healOther'){
+      const amp = state.amplifySpellsActive ? 1 : 0;
+      if(amp) logMsg(`🔥 Amplificazione: ${sp.name} ottiene +1 all'effetto.`,'good');
+      return openHealOtherModal(c, idx, sp, {...r, n:(r.n||1)+amp}, boosted?2:1);
+    }
     else if(r.type==='grantReroll'){ return openGrantRerollModal(c, idx, sp, r); }
   } else if(sp.selfRecupero){
     recuperoFor(c);
@@ -3483,9 +3483,10 @@ function useSpell(c, idx){
     const liveEntities = cb && cb.entities ? cb.entities.filter(e=>e.hp>0) : [];
     const validTargets = sp.filterUndeadDemon ? liveEntities.filter(e=>e.undead||e.demon) : liveEntities;
     if(validTargets.length===0){ logMsg(`⚠️ ${sp.name}: nessuna entità bersaglio presente in questo momento.`,'warn'); return; }
-    const dmg = sp.combatDamageAll * (boosted?2:1);
+    const amp = state.amplifySpellsActive ? 1 : 0;
+    const dmg = sp.combatDamageAll * (boosted?2:1) + amp;
     validTargets.forEach(e=>{ e.hp -= dmg; });
-    logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio.`);
+    logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio${amp?' (+1 da Amplificazione)':''}.`);
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
   }

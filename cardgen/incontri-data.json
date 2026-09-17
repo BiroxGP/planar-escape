@@ -93,7 +93,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",
+    "text": "Il piano amplifica ogni spell di danno o cura lanciato qui: +1 all'effetto, finché il gruppo non salta via. Nessun check, effetto automatico.",
     "manual": false,
     "forte": false,
     "persistent": false
