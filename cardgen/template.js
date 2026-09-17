@@ -51,10 +51,15 @@ const SCHOOL_EMOJI = { essenza: '🪄', flusso: '✨', divinazione: '🔮' };
 // protezione/oneshot/particolare). Scudi si separano dall'armatura (slot "shield"), anelli
 // e protezioni confluiscono insieme in "altro". Pozione/oneshot confluiranno in
 // "consumabile" quando arriverà l'icona dedicata; particolare resta a sé per ora.
+// "particolare" si divide fra "altro" (effetto permanente/riusabile) e "consumabile"
+// (si esaurisce con l'uso) — scelta dall'utente carta per carta, non deducibile da un solo
+// flag dati (alcuni consumabili qui non hanno oneUse impostato pur esaurendosi all'uso).
+const PARTICOLARE_CONSUMABILE_IDS = new Set(['o_acquasanta', 'o_ancoracasa', 'o_chiaveplanare', 'o_cimeliodelviandante', 'o_frammentocristallo']);
 function badgeCategoryFor(item) {
   if (item.cat === 'armatura' && item.slot === 'shield') return 'scudo';
   if (item.cat === 'anello' || item.cat === 'protezione') return 'altro';
   if (item.cat === 'pozione' || item.cat === 'oneshot') return 'consumabile';
+  if (item.cat === 'particolare') return PARTICOLARE_CONSUMABILE_IDS.has(item.id) ? 'consumabile' : 'altro';
   return item.cat;
 }
 const ITEM_CAT_ACCENT = { arma: '#6b7a8f', armatura: '#7a8f6b', scudo: '#8f9a6b', altro: '#c9932a', consumabile: '#4fb0a6', particolare: '#a3781c' };

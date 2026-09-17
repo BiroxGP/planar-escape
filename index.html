@@ -335,8 +335,8 @@ const PIANI = [
   P("baratro_in_fiamme","Il Baratro in Fiamme (Demoniaco, 2° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:2}),
   P("gelo_dellabisso","Il Gelo dell'Abisso (Demoniaco, 3° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:3}),
   P("palude_sconsacrata","La Palude Sconsacrata (Piano Negativo, 1°)","nonmorti","for_or_int",false,"Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",null,{girone:1}),
-  P("velo_dei_sussurri","Il Velo dei Sussurri (Piano Negativo, 2°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",null,{girone:2}),
-  P("voragine_della_negativita","La Voragine della Negatività (Piano Negativo, 3°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, ogni turno un check di Sanità Mentale o si perde 1 Sanità Mentale. Niente Furtività: un Incontro a ogni turno.",null,{girone:3}),
+  P("velo_dei_sussurri","Il Velo dei Sussurri (Piano Negativo, 2°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, a fine turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",null,{girone:2}),
+  P("voragine_della_negativita","La Voragine della Negatività (Piano Negativo, 3°)","nonmorti","for_or_int",false,"Dal 2° turno consecutivo qui, a fine turno: -1 Sanità Mentale (rischio Follia). Niente Furtività: un Incontro a ogni turno.",null,{girone:3}),
 ];
 const PIANI_BY_ID = Object.fromEntries(PIANI.map(p=>[p.id,p]));
 const RECUPERO_PLANES = new Set(PIANI.filter(p=>p.recupero).map(p=>p.id));
@@ -361,7 +361,7 @@ const INCONTRI = {
     C("el_mercante","Mercante elementale","ricompensa","Uno spirito offre un baratto: un oggetto in cambio di un nuovo oggetto o di 1 risorsa planare, a scelta.",{reward:{type:"tradeItemForItemOrResource"}}),
     C("el_custode","Custode del piano","incontro","Un elementale maggiore sorveglia il passaggio. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
     C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",{auto:true,onFail:{type:"amplify"}}),
-    C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",{reward:{type:"heal",n:1}}),
+    C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta. Al riparo qui: si evita anche l'effetto di fine turno del piano.",{reward:{type:"heal",n:1},safeRespite:true}),
     C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
     C("el_onda","Onda d'Urto","check","Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",{check:"des",onFail:{type:"damage",n:1}}),
     C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
@@ -1669,16 +1669,10 @@ function applyGironeEffects(plane, acts){
   if(plane.family==='demoniaco' && plane.girone>=2){
     acts.forEach(c=>{ applyAnimaLoss(c,1); });
   }
-  if(plane.family==='nonmorti'){
-    const consec = state.turnConsecutive[plane.id]||1;
-    if(consec>=2){
-      acts.forEach(c=>{
-        const r=checkRoll(c,'san');
-        logMsg(`🧠 ${c.name} check Sanità Mentale (Piano Negativo, permanenza prolungata): ${r.roll} vs ${r.val} → ${r.success?'ok':'FALLITO, -1 San'}.`);
-        if(!r.success) applySanLoss(c,1);
-      });
-    }
-  }
+  // Piano Negativo (nonmorti) dal 2° turno consecutivo: la perdita di Sanità è a fine
+  // turno, non all'ingresso — vedi applyFineTurnoIfNeeded(). Lì si passa direttamente da
+  // applySanLoss (che gestisce da sé il check contro la Follia, stesse regole di Corruzione/
+  // Veleno/Tempesta), invece di un check ridondante qui che ne raddoppiava uno interno.
 }
 function applyAnimaLoss(c,n){
   for(let i=0;i<n;i++){
@@ -1862,7 +1856,7 @@ function renderIncontroAction(){
   // qualcosa, raccogliere un oggetto...) fa scattare l'effetto di fine turno del piano, se
   // presente — a differenza di uno scontro (dove si può ancora tentare la fuga) qui non c'è
   // modo di evitarlo una volta scelto di agire, quindi lo si avvisa prima.
-  const fineTurnoWarning = (FINE_TURNO_PLANES.has(plane.id) && card.type!=='nessun')
+  const fineTurnoWarning = (hasFineTurnoRisk(plane) && card.type!=='nessun' && !card.safeRespite)
     ? `<p class="hint">⚠️ Agire qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)}.</p>` : '';
   if(card.type==='nessun'){
     el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
@@ -2374,7 +2368,7 @@ function renderRewardPanel(card, acts){
   const r=card.reward||{};
   switch(r.type){
     case 'resource': return `<button class="primary" id="btnApplyReward">+${r.n} risorsa planare per il gruppo</button>`;
-    case 'heal': return `<div>${acts.map(c=>`<button class="small" data-heal="${c.id}">Cura ${r.n} PV → ${c.name}</button>`).join(' ')}</div>`;
+    case 'heal': return `<div>${acts.map(c=>`<button class="small" data-heal="${c.id}">Cura ${r.n} PV → ${c.name}</button>`).join(' ')}<button id="btnDeclineReward">Rifiuta, non serve</button></div>`;
     case 'item': return `<button class="primary" id="btnApplyReward">Pesca un oggetto</button><div class="row mt1">${acts.map(c=>`<button class="small" data-giveitem="${c.id}">a ${c.name}</button>`).join('')}</div>`;
     case 'peek': return `<button class="primary" id="btnApplyReward">Guarda ${r.n} carta/e in cima al mazzo Piani</button>`;
     case 'peekBottom': return `<button class="primary" id="btnApplyReward">Guarda la carta in fondo al mazzo Piani</button>`;
@@ -2398,7 +2392,12 @@ function renderRewardPanel(card, acts){
 }
 function bindRewardPanel(card, acts){
   const r=card.reward||{};
-  const done=()=>finishIncontro();
+  const done=()=>{
+    // Rifugio temporaneo (e futuri ripari simili): qualunque sia la scelta, il riparo protegge
+    // anche dall'effetto di fine turno del piano (Veleno/Tempesta/Piano Negativo).
+    if(card.safeRespite && state.currentDraw) state.currentDraw.skipFineTurno = true;
+    finishIncontro();
+  };
   const genericBtn=document.getElementById('btnApplyReward');
   if(genericBtn) genericBtn.onclick=()=>{
     if(r.type==='resource'){ acts.forEach(c=>{}); if(acts[0]) acts[0].resources+=r.n; logMsg(`💠 Il gruppo ottiene ${r.n} risorsa planare (assegnata a ${acts[0]?.name}).`); }
@@ -2673,9 +2672,15 @@ function bindEsattoreCard(acts, plane){
 // impostato prima di chiamare finishIncontro(). Nessuna gestione di più turni di permanenza:
 // si applica una volta sola, a fine di QUESTO turno.
 const FINE_TURNO_PLANES = new Set(['veleno','tempesta']);
+function hasFineTurnoRisk(plane){
+  if(!plane) return false;
+  if(FINE_TURNO_PLANES.has(plane.id)) return true;
+  if(plane.family==='nonmorti' && (state.turnConsecutive[plane.id]||1)>=2) return true;
+  return false;
+}
 function applyFineTurnoIfNeeded(){
   const plane = currentPlane();
-  if(!plane || !FINE_TURNO_PLANES.has(plane.id)) return;
+  if(!hasFineTurnoRisk(plane)) return;
   const acts = activeChars();
   if(!acts.length) return;
   const ctx = {family: plane.family, planeId: plane.id};
@@ -2686,6 +2691,9 @@ function applyFineTurnoIfNeeded(){
     const v=acts[Math.floor(Math.random()*acts.length)];
     applyDamage(v,'pv',1,ctx);
     logMsg(`⚡ Tempesta: fulmine a fine turno su ${v.name}.`,'warn');
+  } else if(plane.family==='nonmorti'){
+    logMsg('🧠 Piano Negativo: la permanenza prolungata logora la mente, a fine turno il gruppo presente rischia la Follia.','warn');
+    acts.forEach(c=>applySanLoss(c,1));
   }
 }
 function finishIncontro(){
@@ -3247,6 +3255,12 @@ function useItem(c, idx){
     reinsertPianoCard('__PT__');
     logMsg(`🗺️ ${c.name} usa ${it.name}: una carta Piano Terreno extra viene mescolata nel mazzo Piani.`,'good');
     c.inventory.splice(idx,1);
+    return;
+  }
+  if(it.peek){
+    c.inventory.splice(idx,1);
+    logMsg(`🔮 ${c.name} usa ${it.name}: guarda le prime ${it.peek} carte in cima al mazzo Piani.`);
+    showPeekModal({type:'peek', n:it.peek, discard:false});
     return;
   }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
