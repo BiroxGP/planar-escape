@@ -104,7 +104,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "ricompensa",
-    "text": "Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",
+    "text": "Un angolo relativamente sicuro: +1 PV a un personaggio a scelta. Al riparo qui: si evita anche l'effetto di fine turno del piano.",
     "manual": false,
     "forte": false,
     "persistent": false

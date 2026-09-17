@@ -427,7 +427,7 @@
     "id": "o_chiaveplanare",
     "name": "Chiave Planare",
     "cat": "particolare",
-    "text": "Guarda le prime 2 carte in cima al mazzo Piani, senza scartare.",
+    "text": "Guarda le prime 2 carte in cima al mazzo Piani: scegli quale mandare in fondo, l'altra resta in cima.",
     "tier": null,
     "slot": null
   },

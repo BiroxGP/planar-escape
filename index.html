@@ -523,7 +523,7 @@ const OGGETTI = [
   O("o_dadorunico","Dado Runico","oneshot","Garantisce un successo automatico nella prossima Contesa.",{oneUse:true,autoSuccessNext:true}),
   O("o_specchioinfranto","Specchio Infranto","particolare","+2 contro un'entità di Ombra/Specchi/riflesso, appena riconosciuta.",{manualUse:true}),
   O("o_frammentocristallo","Frammento di Cristallo","particolare","Amplifica il prossimo incantesimo lanciato, +100% una tantum.",{spellBoostItem:true}),
-  O("o_chiaveplanare","Chiave Planare","particolare","Guarda le prime 2 carte in cima al mazzo Piani, senza scartare.",{peek:2}),
+  O("o_chiaveplanare","Chiave Planare","particolare","Guarda le prime 2 carte in cima al mazzo Piani: scegli quale mandare in fondo, l'altra resta in cima.",{peek:2}),
   O("o_medaglionegirone","Medaglione del Girone","particolare","Appena si arriva in un girone infernale, lo abbassa di 1 (mai sotto il 1°).",{manualUse:true}),
   O("o_acquasanta","Acqua Santa","particolare","One-shot: annichilisce del tutto un qualsiasi non-morto.",{oneUse:true,smiteUndeadItem:true}),
   O("o_cimeliodelviandante","Cimelio del Viandante","particolare","Resistenza per il prossimo piano di destinazione del gruppo.",{oneUse:true,wildcardResistanceItem:true}),
@@ -3260,7 +3260,7 @@ function useItem(c, idx){
   if(it.peek){
     c.inventory.splice(idx,1);
     logMsg(`🔮 ${c.name} usa ${it.name}: guarda le prime ${it.peek} carte in cima al mazzo Piani.`);
-    showPeekModal({type:'peek', n:it.peek, discard:false});
+    showPeekModal({type:'peek', n:it.peek, chooseBottom:true});
     return;
   }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
