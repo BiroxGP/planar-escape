@@ -470,9 +470,9 @@ Object.entries(INCONTRI).forEach(([fam,list])=>list.forEach(c=>c.fam=fam));
 /* ---------------- OGGETTI (60) ---------------- */
 function O(id,name,cat,text,extra){ return Object.assign({id,name,cat,text},extra||{}); }
 const OGGETTI = [
-  O("o_spada_corta","Spada Corta","arma","Arma per tutti (Forza). Nessun bonus.",{slot:"weapon",tier:"tutti",statKey:"for"}),
-  O("o_fionda","Fionda","arma","Arma per tutti (Destrezza). Nessun bonus.",{slot:"weapon",tier:"tutti",statKey:"des"}),
-  O("o_bastone","Bastone Semplice","arma","Arma per tutti (Intelletto). Nessun bonus.",{slot:"weapon",tier:"tutti",statKey:"int"}),
+  O("o_spada_corta","Spada Corta","arma","Arma per tutti (Forza). Nessun bonus a Forza, ma +1 Punti Vita.",{slot:"weapon",tier:"tutti",statKey:"for",secondaryStatKey:"pv",secondaryStatBonus:1}),
+  O("o_fionda","Fionda","arma","Arma per tutti (Destrezza). Nessun bonus a Destrezza, ma +1 Sanità Mentale.",{slot:"weapon",tier:"tutti",statKey:"des",secondaryStatKey:"san",secondaryStatBonus:1}),
+  O("o_bastone","Bastone Semplice","arma","Arma per tutti (Intelletto). Nessun bonus a Intelletto, ma +1 Anima.",{slot:"weapon",tier:"tutti",statKey:"int",secondaryStatKey:"anima",secondaryStatBonus:1}),
   O("o_spadafiamm","Spada Fiammeggiante","arma","+1 Forza, +1 danno. Nel piano Fuoco il primo danno è sempre parato.",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:1,dmgBonus:1}),
   O("o_asciatitani","Ascia dei Titani","arma","+1 Forza, +1 danno. Contro un boss, ulteriore +1 Forza.",{slot:"weapon",tier:"pesante",statKey:"for",statBonus:1,dmgBonus:1}),
   O("o_pugnaleombra","Pugnale dell'Ombra","arma","+1 Destrezza, +1 danno.",{slot:"weapon",tier:"leggera",statKey:"des",statBonus:1,dmgBonus:1}),
@@ -967,6 +967,7 @@ function effectiveStat(c, stat){
     if(it.statKey===stat) v+=it.statBonus||0;
     if(it.statKey2===stat) v+=it.statBonus||0;
     if(it.statKey3===stat) v+=it.statBonus||0;
+    if(it.secondaryStatKey===stat) v+=it.secondaryStatBonus||0;
   });
   c.equipped.rings.forEach(id=>{
     const it=OGGETTI_BY_ID[id]; if(!it) return;
