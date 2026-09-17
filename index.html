@@ -2933,6 +2933,8 @@ function bindPianoTerrenoModal(dest){
     closeModal(); state.currentDraw=null; render();
   };
   document.querySelectorAll('[data-ptcheck]').forEach(b=>b.onclick=()=>{
+    if(b.disabled) return;
+    b.disabled = true;
     const c=state.players.find(x=>x.id===b.dataset.ptcheck);
     const r=checkRoll(c,'int');
     document.getElementById('ptCheckResult').innerHTML += `<div class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${c.name}: ${r.success?'Successo':'Fallito'}</div>`;
