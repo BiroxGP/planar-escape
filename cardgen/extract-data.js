@@ -142,6 +142,7 @@ const oggetti = sandbox.__DATA__.OGGETTI.map(o => ({
   cat: o.cat,
   text: o.text,
   tier: o.tier || null,
+  slot: o.slot || null,
 }));
 fs.writeFileSync(path.join(__dirname, 'oggetti-data.json'), JSON.stringify(oggetti, null, 2));
 console.log(`OK — ${oggetti.length} oggetti scritti in oggetti-data.json`);

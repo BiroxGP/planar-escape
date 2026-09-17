@@ -46,9 +46,20 @@ const SCHOOL_EMOJI = { essenza: '🪄', flusso: '✨', divinazione: '🔮' };
 // Oggetti: stesso principio degli spell (icona di categoria come sigillo, coordinata via
 // colore), ma solo "arma" ha per ora un'illustrazione fornita — le altre useranno il grigio
 // di fallback finché non arriva l'icona/l'accento dedicato.
-const ITEM_CAT_ACCENT = { arma: '#6b7a8f', armatura: '#7a8f6b', anello: '#c9932a', pozione: '#4fb0a6', protezione: '#8f6bb0', oneshot: '#c46464', particolare: '#a3781c' };
-const ITEM_CAT_LABEL = { arma: 'Arma', armatura: 'Armatura', anello: 'Anello', pozione: 'Pozione', protezione: 'Protezione', oneshot: 'Uso singolo', particolare: 'Particolare' };
-const ITEM_CAT_EMOJI = { arma: '⚔️', armatura: '🛡️', anello: '💍', pozione: '🧪', protezione: '🧿', oneshot: '✨', particolare: '🔮' };
+// Tassonomia "di stampa" scelta dall'utente — 5 gruppi visivi, distinti dalla categoria
+// meccanica `cat` usata dal gioco (che resta invariata: arma/armatura/anello/pozione/
+// protezione/oneshot/particolare). Scudi si separano dall'armatura (slot "shield"), anelli
+// e protezioni confluiscono insieme in "altro". Pozione/oneshot confluiranno in
+// "consumabile" quando arriverà l'icona dedicata; particolare resta a sé per ora.
+function badgeCategoryFor(item) {
+  if (item.cat === 'armatura' && item.slot === 'shield') return 'scudo';
+  if (item.cat === 'anello' || item.cat === 'protezione') return 'altro';
+  if (item.cat === 'pozione' || item.cat === 'oneshot') return 'consumabile';
+  return item.cat;
+}
+const ITEM_CAT_ACCENT = { arma: '#6b7a8f', armatura: '#7a8f6b', scudo: '#8f9a6b', altro: '#c9932a', consumabile: '#4fb0a6', particolare: '#a3781c' };
+const ITEM_CAT_LABEL = { arma: 'Arma', armatura: 'Armatura', scudo: 'Scudo', altro: 'Altro', consumabile: 'Consumabile', particolare: 'Particolare' };
+const ITEM_CAT_EMOJI = { arma: '⚔️', armatura: '🛡️', scudo: '🛡️', altro: '🧿', consumabile: '🧪', particolare: '🔮' };
 
 const STAT_ICON = { for:'💪', int:'🧠', des:'🏃', pv:'❤️', san:'🌀', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
@@ -189,12 +200,13 @@ function itemBadgeLayer(cat, artDir) {
 }
 
 function itemCardHtml(item, artDir) {
-  const accent = ITEM_CAT_ACCENT[item.cat] || '#5f564a';
-  const emoji = ITEM_CAT_EMOJI[item.cat] || '🃏';
+  const badgeCat = badgeCategoryFor(item);
+  const accent = ITEM_CAT_ACCENT[badgeCat] || '#5f564a';
+  const emoji = ITEM_CAT_EMOJI[badgeCat] || '🃏';
   return `
   <div class="card card-portrait" id="card-${item.id}" data-id="${item.id}" style="--fam:${accent};">
     ${artLayer(item, artDir, accent, emoji)}
-    ${itemBadgeLayer(item.cat, artDir)}
+    ${itemBadgeLayer(badgeCat, artDir)}
     <div class="top-strip"></div>
     <div class="panel item-panel">
       <div class="name-row">
@@ -202,7 +214,7 @@ function itemCardHtml(item, artDir) {
           <div class="name item-name">${esc(item.name)}</div>
         </div>
         <div class="badges">
-          <span class="badge"><span class="badge-icon">${emoji}</span>${esc(ITEM_CAT_LABEL[item.cat]||item.cat)}</span>
+          <span class="badge"><span class="badge-icon">${emoji}</span>${esc(ITEM_CAT_LABEL[badgeCat]||badgeCat)}</span>
           ${item.tier ? `<span class="badge tier-badge">${esc(TIER_LABEL[item.tier]||item.tier)}</span>` : ''}
         </div>
       </div>

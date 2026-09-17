@@ -3142,6 +3142,21 @@ function revertPerPlaneBuffs(c){
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
   if(!it) return;
+  if(it.slot==='shield'){
+    // uno scudo si imbraccia solo insieme a un'arma leggera — con arma pesante, "tutti" o
+    // nessun'arma equipaggiata non è permesso.
+    const weapon = c.equipped.weapon ? OGGETTI_BY_ID[c.equipped.weapon] : null;
+    if(!weapon || weapon.tier!=='leggera'){
+      logMsg(`⚠️ ${it.name}: uno scudo si imbraccia solo insieme a un'arma leggera. Equipaggia prima un'arma leggera.`,'warn');
+      return;
+    }
+  }
+  if(it.slot==='weapon' && it.tier!=='leggera' && c.equipped.shield){
+    const oldShield = OGGETTI_BY_ID[c.equipped.shield];
+    c.inventory.push(c.equipped.shield);
+    c.equipped.shield = null;
+    logMsg(`🛡️ ${c.name}: ${oldShield?.name||'lo scudo'} non si può più imbracciare con un'arma non leggera, torna nell'inventario.`,'warn');
+  }
   if(it.slot==='weapon'||it.slot==='armor'||it.slot==='shield'){
     // equipaggiare deve TOGLIERE l'oggetto dall'inventario (altrimenti resta lì, identico,
     // col suo bottone "Usa/Equip" ancora cliccabile: sembra che equipaggiare non faccia nulla)

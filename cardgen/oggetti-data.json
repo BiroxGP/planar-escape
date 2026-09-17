@@ -4,419 +4,479 @@
     "name": "Spada Corta",
     "cat": "arma",
     "text": "Arma per tutti (Forza). Nessun bonus a Forza, ma +1 Punti Vita.",
-    "tier": "tutti"
+    "tier": "tutti",
+    "slot": "weapon"
   },
   {
     "id": "o_fionda",
     "name": "Fionda",
     "cat": "arma",
     "text": "Arma per tutti (Destrezza). Nessun bonus a Destrezza, ma +1 Sanità Mentale.",
-    "tier": "tutti"
+    "tier": "tutti",
+    "slot": "weapon"
   },
   {
     "id": "o_bastone",
     "name": "Bastone Semplice",
     "cat": "arma",
     "text": "Arma per tutti (Intelletto). Nessun bonus a Intelletto, ma +1 Anima.",
-    "tier": "tutti"
+    "tier": "tutti",
+    "slot": "weapon"
   },
   {
     "id": "o_spadafiamm",
     "name": "Spada Fiammeggiante",
     "cat": "arma",
     "text": "+1 Forza, +1 danno. Nel piano Fuoco il primo danno è sempre parato.",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "weapon"
   },
   {
     "id": "o_asciatitani",
     "name": "Ascia dei Titani",
     "cat": "arma",
     "text": "+1 Forza, +1 danno. Contro un boss, ulteriore +1 Forza.",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "weapon"
   },
   {
     "id": "o_pugnaleombra",
     "name": "Pugnale dell'Ombra",
     "cat": "arma",
     "text": "+1 Destrezza, +1 danno.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_arcolungo",
     "name": "Arco Lungo Planare",
     "cat": "arma",
     "text": "+1 Destrezza, +1 danno. Permette Furtività combattendo a distanza.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_martello",
     "name": "Martello del Giudizio",
     "cat": "arma",
     "text": "+1 Forza, +1 danno. Contro non-morti/demoni, danno raddoppiato.",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "weapon"
   },
   {
     "id": "o_bacchetta",
     "name": "Bacchetta Runica da Combattimento",
     "cat": "arma",
     "text": "+1 Intelletto, +1 danno nelle Contese di Intelletto.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_spadatitano",
     "name": "Spada del Titano Decaduto",
     "cat": "arma",
     "text": "+2 Forza, +2 danno (rara).",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "weapon"
   },
   {
     "id": "o_scettromente",
     "name": "Scettro della Mente Infinita",
     "cat": "arma",
     "text": "+2 Intelletto, +2 danno (rara).",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_lamavento",
     "name": "Lama del Vento Silente",
     "cat": "arma",
     "text": "+2 Destrezza, +2 danno (rara).",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_lamaduellante",
     "name": "Lama del Duellante",
     "cat": "arma",
     "text": "+1 Forza/Destrezza, +1 danno in entrambe.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_scettrosaggio",
     "name": "Scettro del Guerriero Saggio",
     "cat": "arma",
     "text": "+1 Forza/Intelletto, +1 danno in entrambe.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_pugnaleacume",
     "name": "Pugnale dell'Acume",
     "cat": "arma",
     "text": "+1 Intelletto/Destrezza, +1 danno in entrambe.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_spadaequilibrio",
     "name": "Spada dell'Equilibrio Perfetto",
     "cat": "arma",
     "text": "+1 For/Int/Des, +1 danno in tutte (rara).",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "weapon"
   },
   {
     "id": "o_tridente",
     "name": "Tridente delle Essenze",
     "cat": "arma",
     "text": "+1 e +1 danno nelle Contese di PV, San o Anima a scelta (rara).",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "weapon"
   },
   {
     "id": "o_armaturapiastre",
     "name": "Armatura di Piastre Antica",
     "cat": "armatura",
     "text": "+1 PV e +1 Anima subito (fino a 6).",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "armor"
   },
   {
     "id": "o_corazzacolosso",
     "name": "Corazza del Colosso",
     "cat": "armatura",
     "text": "Primo danno Fisico d'ingresso sempre parato; +1 Forza.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "armor"
   },
   {
     "id": "o_scudoultimo",
     "name": "Scudo dell'Ultimo Respiro",
     "cat": "armatura",
     "text": "Para il primo danno subito in una Contesa (qualsiasi tipo), poi si rompe.",
-    "tier": null
+    "tier": null,
+    "slot": "shield"
   },
   {
     "id": "o_scudoferro",
     "name": "Scudo di Ferro",
     "cat": "armatura",
     "text": "Para il primo danno fisico subito in una Contesa, poi si rompe.",
-    "tier": null
+    "tier": null,
+    "slot": "shield"
   },
   {
     "id": "o_mantoetereo",
     "name": "Manto Etereo",
     "cat": "armatura",
     "text": "Primo danno d'ingresso di Tipo Etereo sempre parato.",
-    "tier": "none"
+    "tier": "none",
+    "slot": "armor"
   },
   {
     "id": "o_piastrebaluardo",
     "name": "Piastre del Baluardo",
     "cat": "armatura",
     "text": "+1 PV subito (fino a 6).",
-    "tier": "pesante"
+    "tier": "pesante",
+    "slot": "armor"
   },
   {
     "id": "o_vestesilenzioso",
     "name": "Veste del Silenzioso",
     "cat": "armatura",
     "text": "+1 Destrezza mentre indossata.",
-    "tier": "leggera"
+    "tier": "leggera",
+    "slot": "armor"
   },
   {
     "id": "o_tunicainiziato",
     "name": "Tunica dell'Iniziato",
     "cat": "armatura",
     "text": "+1 Sanità Mentale, applicato subito (fino a 6).",
-    "tier": "none"
+    "tier": "none",
+    "slot": "armor"
   },
   {
     "id": "o_anelloferro",
     "name": "Anello di Ferro Vitale",
     "cat": "anello",
     "text": "+2 PV subito (fino a 6), permanente (raro).",
-    "tier": null
+    "tier": null,
+    "slot": "ring"
   },
   {
     "id": "o_anellomente",
     "name": "Anello della Chiara Mente",
     "cat": "anello",
     "text": "+2 Intelletto mentre indossato.",
-    "tier": null
+    "tier": null,
+    "slot": "ring"
   },
   {
     "id": "o_anellopasso",
     "name": "Anello del Passo Leggero",
     "cat": "anello",
     "text": "+2 Destrezza mentre indossato.",
-    "tier": null
+    "tier": null,
+    "slot": "ring"
   },
   {
     "id": "o_anelloanima",
     "name": "Anello dell'Anima Salda",
     "cat": "anello",
     "text": "+2 Anima mentre indossato.",
-    "tier": null
+    "tier": null,
+    "slot": "ring"
   },
   {
     "id": "o_anellolegame",
     "name": "Anello del Legame",
     "cat": "anello",
     "text": "One-shot: al prossimo salto, si atterra comunque insieme al gruppo.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_anellocolpo",
     "name": "Anello del Colpo Pesante",
     "cat": "anello",
     "text": "+2 danno su qualsiasi colpo a segno.",
-    "tier": null
+    "tier": null,
+    "slot": "ring"
   },
   {
     "id": "o_pozionecura1",
     "name": "Pozione di Cura +1",
     "cat": "pozione",
     "text": "Consumabile: recupera 1 PV in qualsiasi momento.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_elisir",
     "name": "Elisir di Ripristino",
     "cat": "pozione",
     "text": "Consumabile: rimuove un depotenziamento temporaneo a caso.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_filtrochiarezza",
     "name": "Filtro di Chiarezza",
     "cat": "pozione",
     "text": "Consumabile: recupera 1 Sanità Mentale.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_filtroredenzione",
     "name": "Filtro di Redenzione",
     "cat": "pozione",
     "text": "Consumabile: recupera 1 Anima.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_pozionecura2",
     "name": "Pozione di Cura +2",
     "cat": "pozione",
     "text": "Consumabile: recupera 2 PV in qualsiasi momento.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_tonicofuria",
     "name": "Tonico della Furia",
     "cat": "pozione",
     "text": "Consumabile one-shot: +1 alla prossima Contesa di Forza.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_distillato",
     "name": "Distillato Planare",
     "cat": "pozione",
     "text": "Consumabile: equivale a 1 risorsa planare generica.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_amuletofuoco",
     "name": "Amuleto contro il Fuoco",
     "cat": "protezione",
     "text": "Annulla tutto il danno subito nel piano Fuoco.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_talismanoveleno",
     "name": "Talismano Anti-Veleno",
     "cat": "protezione",
     "text": "Annulla tutto il danno subito nel piano Veleno.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_amuletofulmine",
     "name": "Amuleto del Fulmine",
     "cat": "protezione",
     "text": "Annulla tutto il danno subito nel piano Tempesta.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_ciondoloequilibrio",
     "name": "Ciondolo dell'Equilibrio",
     "cat": "protezione",
     "text": "Primo effetto negativo in un piano di Entropia sempre parato.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_sigillosacro",
     "name": "Sigillo Sacro",
     "cat": "protezione",
     "text": "Primo effetto negativo in un piano di Armonia sempre parato.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_auraassorbente",
     "name": "Aura Assorbente",
     "cat": "protezione",
     "text": "In ogni Contesa, il primo danno subito dal team è sempre parato (illimitato).",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_reliquiafredda",
     "name": "Reliquia Fredda",
     "cat": "protezione",
     "text": "Annulla il malus d'ingresso di Tenebre o Luce (permanente).",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_bacchettafulmine",
     "name": "Bacchetta del Fulmine",
     "cat": "oneshot",
     "text": "One-shot: 1 danno diretto a tutte le entità presenti, senza tirare.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_bacchettarinvio",
     "name": "Bacchetta del Rinvio",
     "cat": "oneshot",
     "text": "Annulla un Incontro ostile, come la Furtività.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_vergascambio",
     "name": "Verga dello Scambio",
     "cat": "oneshot",
     "text": "One-shot (Caos): scambia i risultati di un giro già tirato.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_bastonerifugio",
     "name": "Bastone del Rifugio",
     "cat": "oneshot",
     "text": "Trasforma il piano corrente in Recupero per un turno, solo per chi lo usa.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_scettrocongelamento",
     "name": "Scettro di Congelamento",
     "cat": "oneshot",
     "text": "Un'entità persistente non mette a segno colpi in quel giro.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_dadorunico",
     "name": "Dado Runico",
     "cat": "oneshot",
     "text": "Garantisce un successo automatico nella prossima Contesa.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_specchioinfranto",
     "name": "Specchio Infranto",
     "cat": "particolare",
     "text": "+2 contro un'entità di Ombra/Specchi/riflesso, appena riconosciuta.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_frammentocristallo",
     "name": "Frammento di Cristallo",
     "cat": "particolare",
     "text": "Amplifica il prossimo incantesimo lanciato, +100% una tantum.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_chiaveplanare",
     "name": "Chiave Planare",
     "cat": "particolare",
     "text": "Guarda le prime 2 carte in cima al mazzo Piani, senza scartare.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_medaglionegirone",
     "name": "Medaglione del Girone",
     "cat": "particolare",
     "text": "Appena si arriva in un girone infernale, lo abbassa di 1 (mai sotto il 1°).",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_acquasanta",
     "name": "Acqua Santa",
     "cat": "particolare",
     "text": "One-shot: annichilisce del tutto un qualsiasi non-morto.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_cimeliodelviandante",
     "name": "Cimelio del Viandante",
     "cat": "particolare",
     "text": "Resistenza per il prossimo piano di destinazione del gruppo.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_grimoriodelfurore",
     "name": "Grimorio del Furore",
     "cat": "particolare",
     "text": "+1 danno su qualsiasi colpo a segno (si cumula).",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_cuoreabisso",
     "name": "Cuore dell'Abisso",
     "cat": "particolare",
     "text": "Oggetto unico: +2 danno su qualsiasi colpo a segno.",
-    "tier": null
+    "tier": null,
+    "slot": null
   },
   {
     "id": "o_ancoracasa",
     "name": "Ancora di Casa",
     "cat": "particolare",
     "text": "Raro one-shot: aggiunge una carta Piano Terreno mescolata nel mazzo Piani.",
-    "tier": null
+    "tier": null,
+    "slot": null
   }
 ]
