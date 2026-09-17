@@ -363,7 +363,7 @@ const INCONTRI = {
     C("el_amplificazione","Amplificazione","check","Il piano amplifica temporaneamente un beneficio o maleficio elementare già attivo su un personaggio — nessun check, effetto automatico.",{auto:true,onFail:{type:"amplify"}}),
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta.",{reward:{type:"heal",n:1}}),
     C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
-    C("el_onda","Onda d'Urto","incontro","Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza (valore nemico 2).",{check:"des",gravity:0}),
+    C("el_onda","Onda d'Urto","check","Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",{check:"des",onFail:{type:"damage",n:1}}),
     C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
     C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",{reward:{type:"spellBoost"}}),
     C("el_fumo","Fumo Tossico","check","Esalazioni velenose. Check di Punti Vita: se fallito, -1 PV.",{check:"pv",onFail:{type:"damage",n:1}}),

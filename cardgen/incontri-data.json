@@ -125,8 +125,8 @@
     "name": "Onda d'Urto",
     "deck": "elementare",
     "family": "elementare",
-    "type": "incontro",
-    "text": "Una scarica improvvisa mette alla prova i riflessi. Scontro di Destrezza (valore nemico 2).",
+    "type": "check",
+    "text": "Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",
     "manual": false,
     "forte": false,
     "persistent": false
