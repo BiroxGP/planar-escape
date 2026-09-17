@@ -29,7 +29,7 @@ if (idx === -1) {
 
 const scriptStart = src.indexOf('<script>') + '<script>'.length;
 let code = src.slice(scriptStart, idx);
-code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES, INCONTRI: INCONTRI, SPELLS: SPELLS };\n';
+code += '\nthis.__DATA__ = { PIANI: PIANI, PIANO_TERRENO: PIANO_TERRENO, CLASSES: CLASSES, INCONTRI: INCONTRI, SPELLS: SPELLS, OGGETTI: OGGETTI };\n';
 
 const sandbox = {};
 vm.createContext(sandbox);
@@ -53,6 +53,10 @@ if (!sandbox.__DATA__.INCONTRI || typeof sandbox.__DATA__.INCONTRI !== 'object')
 }
 if (!sandbox.__DATA__.SPELLS || typeof sandbox.__DATA__.SPELLS !== 'object') {
   console.error('Estrazione fallita: SPELLS non trovato.');
+  process.exit(1);
+}
+if (!Array.isArray(sandbox.__DATA__.OGGETTI)) {
+  console.error('Estrazione fallita: OGGETTI non trovato.');
   process.exit(1);
 }
 
@@ -130,3 +134,14 @@ for (const [school, list] of Object.entries(sandbox.__DATA__.SPELLS)) {
 }
 fs.writeFileSync(path.join(__dirname, 'spells-data.json'), JSON.stringify(spells, null, 2));
 console.log(`OK — ${spells.length} spell scritti in spells-data.json`);
+
+// OGGETTI è un array piatto già; teniamo solo i campi utili al render della carta.
+const oggetti = sandbox.__DATA__.OGGETTI.map(o => ({
+  id: o.id,
+  name: o.name,
+  cat: o.cat,
+  text: o.text,
+  tier: o.tier || null,
+}));
+fs.writeFileSync(path.join(__dirname, 'oggetti-data.json'), JSON.stringify(oggetti, null, 2));
+console.log(`OK — ${oggetti.length} oggetti scritti in oggetti-data.json`);

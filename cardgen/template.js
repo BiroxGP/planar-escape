@@ -43,6 +43,13 @@ const SCHOOL_ACCENT = { essenza: '#a855e0', flusso: '#d9924a', divinazione: '#7c
 const SCHOOL_LABEL = { essenza: 'Essenza', flusso: 'Flusso', divinazione: 'Divinazione' };
 const SCHOOL_EMOJI = { essenza: '🪄', flusso: '✨', divinazione: '🔮' };
 
+// Oggetti: stesso principio degli spell (icona di categoria come sigillo, coordinata via
+// colore), ma solo "arma" ha per ora un'illustrazione fornita — le altre useranno il grigio
+// di fallback finché non arriva l'icona/l'accento dedicato.
+const ITEM_CAT_ACCENT = { arma: '#6b7a8f', armatura: '#7a8f6b', anello: '#c9932a', pozione: '#4fb0a6', protezione: '#8f6bb0', oneshot: '#c46464', particolare: '#a3781c' };
+const ITEM_CAT_LABEL = { arma: 'Arma', armatura: 'Armatura', anello: 'Anello', pozione: 'Pozione', protezione: 'Protezione', oneshot: 'Uso singolo', particolare: 'Particolare' };
+const ITEM_CAT_EMOJI = { arma: '⚔️', armatura: '🛡️', anello: '💍', pozione: '🧪', protezione: '🧿', oneshot: '✨', particolare: '🔮' };
+
 const STAT_ICON = { for:'💪', int:'🧠', des:'🏃', pv:'❤️', san:'🌀', anima:'🕯️' };
 const STAT_LABEL = { for:'Forza', int:'Intelletto', des:'Destrezza', pv:'Punti Vita', san:'Sanità Mentale', anima:'Anima' };
 
@@ -157,6 +164,71 @@ function spellPageHtml(spells, flavors, artDir) {
   .spell-name{ font-size:32px; }
   .cost-badge{ background:rgba(217,146,74,.18); border-color:rgba(217,146,74,.55); color:#f0c396; }
   .spell-text{ font-size:16px; line-height:1.35; }
+</style></head>
+<body><div class="stage">
+${cards}
+</div></body></html>`;
+}
+
+const TIER_LABEL = { tutti: 'Per tutti', leggera: 'Leggera', pesante: 'Pesante' };
+
+function itemBadgeLayer(cat, artDir) {
+  // sigillo di categoria oggetto: file condiviso da tutti gli oggetti della stessa categoria
+  // (es. "icon-arma.*"), non specifico della singola carta.
+  const exts = ['.png', '.jpg', '.jpeg', '.webp'];
+  let found = null;
+  if (artDir) {
+    for (const ext of exts) {
+      const p = path.join(artDir, 'icon-' + cat + ext);
+      if (fs.existsSync(p)) { found = p; break; }
+    }
+  }
+  if (!found) return '';
+  const fileUrl = pathToFileURL(found).href;
+  return `<div class="cat-badge"><img src="${fileUrl}"></div>`;
+}
+
+function itemCardHtml(item, artDir) {
+  const accent = ITEM_CAT_ACCENT[item.cat] || '#5f564a';
+  const emoji = ITEM_CAT_EMOJI[item.cat] || '🃏';
+  return `
+  <div class="card card-portrait" id="card-${item.id}" data-id="${item.id}" style="--fam:${accent};">
+    ${artLayer(item, artDir, accent, emoji)}
+    ${itemBadgeLayer(item.cat, artDir)}
+    <div class="top-strip"></div>
+    <div class="panel item-panel">
+      <div class="name-row">
+        <div class="name-block">
+          <div class="name item-name">${esc(item.name)}</div>
+        </div>
+        <div class="badges">
+          <span class="badge"><span class="badge-icon">${emoji}</span>${esc(ITEM_CAT_LABEL[item.cat]||item.cat)}</span>
+          ${item.tier ? `<span class="badge tier-badge">${esc(TIER_LABEL[item.tier]||item.tier)}</span>` : ''}
+        </div>
+      </div>
+      <div class="rule-text item-text">${esc(item.text)}</div>
+    </div>
+  </div>`;
+}
+
+function itemPageHtml(items, artDir) {
+  const cards = items.map(it => itemCardHtml(it, artDir)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>${sharedCardCss()}
+  .cat-badge{
+    position:absolute; top:24px; right:24px; z-index:4;
+    width:84px; height:84px; border-radius:50%;
+    background:radial-gradient(circle, rgba(10,10,12,.72) 0%, rgba(10,10,12,.46) 55%, rgba(10,10,12,0) 100%);
+    box-shadow:0 0 10px 2px var(--fam);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .cat-badge img{ width:86%; height:86%; object-fit:contain; mix-blend-mode:screen; opacity:.85; filter:drop-shadow(0 0 4px var(--fam)); }
+  .item-panel{ height:36%; padding:16px 26px 22px; }
+  .item-name{ font-size:30px; }
+  .tier-badge{ background:rgba(255,255,255,.08); }
+  .item-text{ font-size:16px; line-height:1.35; }
 </style></head>
 <body><div class="stage">
 ${cards}
@@ -403,4 +475,4 @@ ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, spellPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
+module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, spellPageHtml, itemPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
