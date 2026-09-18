@@ -420,7 +420,7 @@ const INCONTRI = {
     C("ar_custode","Custode Sacro","incontro","Un guardiano purificatore attacca chiunque si trovi nel gruppo. Scontro di Forza (valore nemico 2).",{check:"for",gravity:0}),
     C("ar_automa","Automa di Metallo","incontro","Un costrutto meccanico attacca con precisione glaciale. Scontro di Destrezza (valore nemico 2).",{check:"des",gravity:0}),
     C("ar_oracolo","Oracolo della Verità","check","Un oracolo rivela un fatto scomodo. Check di Sanità Mentale: se fallito, depotenziamento temporaneo a una caratteristica casuale.",{check:"san",onFail:{type:"tempDebuff",stat:"random"}}),
-    C("ar_eternita","Custode di Eternità","ricompensa","Un archivio cosmico restituisce ciò che era perduto per sempre. Ricompensa (rara): rimuovi un depotenziamento permanente a un personaggio a scelta.",{reward:{type:"removePermDebuff"}}),
+    C("ar_eternita","Custode di Eternità","ricompensa","Un archivio cosmico restituisce ciò che era perduto per sempre. Ricompensa (rara): rimuovi un depotenziamento permanente a un personaggio a scelta, oppure restituiscigli tutti i Punti Vita perduti. Si applica solo a chi ha davvero qualcosa di perduto per sempre.",{reward:{type:"removePermDebuff"}}),
     C("ar_statua","Statua di Stasi","check","Il tempo si ferma per un oggetto, proteggendolo per sempre da perdite, furti e distruzione.",{statuaCard:true}),
     C("ar_benedizione","Benedizione","ricompensa","Una cura o protezione tipica del piano Sacro. Ricompensa: +1 PV a tutti i presenti, e un depotenziamento temporaneo guarito a un personaggio.",{reward:{type:"groupHealCure"}}),
     C("ar_geometria","Geometria perfetta","incontro","Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
@@ -2490,7 +2490,11 @@ function renderRewardPanel(card, acts){
       if(!debuffed.length) return `<button class="primary" id="btnApplyReward">Applica: +1 PV a tutti (nessun depotenziamento da guarire)</button>`;
       return `<p class="hint">+1 PV a tutti i presenti. Scegli anche chi guarisce da un depotenziamento temporaneo:</p><div>${debuffed.map(c=>`<button class="small" data-curedebuff="${c.id}">${escapeHtml(c.name)}</button>`).join(' ')}</div>`;
     }
-    case 'removePermDebuff': return `<div>${acts.map(c=>`<button class="small" data-rmperm="${c.id}">Rimuovi 1 depotenz. perm. a ${c.name}</button>`).join(' ')}</div>`;
+    case 'removePermDebuff': {
+      const eligible = acts.filter(eternitaEligible);
+      if(!eligible.length) return `<p class="hint">Nessuno tra i presenti ha davvero perso qualcosa per sempre: l'archivio non ha nulla da restituire.</p><button id="btnDeclineReward">Continua</button>`;
+      return `<div>${eligible.map(c=>`<button class="small" data-rmperm="${c.id}">Restituisci qualcosa di perduto a ${c.name}</button>`).join(' ')}</div>`;
+    }
     case 'sanheal': return `<div>${acts.map(c=>`<button class="small" data-sanheal="${c.id}">+1 San a ${c.name}</button>`).join(' ')}</div>`;
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
     case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button></span>`).join('')}</div>`;
@@ -2579,20 +2583,33 @@ function bindRewardPanel(card, acts){
     done();
   });
 }
+function eternitaEligible(c){
+  // "ciò che era perduto per sempre": un depotenziamento permanente su una caratteristica,
+  // oppure Punti Vita mai recuperati (il Recupero normale ne restituisce solo 1 a botta).
+  return STATS.some(s=>s!=='pv' && c.permDebuffN[s]>0) || c.stats.pv<c.start.pv;
+}
 function openRemovePermModal(c){
-  const stats = STATS.filter(s=>s!=='pv' && c.permDebuffN[s]>0);
-  if(stats.length===0){
-    logMsg(`✨ ${c.name} non ha alcun depotenziamento permanente da rimuovere: l'archivio non trova nulla da restituire.`);
+  const debuffStats = STATS.filter(s=>s!=='pv' && c.permDebuffN[s]>0);
+  const canHealPv = c.stats.pv < c.start.pv;
+  if(debuffStats.length===0 && !canHealPv){
+    logMsg(`✨ ${c.name} non ha nulla di perduto per sempre da restituire: l'archivio non trova nulla.`);
     finishIncontro();
     return;
   }
-  openModal(`<h3>📜 Custode di Eternità</h3><p>Scegli quale depotenziamento permanente rimuovere a ${escapeHtml(c.name)}:</p>
-    <div class="row">${stats.map(s=>`<button class="small" data-rmpermstat="${s}">${STAT_LABEL[s]} (-${c.permDebuffN[s]} attuale)</button>`).join('')}</div>`);
+  const pvBtn = canHealPv ? `<button class="small" data-rmpermstat="pv">Punti Vita (${c.stats.pv} → ${c.start.pv})</button>` : '';
+  openModal(`<h3>📜 Custode di Eternità</h3><p>Scegli cosa restituire a ${escapeHtml(c.name)}:</p>
+    <div class="row">${debuffStats.map(s=>`<button class="small" data-rmpermstat="${s}">${STAT_LABEL[s]} (-${c.permDebuffN[s]} attuale)</button>`).join('')}${pvBtn}</div>`);
   document.querySelectorAll('[data-rmpermstat]').forEach(b=>b.onclick=()=>{
     const stat=b.dataset.rmpermstat;
-    c.permDebuffN[stat]--;
-    c.stats[stat]=Math.min(c.start[stat], c.stats[stat]+1);
-    logMsg(`✨ ${c.name}: un depotenziamento permanente a ${STAT_LABEL[stat]} viene rimosso.`,'good');
+    if(stat==='pv'){
+      const before=c.stats.pv;
+      c.stats.pv = c.start.pv;
+      logMsg(`✨ ${c.name}: i Punti Vita perduti tornano al massimo (${before} → ${c.stats.pv}).`,'good');
+    } else {
+      c.permDebuffN[stat]--;
+      c.stats[stat]=Math.min(c.start[stat], c.stats[stat]+1);
+      logMsg(`✨ ${c.name}: un depotenziamento permanente a ${STAT_LABEL[stat]} viene rimosso.`,'good');
+    }
     closeModal();
     finishIncontro();
   });

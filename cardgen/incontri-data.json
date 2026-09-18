@@ -665,7 +665,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "ricompensa",
-    "text": "Un archivio cosmico restituisce ciò che era perduto per sempre. Ricompensa (rara): rimuovi un depotenziamento permanente a un personaggio a scelta.",
+    "text": "Un archivio cosmico restituisce ciò che era perduto per sempre. Ricompensa (rara): rimuovi un depotenziamento permanente a un personaggio a scelta, oppure restituiscigli tutti i Punti Vita perduti. Si applica solo a chi ha davvero qualcosa di perduto per sempre.",
     "manual": false,
     "forte": false,
     "persistent": false
