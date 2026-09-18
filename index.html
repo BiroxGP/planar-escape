@@ -458,7 +458,7 @@ const INCONTRI = {
     C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani: diventerà la prossima destinazione.",{bivioCard:true}),
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
     C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
-    C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno; 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
+    C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
     C("ge_randagio","Randagio planare","incontro","Una creatura minore e spaventata. Scontro di Forza (valore nemico 1, fisso indipendentemente dal girone).",{check:"for",gravity:-1,forceBase2:true}),
     C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
     C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
@@ -706,6 +706,7 @@ function makeChar(name, clsKey, bonus){
     sigilloActive:false, // Sigillo: non può agire ostilmente per Corruzione, finché resta nel piano
     dmgBonusPlane:0, // Benedizione: +2 danno per tutta la permanenza nel piano
     ordineResetReady:false, // Ordine: può riportare una propria caratteristica al valore di partenza di 1° livello, finché resta nel piano
+    skipNextIncontro:false, // perdita individuale del turno: escluso dal prossimo Incontro del gruppo, poi si consuma
     wildcardResistance:false, // Cimelio del Viandante/Vaticinio: para il primo danno d'ingresso del prossimo piano, qualunque famiglia
     contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
@@ -1582,9 +1583,16 @@ function applyPlaneIntrinsic(plane){
   // partecipa all'Incontro di questo turno — né scontro né altro, viene tolto dai target
   // prima ancora di pescare la carta (non solo escluso dal combattimento come la Furtività).
   let drawTargets = null;
-  if(plane.id==='sogno'){
-    const dreaming = state.currentDraw.dreamers || [];
-    drawTargets = acts.filter(c=>!dreaming.includes(c.id));
+  const dreaming = plane.id==='sogno' ? (state.currentDraw.dreamers || []) : [];
+  const turnSkippers = acts.filter(c=>c.skipNextIncontro);
+  if(dreaming.length || turnSkippers.length){
+    drawTargets = acts.filter(c=>!dreaming.includes(c.id) && !c.skipNextIncontro);
+  }
+  if(turnSkippers.length){
+    const names = turnSkippers.map(c=>c.name);
+    const plural = names.length>1;
+    logMsg(`⏳ ${names.join(', ')} ${plural?'restano':'resta'} esclus${plural?'i':'o'} dall'Incontro di questo turno: ${plural?'avevano':'aveva'} perso il turno precedente.`,'warn');
+    turnSkippers.forEach(c=>{ c.skipNextIncontro=false; });
   }
   // draw incontro after intrinsic (unless plane fully occupies the turn, none do per rules: "si pesca comunque, come sempre")
   const forcedFamily = (plane.family==='demoniaco'||plane.family==='nonmorti') ? plane.deck : null;
@@ -2008,8 +2016,11 @@ function renderIncontroAction(){
       state.currentDraw.autoApplied = true;
       const r = d6();
       if(r<=2){
-        logMsg(`⏳ Anomalia temporale (${r}): il tempo rallenta, il gruppo perde questo turno.`,'warn');
-        acts.forEach(c=>logMsg(`⏳ ${c.name} perde il turno.`));
+        logMsg(`⏳ Anomalia temporale (${r}): il tempo rallenta, il gruppo perde questo turno e resta fermo dov'è.`,'warn');
+        if(hasFineTurnoRisk(plane)){
+          logMsg(`⏳ Restando fermo, il gruppo subisce di nuovo il rischio di fine turno di ${plane.name}.`,'warn');
+          applyFineTurnoIfNeeded();
+        }
       } else if(r<=4){
         logMsg(`⏳ Anomalia temporale (${r}): un breve sussulto, poi tutto torna normale. Nessun effetto.`);
       } else if(r===5){
@@ -2155,7 +2166,7 @@ function applyConsequence(cons, targets, plane){
         applyTempDebuff(c,stat); break;
       }
       case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
-      case 'loseTurn': logMsg(`⏳ ${c.name} perde il turno.`); break;
+      case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} perde il turno: non parteciperà all'Incontro del prossimo piano.`,'warn'); break;
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
@@ -2396,7 +2407,7 @@ function fightRound(plane, card, acts, cb){
   }
   if(card.onLoseExtra && passThrough>0){
     acts.forEach(c=>{
-      if(card.onLoseExtra==='loseTurn') logMsg(`⏳ ${c.name} perde anche il turno.`);
+      if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} perde anche il turno: non parteciperà all'Incontro del prossimo piano.`,'warn'); }
       if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
       if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
     });

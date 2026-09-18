@@ -1039,7 +1039,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "check",
-    "text": "Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno; 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",
+    "text": "Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",
     "manual": false,
     "forte": false,
     "persistent": false
