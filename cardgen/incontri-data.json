@@ -1049,8 +1049,8 @@
     "name": "Randagio planare",
     "deck": "generico",
     "family": "generico",
-    "type": "incontro",
-    "text": "Una creatura minore e spaventata. Scontro di Forza (valore nemico 1, fisso indipendentemente dal girone).",
+    "type": "check",
+    "text": "Una creatura minore e spaventata si avvicina, in cerca di un compagno. Nessun check: chi lo accoglie lo lega a sé come compagno (valore 1) — aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.",
     "manual": false,
     "forte": false,
     "persistent": false

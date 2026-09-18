@@ -459,7 +459,7 @@ const INCONTRI = {
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
     C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
     C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
-    C("ge_randagio","Randagio planare","incontro","Una creatura minore e spaventata. Scontro di Forza (valore nemico 1, fisso indipendentemente dal girone).",{check:"for",gravity:-1,forceBase2:true}),
+    C("ge_randagio","Randagio planare","check","Una creatura minore e spaventata si avvicina, in cerca di un compagno. Nessun check: chi lo accoglie lo lega a sé come compagno (valore 1) — aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.",{randagioCard:true}),
     C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
     C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
   ],
@@ -2007,6 +2007,11 @@ function renderIncontroAction(){
     bindEsattoreCard(acts, plane);
     return;
   }
+  if(card.randagioCard){
+    el.innerHTML = fineTurnoWarning + renderRandagioCard(acts);
+    bindRandagioCard(acts);
+    return;
+  }
   if(card.richiamoCard){
     if(!state.currentDraw.autoApplied){
       const victims = acts.filter(c=>c.turnStartPv!=null && c.stats.pv < c.turnStartPv);
@@ -2760,6 +2765,23 @@ function bindStatuaCard(acts){
     const [cid,itemId]=b.dataset.statua.split('::');
     const c=acts.find(x=>x.id===cid);
     setProtectedItem(c, itemId);
+    finishIncontro();
+  });
+  const btn=document.getElementById('btnResolveDone');
+  if(btn) btn.onclick=finishIncontro;
+}
+function renderRandagioCard(acts){
+  return `<div class="manual-box">
+    <h4>🐾 Randagio Planare</h4>
+    <p style="font-size:.85rem;">Una creatura minore e spaventata si avvicina, in cerca di un compagno. Chi lo accoglie lo lega a sé (valore 1): aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.</p>
+    <div class="row">${acts.map(c=>`<button class="small" data-randagio="${c.id}">${c.name} lo accoglie${c.companion?` (sostituisce ${escapeHtml(c.companion.name)})`:''}</button>`).join('')}</div>
+    <button class="primary mt1" id="btnResolveDone">Nessuno lo accoglie, si allontana</button>
+  </div>`;
+}
+function bindRandagioCard(acts){
+  document.querySelectorAll('[data-randagio]').forEach(b=>b.onclick=()=>{
+    const c=acts.find(x=>x.id===b.dataset.randagio);
+    grantCompanion(c, 'Randagio Planare', 1);
     finishIncontro();
   });
   const btn=document.getElementById('btnResolveDone');
