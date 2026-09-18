@@ -59,7 +59,7 @@
     "id": "sp_sagoma",
     "name": "Sagoma Illusoria",
     "school": "essenza",
-    "text": "Assorbe il prossimo colpo a segno subito, poi svanisce.",
+    "text": "Assorbe la prossima perdita subita — danno, perdita di Anima/Sanità Mentale, o depotenziamento temporaneo/permanente a una caratteristica — da qualsiasi fonte, una sola volta, poi svanisce.",
     "cost": 0
   },
   {

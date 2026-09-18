@@ -545,7 +545,7 @@ const SPELLS = {
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{drenaggioSpell:true}),
     S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
-    S("sp_sagoma","Sagoma Illusoria","Assorbe il prossimo colpo a segno subito, poi svanisce.",{sagomaSpell:true}),
+    S("sp_sagoma","Sagoma Illusoria","Assorbe la prossima perdita subita — danno, perdita di Anima/Sanità Mentale, o depotenziamento temporaneo/permanente a una caratteristica — da qualsiasi fonte, una sola volta, poi svanisce.",{sagomaSpell:true}),
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{trasmutazioneSpell:true}),
     S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
@@ -698,13 +698,14 @@ function makeChar(name, clsKey, bonus){
     dardoReady:false, // Mago: prossima Contesa infligge 2 danni sicuri
     monkShieldReady:false, // Monaco: annulla il prossimo danno subito
     tempraReady:false, // Tempra: para il prossimo danno subito, qualsiasi tipo
-    sagomaReady:false, // Sagoma Illusoria: assorbe il prossimo colpo a segno subito, poi svanisce
+    sagomaReady:false, // Sagoma Illusoria: assorbe la prossima perdita subita (danno, Anima/Sanità, depotenziamento), poi svanisce
     formaSelvaticaSwap:null, // Druido: [statA,statB] scambiate fino al prossimo salto
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
     egidaReady:false, // Egida: para il prossimo danno Fisico, fino al prossimo salto
     sigilloActive:false, // Sigillo: non può agire ostilmente per Corruzione, finché resta nel piano
     dmgBonusPlane:0, // Benedizione: +2 danno per tutta la permanenza nel piano
+    ordineResetReady:false, // Ordine: può riportare una propria caratteristica al valore di partenza di 1° livello, finché resta nel piano
     wildcardResistance:false, // Cimelio del Viandante/Vaticinio: para il primo danno d'ingresso del prossimo piano, qualunque famiglia
     contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
@@ -889,6 +890,11 @@ function handlePvThreshold(c){
 }
 function applyTempDebuff(c, stat){
   if(stat==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); return; }
+  if(c.sagomaReady){
+    c.sagomaReady=false;
+    logMsg(`👤 ${c.name} assorbe il depotenziamento con Sagoma Illusoria, che poi svanisce.`);
+    return;
+  }
   if(c.tempDebuff[stat]){
     c.permDebuffN[stat]++;
     c.stats[stat]=Math.max(1,c.stats[stat]-1);
@@ -901,6 +907,11 @@ function applyTempDebuff(c, stat){
 }
 function applyPermDebuff(c, stat){
   if(stat==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); return; } // niente "permDebuffN.pv": il PV non ha quel contatore, è danno diretto
+  if(c.sagomaReady){
+    c.sagomaReady=false;
+    logMsg(`👤 ${c.name} assorbe il depotenziamento con Sagoma Illusoria, che poi svanisce.`);
+    return;
+  }
   c.permDebuffN[stat]++;
   c.stats[stat]=Math.max(1,c.stats[stat]-1);
   logMsg(`⬇️⬇️ ${c.name} subisce un depotenziamento PERMANENTE a ${STAT_LABEL[stat]}.`,'bad');
@@ -919,6 +930,13 @@ function applyTempBonus(c, stat, n){
     c.tempBonus[stat]=(c.tempBonus[stat]||0)+(c.stats[stat]-before);
     logMsg(`🎁 ${c.name} ottiene +${n} temporaneo a ${STAT_LABEL[stat]} (dura fino al prossimo Recupero).`);
   }
+}
+function applyOrdineReset(c, stat){
+  const before = c.stats[stat];
+  c.stats[stat] = c.start[stat];
+  if(stat!=='pv'){ c.tempDebuff[stat]=false; c.permDebuffN[stat]=0; }
+  c.ordineResetReady = false;
+  logMsg(`⚖️ ${c.name} riporta ${STAT_LABEL[stat]} al valore di partenza di 1° livello (${before} → ${c.stats[stat]}), cancellando ogni effetto accumulato.`,'good');
 }
 function healStat(c, stat, n){
   const cap = stat==='pv'||stat==='san'||stat==='anima' ? c.start[stat] : 6;
@@ -1147,7 +1165,11 @@ function renderVuotoChoice(){
   </div>`;
 }
 function applyVuotoLoss(c, what){
-  if(what==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); logMsg(`🕳️ ${c.name} sceglie di perdere 1 PV.`); }
+  // per 'pv' non logghiamo noi l'esito: applyDamage racconta già da sé cosa succede
+  // davvero (danno subito, oppure parato da Cerchio/Egida/Tempra/Sagoma/Resistenza) —
+  // un messaggio fisso "sceglie di perdere 1 PV" qui sopra sarebbe fuorviante quando
+  // il colpo viene parato subito dopo.
+  if(what==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); }
   else if(what==='item' && c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di perdere ${OGGETTI_BY_ID[lost]?.name}.`); }
   else if(what==='spell' && c.spells.length){ const idx=Math.floor(Math.random()*c.spells.length); const lost=c.spells.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di dimenticare ${SPELLS_BY_ID[lost]?.name}.`); }
   else if(what==='ability'){
@@ -1614,7 +1636,10 @@ const PLANE_EFFECTS = {
       logMsg(`💭 ${names.join(', ')} ${plural?'restano':'resta'} intrappolat${plural?'i':'o'} nell'illusione: non partecipa${plural?'no':''} all'Incontro di questo turno, sia esso uno scontro o altro.`,'warn');
     }
   },
-  ordine:(p,acts,ctx)=>{ logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello (usa Gestisci).'); },
+  ordine:(p,acts,ctx)=>{
+    acts.forEach(c=>{ c.ordineResetReady = true; });
+    logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello, una sola volta (usa Gestisci).');
+  },
   legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio (baratto forzato, applica manualmente).'); },
   sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
   stasi:(p,acts,ctx)=>{ logMsg('⏳ Qui nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.'); },
@@ -3063,6 +3088,9 @@ function openCharManageModal(id){
     ${c.companion?`<p class="hint">🗿 Compagno: <strong>${escapeHtml(c.companion.name)}</strong> (valore ${c.companion.value}) — aiuta in qualsiasi check se il suo valore è più alto, e protegge da un colpo per volta negli scontri finché non si distrugge.</p>`:''}
     ${c.protectedItemId?`<p class="hint">⏳ Statua di Stasi: <strong>${escapeHtml(OGGETTI_BY_ID[c.protectedItemId]?.name||c.protectedItemId)}</strong> è protetto — non può essere perso, rubato o distrutto da nessun effetto.</p>`:''}
     ${inRecuperoPlane?`<p class="hint">🛌 Piano di Recupero: il riposo è automatico all'ingresso.</p>`:''}
+    ${c.ordineResetReady?`<div class="panel" style="margin:.5rem 0;"><p class="hint">⚖️ Ordine: scegli una caratteristica da riportare al valore di partenza di 1° livello, cancellando ogni effetto accumulato (nel bene e nel male) — una sola volta.</p>
+      <div class="row">${STATS.map(s=>`<button class="small" data-ordinereset="${s}">${STAT_LABEL[s]} (ora ${c.stats[s]} → ${c.start[s]})</button>`).join('')}</div>
+    </div>`:''}
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
       ${cls.special ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
@@ -3098,7 +3126,7 @@ function openCharManageModal(id){
         <div class="info">
           <div class="title">${escapeHtml(sp.name)} <span class="badge">${escapeHtml(school||'')}</span>${sp.cost?`<span class="badge">costo ${sp.cost}</span>`:''}</div>
           <p class="desc">${escapeHtml(sp.text||'')}</p>
-          <div class="actions"><button class="small" data-usespell="${i}">Usa</button></div>
+          <div class="actions"><button class="small" data-usespell="${i}" ${sp.cost && c.resources<sp.cost?'disabled title="Risorse planari insufficienti"':''}>Usa</button>${sp.cost && c.resources<sp.cost?` <span class="hint">servono ${sp.cost} risorse planari, ${c.name} ne ha ${c.resources}</span>`:''}</div>
         </div>
       </div>`;
     }).join('')||'<span class="hint">Nessuno</span>'}</div>
@@ -3111,6 +3139,7 @@ function openCharManageModal(id){
   if(specialBtn) specialBtn.onclick=()=>{ useClassSpecial(c); render(); openCharManageModal(id); };
   const rerollBtn=document.getElementById('mgrReroll');
   if(rerollBtn) rerollBtn.onclick=()=>{ c.rerolls--; logMsg(`🔁 ${c.name} usa un reroll.`); render(); openCharManageModal(id); };
+  document.querySelectorAll('[data-ordinereset]').forEach(b=>b.onclick=()=>{ applyOrdineReset(c, b.dataset.ordinereset); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-useitem]').forEach(b=>b.onclick=()=>{ const openedOwnModal=useItem(c, +b.dataset.useitem); render(); if(!openedOwnModal) openCharManageModal(id); });
   document.querySelectorAll('[data-unequip]').forEach(b=>b.onclick=()=>{ unequipSlot(c, b.dataset.unequip); render(); openCharManageModal(id); });
   document.querySelectorAll('[data-unequipring]').forEach(b=>b.onclick=()=>{ unequipRing(c, +b.dataset.unequipring); render(); openCharManageModal(id); });
@@ -3424,7 +3453,7 @@ function useSpell(c, idx){
   }
   if(sp.sagomaSpell){
     c.sagomaReady = true;
-    logMsg(`👤 ${c.name} lancia ${sp.name}: assorbirà il prossimo colpo a segno subito, poi svanisce.`,'good');
+    logMsg(`👤 ${c.name} lancia ${sp.name}: assorbirà la prossima perdita subita, da qualsiasi fonte, poi svanisce.`,'good');
     c.spells.splice(idx,1);
     return;
   }
