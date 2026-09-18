@@ -44,7 +44,7 @@
     "rerollLvl": 0,
     "affinity": {},
     "exitPlane": null,
-    "desc": "Furia brutale: ogni colpo a segno in Contese di Forza infligge 2 danni; un 6 naturale in qualsiasi Contesa infligge 2 danni. A 0 PV non sviene, resta attivo."
+    "desc": "Furia brutale: un 6 naturale in qualsiasi Contesa infligge 2 danni invece di 1. A 0 PV non sviene, resta attivo."
   },
   {
     "id": "ladro",
@@ -146,7 +146,7 @@
       "flusso": 3
     },
     "exitPlane": null,
-    "desc": "Abilità: il primo Flusso lanciato su un compagno dopo l'attivazione cura anche 1 PV extra (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."
+    "desc": "Abilità: cura 1 PV a un bersaglio a scelta (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."
   },
   {
     "id": "druido",

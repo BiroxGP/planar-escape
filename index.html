@@ -259,15 +259,15 @@ const CLASSES = {
   guerriero:{name:"Guerriero",icon:"⚔️",for:4,int:1,des:3,pv:5,san:5,anima:5,affinity:{},reroll:0,rerollLvl:0,weapons:"heavy",resistance:["elementare","terrestre"],stealth:false,
     desc:"Nessuno spell, ma armi e armature pesanti. Resistenza a tutto il Tipo Fisico (Elementare + Terrestre)."},
   barbaro:{name:"Barbaro",icon:"🪓",for:5,int:1,des:3,pv:4,san:5,anima:5,affinity:{},reroll:0,rerollLvl:0,weapons:"light",resistance:[],stealth:false,special:"furia",
-    desc:"Furia brutale: ogni colpo a segno in Contese di Forza infligge 2 danni; un 6 naturale in qualsiasi Contesa infligge 2 danni. A 0 PV non sviene, resta attivo."},
+    desc:"Furia brutale: un 6 naturale in qualsiasi Contesa infligge 2 danni invece di 1. A 0 PV non sviene, resta attivo."},
   ladro:{name:"Ladro",icon:"🗡️",for:2,int:2,des:4,pv:3,san:5,anima:5,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],stealth:true,
     desc:"Furtività: può tentare di restare nascosto da un Incontro (check Destrezza). Classe ibrida: 1 reroll fisso."},
   veggente:{name:"Veggente",icon:"🔮",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{divinazione:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["eterei","entropia"],stealth:false,special:"vista_piani",
     desc:"Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza a Eterei + Entropia."},
   mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["elementare"],special:"dardo",
     desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."},
-  chierico:{name:"Chierico",icon:"🙏",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_bonus",
-    desc:"Abilità: il primo Flusso lanciato su un compagno dopo l'attivazione cura anche 1 PV extra (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."},
+  chierico:{name:"Chierico",icon:"🙏",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_diretta",
+    desc:"Abilità: cura 1 PV a un bersaglio a scelta (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."},
   druido:{name:"Druido",icon:"🌿",for:2,int:3,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["terrestre"],special:"forma_selvatica",waterOk:true,exitPlane:"flora_aliena",
     desc:"Forma Selvatica: scambia temporaneamente due caratteristiche (ricarica a Recupero). A proprio agio in acqua. Uscita personale: Flora Aliena."},
   warlock:{name:"Warlock",icon:"👹",for:2,int:3,des:2,pv:3,san:5,anima:5,affinity:{essenza:2},reroll:0,rerollLvl:0,weapons:"light",resistance:["demoniaco"],special:"evocazione",
@@ -713,7 +713,6 @@ function makeChar(name, clsKey, bonus){
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
     protectedItemId:null, // Statua di Stasi: oggetto immune a qualsiasi perdita/furto/distruzione, un solo oggetto alla volta
-    curaBonusReady:false, // Chierico: abilità attiva, il prossimo Flusso lanciato su un compagno cura anche 1 PV extra
     turnStartPv:null, // PV all'inizio del turno corrente, per Richiamo di sangue (chi ha già perso PV in questo turno)
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
@@ -1684,7 +1683,7 @@ function resolveAttack(c, stat){
   let dmg=0;
   if(hit){
     const cls=CLASSES[c.cls];
-    dmg = (cls.special==='furia' && (stat==='for'||isCrit)) ? 2 : (1+damageBonusFor(c,stat));
+    dmg = (cls.special==='furia' && isCrit) ? 2 : (1+damageBonusFor(c,stat));
     if(c.dmgBonusPlane) dmg += c.dmgBonusPlane; // Benedizione: +2 danno per tutta la permanenza nel piano
   }
   return {roll:r.roll, hit, dmg};
@@ -3228,12 +3227,23 @@ function useClassSpecial(c){
       logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito, su qualunque caratteristica.`);
       break;
     case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}); break;
-    case 'cura_bonus':
-      c.charges.special=false; c.curaBonusReady=true;
-      logMsg(`✨ ${c.name} si prepara: il primo Flusso lanciato su un compagno curerà anche 1 PV extra.`);
+    case 'cura_diretta':
+      c.charges.special=false;
+      openCuraDirettaModal(c);
       break;
     default: c.charges.special=false; logMsg(`✳️ ${c.name} usa la propria abilità di classe.`);
   }
+}
+function openCuraDirettaModal(c){
+  const targets = healableChars();
+  openModal(`<h3>🙏 Cura Diretta</h3><p>Scegli il bersaglio: +1 PV.</p>
+    <div class="row">${targets.map(t=>`<button class="small" data-curadiretta="${t.id}">${escapeHtml(t.name)}${t.status==='unconscious'?' 😵':''}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-curadiretta]').forEach(b=>b.onclick=()=>{
+    const t=targets.find(x=>x.id===b.dataset.curadiretta);
+    healStat(t,'pv',1);
+    logMsg(`🙏 ${c.name} usa l'abilità del Chierico: +1 PV a ${t.id===c.id?'se stesso':t.name}.`,'good');
+    closeModal(); render();
+  });
 }
 function openFormaSelvaticaModal(c){
   openModal(`<h3>🌿 Forma Selvatica</h3><p>Scegli due caratteristiche da scambiare temporaneamente (tornano come prima al prossimo salto):</p>
@@ -3733,18 +3743,12 @@ function openHealOtherModal(caster, idx, sp, r, mult){
   mult = mult||1;
   const stat = r.stat||'pv';
   const amount = (r.n||1)*mult;
-  const bonus = caster.curaBonusReady ? 1 : 0;
   const targets = healableChars();
-  openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}${bonus?' (più 1 PV extra dall\'abilità del Chierico)':''}.</p>
+  openModal(`<h3>${sp.icon||'✨'} ${escapeHtml(sp.name)}</h3><p>Scegli il bersaglio: +${amount} ${STAT_LABEL[stat]}.</p>
     <div class="row">${targets.map(t=>`<button class="small" data-healtarget="${t.id}">${escapeHtml(t.name)}${t.status==='unconscious'?' 😵':''}</button>`).join('')}</div>`);
   document.querySelectorAll('[data-healtarget]').forEach(b=>b.onclick=()=>{
     const t=targets.find(x=>x.id===b.dataset.healtarget);
     healStat(t, stat, amount);
-    if(bonus){
-      healStat(t, 'pv', bonus);
-      caster.curaBonusReady=false;
-      logMsg(`✨ ${caster.name}: l'abilità del Chierico attivata cura anche 1 PV extra a ${t.name} (consumata, ricarica a Recupero).`,'good');
-    }
     caster.spells.splice(idx,1);
     closeModal(); render();
   });
