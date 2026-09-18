@@ -1027,25 +1027,27 @@ function classCardPreview(clsKey){
   </div>`;
 }
 function renderSetup(){
-  const classOptions = Object.entries(CLASSES).map(([k,c])=>`<option value="${k}">${c.icon} ${c.name}</option>`).join('');
   const n = setupPlayers.length;
   const bonus = n===1? '+2 a una statistica a scelta' : (n===2? '+1 a una statistica a scelta' : 'nessun bonus (configurazione normale)');
   return `
   <div class="panel">
     <h2>🌀 Prepara il party</h2>
-    <p class="hint">Da 1 a 5 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}.</p>
+    <p class="hint">Da 1 a 5 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}. Ogni classe si può scegliere una sola volta.</p>
     <div id="playerList">
-      ${setupPlayers.map((p,i)=>`
+      ${setupPlayers.map((p,i)=>{
+        const usedByOthers = setupPlayers.filter((_,j)=>j!==i).map(pp=>pp.cls);
+        return `
         <div class="player-setup">
           <div class="row">
             <input type="text" data-idx="${i}" class="pname" value="${p.name}" style="width:180px;">
-            <select data-idx="${i}" class="pclass">${Object.entries(CLASSES).map(([k,c])=>`<option value="${k}" ${p.cls===k?'selected':''}>${c.icon} ${c.name}</option>`).join('')}</select>
+            <select data-idx="${i}" class="pclass">${Object.entries(CLASSES).filter(([k])=>!usedByOthers.includes(k)).map(([k,c])=>`<option value="${k}" ${p.cls===k?'selected':''}>${c.icon} ${c.name}</option>`).join('')}</select>
             ${n<=2?`<select data-idx="${i}" class="pbonus stat-sel"><option value="">Bonus su...</option>${STATS.map(s=>`<option value="${s}" ${p.bonusStat===s?'selected':''}>${STAT_LABEL[s]}</option>`).join('')}</select>`:''}
             ${setupPlayers.length>1?`<button class="small danger" data-remove="${i}">✕</button>`:''}
           </div>
           ${classCardPreview(p.cls)}
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
     <div class="row mt1">
       <button id="addPlayer" ${setupPlayers.length>=5?'disabled':''}>+ Aggiungi giocatore</button>
@@ -1062,7 +1064,13 @@ function bindSetup(){
   document.querySelectorAll('.pclass').forEach(el=>el.onchange=e=>{setupPlayers[+e.target.dataset.idx].cls=e.target.value; render();});
   document.querySelectorAll('.pbonus').forEach(el=>el.onchange=e=>{setupPlayers[+e.target.dataset.idx].bonusStat=e.target.value;});
   document.querySelectorAll('[data-remove]').forEach(el=>el.onclick=e=>{setupPlayers.splice(+e.target.dataset.remove,1); render();});
-  document.getElementById('addPlayer').onclick=()=>{ if(setupPlayers.length<5){ setupPlayers.push({name:'Giocatore '+(setupPlayers.length+1), cls:'guerriero'}); render(); } };
+  document.getElementById('addPlayer').onclick=()=>{
+    if(setupPlayers.length>=5) return;
+    const usedClasses = setupPlayers.map(p=>p.cls);
+    const freeCls = Object.keys(CLASSES).find(k=>!usedClasses.includes(k)) || 'guerriero';
+    setupPlayers.push({name:'Giocatore '+(setupPlayers.length+1), cls:freeCls});
+    render();
+  };
   document.getElementById('startGame').onclick=()=>{
     newGame();
     const n=setupPlayers.length;
