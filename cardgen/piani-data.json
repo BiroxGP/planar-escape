@@ -297,7 +297,7 @@
     "family": "entropia",
     "check": "des",
     "recupero": false,
-    "text": "Nessun danno diretto: un combattimento one-shot (Contesa di Destrezza) contro la propria stessa ombra. Risolto quello, si pesca comunque il normale Incontro del turno.",
+    "text": "Contesa di Destrezza contro la propria stessa ombra: un solo scambio, vince chi colpisce per primo. Se l'Ombra è più veloce, -1 permanente a Destrezza. Risolto quello, si pesca comunque il normale Incontro del turno.",
     "effectKey": "ombra",
     "deck": "entropia"
   },

@@ -330,7 +330,7 @@ const PIANI = [
   P("tempo","Tempo","entropia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo casuale: un d6 decide su quale delle sei caratteristiche."),
   P("cenere","Cenere","entropia","for",false,"Chi fallisce un check di Forza perde un oggetto, sbriciolato dal vento."),
   P("oblio","Oblio","entropia","int",false,"Chi fallisce un check di Intelletto dimentica di colpo uno spell o un'abilità — un depotenziamento temporaneo come gli altri, guarisce solo in un piano di Recupero."),
-  P("ombra","Ombra","entropia","des",false,"Nessun danno diretto: un combattimento one-shot (Contesa di Destrezza) contro la propria stessa ombra. Risolto quello, si pesca comunque il normale Incontro del turno."),
+  P("ombra","Ombra","entropia","des",false,"Contesa di Destrezza contro la propria stessa ombra: un solo scambio, vince chi colpisce per primo. Se l'Ombra è più veloce, -1 permanente a Destrezza. Risolto quello, si pesca comunque il normale Incontro del turno."),
   P("porte_di_brace","Le Porte di Brace (Demoniaco, 1° girone)","demoniaco","for_or_int",false,"Nessuna Corruzione qui. Niente Furtività: si affronta un Incontro a ogni turno, senza eccezioni.",null,{girone:1}),
   P("baratro_in_fiamme","Il Baratro in Fiamme (Demoniaco, 2° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:2}),
   P("gelo_dellabisso","Il Gelo dell'Abisso (Demoniaco, 3° girone)","demoniaco","for_or_int",false,"Si perde passivamente 1 Anima solo per esserci passati (Corruzione). Niente Furtività: un Incontro a ogni turno, senza eccezioni.",null,{girone:3}),
@@ -385,7 +385,7 @@ const INCONTRI = {
   nonmorti:[
     C("nm_nessuno","Nessun evento","nessun","Il piano è insolitamente silenzioso. Nessun effetto."),
     C("nm_appestato","Appestato","incontro","Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°).",{check:"for",gravity:"level"}),
-    C("nm_spettro","Spettro","incontro","Risucchia la forza vitale e paralizza col terrore. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°).",{check:"int",gravity:"level",damageStat:"pv"}),
+    C("nm_spettro","Spettro","incontro","Risucchia la mente, svuotandola. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°; danno passante a Intelletto, non a Punti Vita).",{check:"int",gravity:"level",damageStat:"int"}),
     C("nm_nugolo","Nugolo necrotico","incontro","Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",{check:"des",gravity:"level-1",swarm:"auto"}),
     C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta. Check di Destrezza: se superato, trovi un oggetto; se fallito, una trappola ti ferisce (-1 PV).",{check:"des",onFail:{type:"damage",n:1},onSuccess:{type:"item"}}),
     C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
@@ -424,7 +424,7 @@ const INCONTRI = {
     C("ar_statua","Statua di Stasi","check","Il tempo si ferma per un oggetto, proteggendolo per sempre da perdite, furti e distruzione.",{statuaCard:true}),
     C("ar_benedizione","Benedizione","ricompensa","Una cura o protezione tipica del piano Sacro. Ricompensa: +1 PV a tutti i presenti, e un depotenziamento temporaneo guarito a un personaggio.",{reward:{type:"groupHealCure"}}),
     C("ar_geometria","Geometria perfetta","incontro","Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
-    C("ar_bagliore","Bagliore del Sole","incontro","Una luce di giudizio rivela ogni colpa. Scontro di Anima (valore nemico 2).",{check:"anima",gravity:0}),
+    C("ar_bagliore","Bagliore del Sole","check","Una luce di giudizio rivela ogni colpa. Check di Anima: se fallito, 1 danno diretto a Punti Vita — non è un check di Corruzione, è la luce del giudizio a colpire.",{check:"anima",onFail:{type:"damage",n:1}}),
     C("ar_pattodonore","Patto d'Onore","ricompensa","Da qui in poi, ogni vittoria del gruppo contro l'Entropia farà trovare un oggetto. Ricompensa: sigilla il patto.",{reward:{type:"pattoOnore"}}),
     C("ar_paradosso","Paradosso logico","check","Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, perdita del turno.",{check:"int",onFail:{type:"loseTurn"}}),
     C("ar_ingranaggio","Ingranaggio inceppato","check","Un ingranaggio si blocca all'improvviso. Check di Destrezza: se fallito, perdita di un oggetto casuale.",{check:"des",onFail:{type:"loseItem"}}),
@@ -1669,7 +1669,13 @@ const PLANE_EFFECTS = {
   tempo:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`⏳ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ const stat=STATS[Math.floor(Math.random()*6)]; applyTempDebuff(c,stat); } }); },
   cenere:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`💨 ${c.name} check Forza: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`💨 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name} (Cenere).`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto dalla Cenere.`); } } }); },
   oblio:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`🌫️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ if(c.spells.length){ logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (rimane in mano ma non utilizzabile fino a Recupero — gestione manuale).`);} else applyTempDebuff(c,'int'); } }); },
-  ombra:(p,acts,ctx)=>{ acts.forEach(c=>{ resolveAutoCombat([c],[{name:'La tua Ombra (Ombra)', statKey:'des', value:2}], ctx); }); },
+  ombra:(p,acts,ctx)=>{
+    acts.forEach(c=>{
+      const r=checkRoll(c,'des');
+      logMsg(`🌑 ${c.name} contro la propria Ombra — check Destrezza: ${r.roll} vs ${r.val} → ${r.success?'colpisce per primo, l\'Ombra si dissolve':'l\'Ombra è più veloce'}.`, r.success?'good':'warn');
+      if(!r.success) applyPermDebuff(c,'des');
+    });
+  },
   none:()=>{},
 };
 function resolveAttack(c, stat){
@@ -1749,28 +1755,6 @@ function passthroughTargets(acts){
     return true;
   });
   return eligible.length ? eligible : acts;
-}
-function resolveAutoCombat(acts, entityDefs, ctx){
-  if(!acts || acts.length===0) return; // nessuno presente/cosciente: niente da risolvere
-  // Combattimento one-shot risolto automaticamente giro dopo giro (usato per effetti intrinseci di piano, es. Ombra),
-  // senza passare dall'interfaccia interattiva del normale Incontro del turno.
-  const entities = entityDefs.map(e=>({...e, hp: e.hp!==undefined?e.hp:e.value}));
-  let rounds=0;
-  while(entities.some(e=>e.hp>0) && rounds<10){
-    rounds++;
-    let teamDmg=0, entityDmg=0;
-    acts.forEach(c=>{
-      const stat = entities[0].statKey;
-      const a=resolveAttack(c,stat);
-      teamDmg+=a.dmg;
-    });
-    entities.forEach(e=>{ if(e.hp<=0) return; const r=d6(); if(r<=e.value) entityDmg+=e.value; });
-    let remaining=teamDmg;
-    entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
-    const passThrough=Math.max(0, entityDmg-teamDmg);
-    if(passThrough>0){ let idx=0; for(let i=0;i<passThrough;i++){ applyCombatPassthrough(acts[idx%acts.length],'pv',{...ctx, combat:true}); idx++; } }
-  }
-  logMsg(`⚔️ ${acts.map(c=>c.name).join(', ')} risolve un combattimento automatico contro ${entityDefs[0].name} in ${rounds} giro/i.`);
 }
 function reshuffleMazzoPiani(){
   if(inStasi()){ logMsg('⏳ Qui nulla può cambiare: il mazzo Piani non è manipolabile (Stasi).', 'warn'); return; }
@@ -2944,7 +2928,10 @@ function openPianoTerrenoModal(dest){
   let body = pianoTerrenoHeroArt(dest);
   if(!hasComposedCard){ body += `<div class="card-body"><h3>🏔️ ${escapeHtml(dest.name)}</h3><p>${escapeHtml(dest.text)}</p></div>`; }
   if(dest.kind==='finaleA'){
-    body += `<div class="row mt1">${activeChars().map(c=>`<button class="primary small" data-win="${c.id}">${c.name} torna a casa (vittoria)</button>`).join('')}<button id="btnPTClose">Nessuno per ora</button></div>`;
+    // un vero Finale (A/B/C) è una vittoria di TUTTO il gruppo insieme, non una scelta
+    // individuale — solo le uscite personali (Druido/Sciamano, kind:'terrestre' più sotto)
+    // portano via un solo personaggio alla volta.
+    body += `<div class="row mt1"><button class="primary" id="btnWinAll">Il gruppo torna a casa (vittoria)</button><button id="btnPTClose">Nessuno per ora</button></div>`;
   } else if(dest.kind==='boss'){
     body += `<div class="row mt1"><button class="primary" id="btnStartBoss">Affronta ${dest.boss.name}</button><button id="btnPTClose">Ignora e continua</button></div>`;
   } else if(dest.kind==='bonus'){
@@ -2971,6 +2958,13 @@ function bindPianoTerrenoModal(dest){
     const c=state.players.find(x=>x.id===b.dataset.win); c.status='won'; c.winType=dest.name;
     logMsg(`🏆 ${c.name} VINCE! (${dest.name})`,'good'); closeModal(); state.currentDraw=null; render();
   });
+  const winAllBtn=document.getElementById('btnWinAll');
+  if(winAllBtn) winAllBtn.onclick=()=>{
+    const winners = activeChars();
+    winners.forEach(c=>{ c.status='won'; c.winType=dest.name; });
+    logMsg(`🏆 Il gruppo intero VINCE insieme! (${dest.name}): ${winners.map(c=>c.name).join(', ')}.`,'good');
+    closeModal(); state.currentDraw=null; render();
+  };
   const closeBtn=document.getElementById('btnPTClose');
   if(closeBtn) closeBtn.onclick=()=>{
     if(dest.kind==='terrestre'){
@@ -3097,8 +3091,9 @@ function renderBossFight(dest, boss, stat, onWin){
   const cb = { entities:[{name:boss.name, statKey:stat, value:boss.value, hp:boss.value}], rounds:0, checkStat:stat, damageStat:'pv' };
   state.currentDraw.combat = cb;
   const plane = {family:'generico', type:'etereo', name:boss.name};
-  function draw(){
-    document.getElementById('bossArea').innerHTML = `<p>${boss.name}: PV ${cb.entities[0].hp}/${boss.value}</p><div class="row"><button class="primary" id="bfRound">Tira un giro</button>${cb.rounds>0?'<button id="bfFlee">Ritirati</button>':''}</div>`;
+  function draw(lastRound){
+    const lastHtml = lastRound ? `<div class="panel" style="margin:.5rem 0;"><p class="hint">${lastRound.summary}</p>${lastRound.rows.map(r=>`<div>${escapeHtml(r)}</div>`).join('')}</div>` : '';
+    document.getElementById('bossArea').innerHTML = `<p>${boss.name}: PV ${cb.entities[0].hp}/${boss.value}</p>${lastHtml}<div class="row"><button class="primary" id="bfRound">Tira un giro</button>${cb.rounds>0?'<button id="bfFlee">Ritirati</button>':''}</div>`;
     document.getElementById('bfRound').onclick=()=>{
       const fighters = activeChars();
       if(fighters.length===0){
@@ -3106,11 +3101,11 @@ function renderBossFight(dest, boss, stat, onWin){
         closeModal(); state.currentDraw=null; render();
         return;
       }
-      fightRoundGeneric(cb, fighters, plane, {damageStat:'pv'});
+      const roundResult = fightRoundGeneric(cb, fighters, plane, {damageStat:'pv'});
       if(cb.entities[0].hp<=0){
         logMsg(`🏆 ${boss.name} è sconfitto!`,'good');
         onWin();
-      } else draw();
+      } else draw(roundResult);
     };
     const fleeBtn=document.getElementById('bfFlee');
     if(fleeBtn) fleeBtn.onclick=()=>{ logMsg('↩️ Il gruppo si ritira dallo scontro col boss.'); closeModal(); state.currentDraw=null; render(); };
@@ -3121,22 +3116,29 @@ function fightRoundGeneric(cb, acts, plane, opts){
   if(!acts || acts.length===0) return; // guardia di sicurezza: il chiamante deve controllare prima di invocare
   cb.rounds++;
   let teamDmg=0, entityDmg=0;
+  const rows=[];
   acts.forEach(c=>{
     const a=resolveAttack(c,cb.checkStat);
     teamDmg+=a.dmg;
-    logMsg(`　 🙂 ${c.name}: ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''}`);
+    const label = `🙂 ${c.name}: ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''}`;
+    rows.push(label);
+    logMsg('　 '+label);
   });
   cb.entities.forEach(e=>{
     if(e.hp<=0) return;
     const r=d6(); const hit=r<=e.value;
     if(hit) entityDmg+=e.value;
-    logMsg(`　 👹 ${e.name}: tiro ${r} ${hit?'✔':'✘'}`);
+    const label = `👹 ${e.name}: tiro ${r} ${hit?'✔':'✘'}`;
+    rows.push(label);
+    logMsg('　 '+label);
   });
   let remaining=teamDmg;
   cb.entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
   const passThrough=Math.max(0,entityDmg-teamDmg);
-  logMsg(`⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`);
+  const summary = `⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`;
+  logMsg(summary);
   if(passThrough>0){ const targets=passthroughTargets(acts); let idx=0; for(let i=0;i<passThrough;i++){ const t=targets[idx%targets.length]; applyCombatPassthrough(t, opts.damageStat||'pv', {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
+  return { summary, rows };
 }
 
 /* ---------- Character management modal (Gestisci) ---------- */
@@ -3802,11 +3804,7 @@ function openHealOtherModal(caster, idx, sp, r, mult){
   return true;
 }
 function openGrantRerollModal(caster, idx, sp, r){
-  const targets = activeChars().filter(x=>x.id!==caster.id);
-  if(targets.length===0){
-    logMsg(`⚠️ ${sp.name}: nessun compagno presente a cui concedere il reroll — lo spell non si consuma.`,'warn');
-    return true;
-  }
+  const targets = activeChars(); // include anche il lanciatore: può tenerlo per sé
   openModal(`<h3>🍀 ${escapeHtml(sp.name)}</h3><p>Scegli chi riceve +${r.n||1} reroll (non ricaricabile):</p>
     <div class="row">${targets.map(t=>`<button class="small" data-grantreroll="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
   document.querySelectorAll('[data-grantreroll]').forEach(b=>b.onclick=()=>{
