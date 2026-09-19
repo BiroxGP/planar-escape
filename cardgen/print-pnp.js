@@ -38,8 +38,11 @@ const SPELL_BACK = { essenza: 'retro_spell_essenza', flusso: 'retro_spell_flusso
 
 const CATEGORIES = {
   // formato Tarocco reale (120x70mm), orientamento carta (paesaggio) — già esatto, nessun ricomposizione necessaria.
-  piani: { cardWmm: 120, cardHmm: 70, items: loadIds('piani-data.json').map(id => ({ id, back: 'retro_piani' })) },
-  piano_terreno: { cardWmm: 120, cardHmm: 70, items: loadIds('piano-terreno-data.json').map(id => ({ id, back: 'retro_piani' })) },
+  // ruler:false — scala/allineamento già validati dall'utente stampando i Piani: il
+  // righello occuperebbe una riga intera (1 colonna sola) sprecando carta senza motivo,
+  // visto che 4 carte per pagina entrano davvero (già testato su carta vera).
+  piani: { cardWmm: 120, cardHmm: 70, ruler: false, items: loadIds('piani-data.json').map(id => ({ id, back: 'retro_piani' })) },
+  piano_terreno: { cardWmm: 120, cardHmm: 70, ruler: false, items: loadIds('piano-terreno-data.json').map(id => ({ id, back: 'retro_piani' })) },
   // Classi: arte NON ricomposta a formato Poker reale — manca l'illustrazione grezza in
   // cards_raw per 11 classi su 13 (solo druido/sciamano ce l'hanno), quindi ricomporre
   // avrebbe voluto dire ritagliare/deformare le altre 11 senza un originale pulito da cui
@@ -58,13 +61,13 @@ const CATEGORIES = {
 // stesso posto, su ogni categoria, indipendentemente da quante carte entrano per riga.
 const RULER_STRIP_MM = 25;
 
-function buildGrid(cardWmm, cardHmm) {
+function buildGrid(cardWmm, cardHmm, withRuler) {
   const usableW = PAGE_W_MM - 2 * MARGIN_MM;
-  const usableH = PAGE_H_MM - 2 * MARGIN_MM - RULER_STRIP_MM;
+  const usableH = PAGE_H_MM - 2 * MARGIN_MM - (withRuler ? RULER_STRIP_MM : 0);
   const cols = Math.floor(usableW / cardWmm);
   const rows = Math.floor(usableH / cardHmm);
   const gridW = cols * cardWmm, gridH = rows * cardHmm;
-  // griglia centrata nell'area sopra la striscia del righello
+  // griglia centrata nell'area sopra la striscia del righello (se presente)
   const offsetXmm = (PAGE_W_MM - gridW) / 2;
   const offsetYmm = MARGIN_MM + (usableH - gridH) / 2;
   return { cols, rows, offsetXmm, offsetYmm };
@@ -73,7 +76,7 @@ function buildGrid(cardWmm, cardHmm) {
 function sheetsHtml(pages, cardWmm, cardHmm, rulerX, rulerY) {
   const ticks = [];
   for (let m = 0; m <= RULER_MM; m += 10) ticks.push(m);
-  const rulerHtml = `<div class="ruler" style="left:${rulerX}mm; top:${rulerY}mm;">
+  const rulerHtml = rulerX == null ? '' : `<div class="ruler" style="left:${rulerX}mm; top:${rulerY}mm;">
     <div class="ruler-bar"></div>
     ${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}
     <div class="ruler-label">Righello di calibrazione: deve misurare esattamente ${RULER_MM}mm. Se non combacia, stampa a dimensione reale (100%), non "adatta alla pagina".</div>
@@ -110,12 +113,13 @@ function sheetsHtml(pages, cardWmm, cardHmm, rulerX, rulerY) {
 }
 
 async function generateCategory(catName, cat, browser, outDir) {
-  const { cols, rows, offsetXmm, offsetYmm } = buildGrid(cat.cardWmm, cat.cardHmm);
+  const withRuler = cat.ruler !== false;
+  const { cols, rows, offsetXmm, offsetYmm } = buildGrid(cat.cardWmm, cat.cardHmm, withRuler);
   const perPage = cols * rows;
-  // righello centrato orizzontalmente nella striscia riservata in fondo alla pagina
-  const rulerX = (PAGE_W_MM - RULER_MM) / 2;
-  const rulerY = PAGE_H_MM - MARGIN_MM - RULER_STRIP_MM + 6;
-  console.log(`[${catName}] griglia ${cols}x${rows} = ${perPage} carte/pagina`);
+  // righello centrato orizzontalmente nella striscia riservata in fondo alla pagina (se presente)
+  const rulerX = withRuler ? (PAGE_W_MM - RULER_MM) / 2 : null;
+  const rulerY = withRuler ? PAGE_H_MM - MARGIN_MM - RULER_STRIP_MM + 6 : null;
+  console.log(`[${catName}] griglia ${cols}x${rows} = ${perPage} carte/pagina${withRuler ? '' : ' (senza righello)'}`);
 
   const missingFront = cat.items.filter(it => !fs.existsSync(path.join(CARDS_DIR, it.id + '.png')));
   const missingBack = cat.items.filter(it => !it.back || !fs.existsSync(path.join(RETRO_DIR, it.back + '.png')));
