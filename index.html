@@ -2619,7 +2619,15 @@ function openRemovePermModal(c){
     finishIncontro();
   });
 }
-function showPeekModal(r, usedRedraw){
+function showPeekModal(r, usedRedraw, onDone){
+  // onDone: cosa fare a scelta risolta. Di default finishIncontro(), corretto quando la
+  // sbirciata È la ricompensa dell'Incontro corrente — ma spell/oggetti/abilità (Terzo
+  // Occhio, Chiave Planare, Vista dei Piani...) si possono usare dal pannello Gestisci in
+  // QUALSIASI momento, anche a metà di un Incontro con altre interazioni ancora aperte:
+  // chiamare finishIncontro() lì chiuderebbe quell'Incontro ancora in corso, perdendo
+  // tutte le azioni non ancora fatte dagli altri personaggi. Quei chiamanti passano
+  // esplicitamente onDone=render.
+  onDone = onDone || finishIncontro;
   const n = r.n||1;
   const top = state.mazzoPiani.slice(-n).reverse(); // deck stored with next-draw at index0 via shift, so top = index0.. wait we shift from front
   render(); // no-op, just ensure state consistent
@@ -2637,19 +2645,19 @@ function showPeekModal(r, usedRedraw){
   openModal(`<h3>👁️ Anteprima mazzo Piani</h3><ul>${names.map(n=>`<li>${n}</li>`).join('')}</ul>
     ${actionsHtml}
     <div class="row mt1"><button id="btnClosePeek">Chiudi</button></div>`);
-  const closeBtn=document.getElementById('btnClosePeek'); if(closeBtn) closeBtn.onclick=()=>{ closeModal(); finishIncontro(); };
+  const closeBtn=document.getElementById('btnClosePeek'); if(closeBtn) closeBtn.onclick=()=>{ closeModal(); onDone(); };
   const moveBtn=document.getElementById('btnMoveBottomTop');
-  if(moveBtn) moveBtn.onclick=()=>{ const bottom=state.mazzoPiani.pop(); state.mazzoPiani.unshift(bottom); logMsg('🔮 La carta in fondo al mazzo diventa la prossima destinazione.'); closeModal(); finishIncontro(); };
+  if(moveBtn) moveBtn.onclick=()=>{ const bottom=state.mazzoPiani.pop(); state.mazzoPiani.unshift(bottom); logMsg('🔮 La carta in fondo al mazzo diventa la prossima destinazione.'); closeModal(); onDone(); };
   document.querySelectorAll('[data-discardpeek]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.discardpeek;
     const id = state.mazzoPiani.splice(i,1)[0];
     state.mazzoPiani.push(id);
     if(r.noRedraw){
       logMsg('🔮 Carta scartata in fondo al mazzo: senza pescarne subito un\'altra, il prossimo salto pescherà semplicemente la nuova carta in cima.');
-      closeModal(); finishIncontro();
+      closeModal(); onDone();
     } else {
       logMsg('🔮 Carta scartata in fondo al mazzo, se ne pesca una nuova al posto suo.');
-      closeModal(); showPeekModal(r, true);
+      closeModal(); showPeekModal(r, true, onDone);
     }
   });
   document.querySelectorAll('[data-sendbottom]').forEach(b=>b.onclick=()=>{
@@ -2657,7 +2665,7 @@ function showPeekModal(r, usedRedraw){
     const id = state.mazzoPiani.splice(i,1)[0];
     state.mazzoPiani.push(id);
     logMsg(`🔮 Una delle ${cards.length} carte viste viene mandata in fondo al mazzo; le altre restano in cima.`);
-    closeModal(); finishIncontro();
+    closeModal(); onDone();
   });
 }
 
@@ -3265,7 +3273,7 @@ function useClassSpecial(c){
       c.charges.special=false; c.monkShieldReady=true;
       logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito, su qualunque caratteristica.`);
       break;
-    case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}); break;
+    case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}, false, render); break;
     case 'cura_diretta':
       c.charges.special=false;
       openCuraDirettaModal(c);
@@ -3449,7 +3457,7 @@ function useItem(c, idx){
   if(it.peek){
     c.inventory.splice(idx,1);
     logMsg(`🔮 ${c.name} usa ${it.name}: guarda le prime ${it.peek} carte in cima al mazzo Piani.`);
-    showPeekModal({type:'peek', n:it.peek, chooseBottom:true});
+    showPeekModal({type:'peek', n:it.peek, chooseBottom:true}, false, render);
     return;
   }
   logMsg(`ℹ️ ${it.name}: ${it.text} (effetto da applicare manualmente al tavolo).`);
@@ -3561,7 +3569,7 @@ function useSpell(c, idx){
   if(sp.reward){
     const r=sp.reward;
     if(r.type==='peek'||r.type==='peekBottom'){
-      showPeekModal(r);
+      showPeekModal(r, false, render);
       c.spells.splice(idx,1);
       return true;
     }
