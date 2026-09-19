@@ -6,10 +6,12 @@ const CARD_W = 1417; // 120mm @ 300dpi — scena panoramica (Piani, Piano Terren
 const CARD_H = 827;  // 70mm  @ 300dpi
 
 // Formato "standard" ritratto: personaggi/oggetti/incontri/spell, non scene d'ambiente.
-// 63x94mm @ 300dpi — combacia quasi esattamente col rapporto nativo dei ritratti
-// generati (1696x2528, ~0.671), quindi l'immagine riempie la carta senza tagli pesanti.
-const PORTRAIT_CARD_W = 744;
-const PORTRAIT_CARD_H = 1110;
+// 63,5x88mm @ 300dpi — formato Poker reale (2,5x3,5in), per il print-and-play.
+// Leggermente più "tozzo" del rapporto nativo dei ritratti generati (1696x2528, ~0.671):
+// artLayer() riempie comunque tutta la carta con background-size:cover (centrato), quindi
+// taglia un filo in più sopra/sotto rispetto a prima — impercettibile, l'illustrazione ha margine.
+const PORTRAIT_CARD_W = 750;
+const PORTRAIT_CARD_H = 1039;
 
 const FAMILY_ACCENT = {
   elementare: '#c1531f',
@@ -492,4 +494,51 @@ ${cards}
 </div></body></html>`;
 }
 
-module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, spellPageHtml, itemPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
+// Dorsi delle carte: l'arte lascia già una zona circolare volutamente semplice e scura al
+// centro (o, per le classi, vuota SOTTO l'icona già presente al centro) apposta per scriverci
+// sopra — qui si aggiunge solo l'etichetta di categoria, niente illustrazione da comporre.
+function cardBackHtml(back, artDir) {
+  const { id, label, accent, shape, labelPos, fontSize } = back;
+  const w = shape === 'landscape' ? CARD_W : PORTRAIT_CARD_W;
+  const h = shape === 'landscape' ? CARD_H : PORTRAIT_CARD_H;
+  const exts = ['.jpg', '.png', '.jpeg', '.webp'];
+  let bg = null;
+  if (artDir) {
+    for (const ext of exts) {
+      const p = path.join(artDir, id + ext);
+      if (fs.existsSync(p)) { bg = pathToFileURL(p).href; break; }
+    }
+  }
+  const top = labelPos === 'belowCircle' ? '77%' : '49.5%';
+  return `
+  <div class="retro-card" id="card-${id}" data-id="${id}" style="width:${w}px;height:${h}px;background-image:url('${bg}');">
+    <div class="retro-label" style="top:${top}; --glow:${accent}; font-size:${fontSize || 40}px;">${esc(label)}</div>
+  </div>`;
+}
+function cardBackPageHtml(backs, artDir) {
+  const cards = backs.map(b => cardBackHtml(b, artDir)).join('\n');
+  return `<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:#3a3630; }
+  .stage{ display:flex; flex-direction:column; gap:40px; padding:40px; align-items:flex-start; }
+  .retro-card{
+    position:relative; background-size:cover; background-position:center;
+    border-radius:22px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .retro-label{
+    position:absolute; left:50%; transform:translate(-50%,-50%);
+    font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
+    font-size:40px; letter-spacing:.05em; white-space:nowrap; text-align:center;
+    color:#f4ede0;
+    text-shadow:0 0 18px var(--glow), 0 0 34px var(--glow), 0 2px 6px rgba(0,0,0,.8);
+  }
+</style></head>
+<body><div class="stage">
+${cards}
+</div></body></html>`;
+}
+
+module.exports = { pageHtml, pianoTerrenoPageHtml, classPageHtml, incontroPageHtml, spellPageHtml, itemPageHtml, cardBackPageHtml, CARD_W, CARD_H, PORTRAIT_CARD_W, PORTRAIT_CARD_H, FAMILY_ACCENT };
