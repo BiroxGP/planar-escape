@@ -1671,7 +1671,7 @@ const PLANE_EFFECTS = {
     logMsg('⛰️ Ora si scava: massimo 3 turni per uscire o il gruppo muore travolto. Gestisci i tentativi di scavo dal pannello Gestisci di ciascun personaggio (check di Forza, +1 con attrezzi).');
   },
   tempesta:(p,acts,ctx)=>{ logMsg('⚡ Fulmini nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), un fulmine colpirà qualcuno a fine turno.'); },
-  cristallo:(p,acts,ctx)=>{ logMsg('💎 Incantesimi e danni fisici raddoppiati (+100%) qui: tienine conto quando applichi danni o spell.'); },
+  cristallo:(p,acts,ctx)=>{ logMsg('💎 Ogni spell lanciato qui ha effetto raddoppiato (+100%, automatico). I danni fisici subiti qui sono raddoppiati: tienine conto applicandoli manualmente.'); },
   luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`☀️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name}: -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
   tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
   sogno:(p,acts,ctx)=>{
@@ -3603,8 +3603,10 @@ function useSpell(c, idx){
     c.resources -= cost;
     logMsg(`💠 ${c.name} spende ${cost} risorsa/e planare/i per lanciare ${sp.name}.`);
   }
-  const boosted = !!c.nextSpellBoost;
-  if(boosted){ c.nextSpellBoost=false; logMsg(`✨ ${c.name} lancia ${sp.name} con il potenziamento pronto: effetto raddoppiato (+100%).`); }
+  const onCristallo = currentPlane()?.id==='cristallo';
+  const boosted = !!c.nextSpellBoost || onCristallo;
+  if(c.nextSpellBoost){ c.nextSpellBoost=false; logMsg(`✨ ${c.name} lancia ${sp.name} con il potenziamento pronto: effetto raddoppiato (+100%).`); }
+  else if(onCristallo){ logMsg(`💎 ${c.name} lancia ${sp.name} nel Cristallo: effetto raddoppiato (+100%).`); }
   if(sp.reward){
     const r=sp.reward;
     if(r.type==='peek'||r.type==='peekBottom'){
