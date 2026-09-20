@@ -178,10 +178,8 @@ function spellPageHtml(spells, flavors, artDir) {
     display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
   .school-badge img{ width:90%; height:90%; object-fit:contain; mix-blend-mode:screen; filter:drop-shadow(0 0 10px var(--fam)); }
-  .spell-panel{ height:42%; padding:16px 26px 24px; }
-  .spell-name{ font-size:32px; }
+  .spell-panel{ height:60%; padding:16px 26px 24px; }
   .cost-badge{ background:rgba(217,146,74,.18); border-color:rgba(217,146,74,.55); color:#f0c396; }
-  .spell-text{ font-size:16px; line-height:1.35; }
 </style></head>
 <body><div class="stage">
 ${cards}
@@ -244,10 +242,8 @@ function itemPageHtml(items, artDir) {
     display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
   .cat-badge img{ width:86%; height:86%; object-fit:contain; mix-blend-mode:screen; opacity:.85; filter:drop-shadow(0 0 4px var(--fam)); }
-  .item-panel{ height:36%; padding:16px 26px 22px; }
-  .item-name{ font-size:30px; }
+  .item-panel{ height:56%; padding:16px 26px 22px; }
   .tier-badge{ background:rgba(255,255,255,.08); }
-  .item-text{ font-size:16px; line-height:1.35; }
 </style></head>
 <body><div class="stage">
 ${cards}
@@ -348,8 +344,7 @@ function classPageHtml(classes, artDir) {
 <html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
-  .class-panel{ height:44%; padding:16px 26px 24px; }
-  .class-panel .name{ font-size:34px; }
+  .class-panel{ height:60%; padding:16px 26px 24px; }
   .stat-block{ display:flex; gap:6px; margin-bottom:8px; }
   .stat-cell{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
@@ -361,7 +356,6 @@ function classPageHtml(classes, artDir) {
   .class-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
   .class-badges .badge{ font-size:12px; padding:4px 10px; gap:5px; }
   .class-badges .badge-icon{ font-size:15px; }
-  .class-desc{ font-size:15px; line-height:1.3; }
 </style></head>
 <body><div class="stage">
 ${cards}
@@ -399,13 +393,11 @@ function incontroPageHtml(cards, artDir) {
 <html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
-  .incontro-panel{ height:40%; padding:16px 26px 24px; }
-  .incontro-name{ font-size:32px; }
+  .incontro-panel{ height:62%; padding:16px 26px 24px; }
   .incontro-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
   .incontro-badges .badge{ font-size:12px; padding:4px 10px; }
   .badge-manual{ background:rgba(214,140,69,.22); border-color:rgba(214,140,69,.55); color:#f0c396; }
   .badge-forte{ background:rgba(196,64,64,.22); border-color:rgba(196,64,64,.55); color:#f3a3a3; }
-  .incontro-text{ font-size:16px; line-height:1.35; }
 </style></head>
 <body><div class="stage">
 ${html}
@@ -448,7 +440,7 @@ function sharedCardCss() {
   .finale-ribbon{ background:linear-gradient(135deg,#d9a521,#a3781c); }
   .exit-ribbon{ background:linear-gradient(135deg,#4caf7d,#1f6b46); color:#f4fff8; }
   .panel{
-    position:absolute; left:0; right:0; bottom:0; height:47%; z-index:2;
+    position:absolute; left:0; right:0; bottom:0; height:52%; z-index:2;
     background:linear-gradient(to bottom, rgba(12,10,9,0) 0%, rgba(12,10,9,.5) 20%, rgba(10,8,7,.90) 52%, rgba(8,6,6,.97) 100%);
     display:flex; flex-direction:column; justify-content:flex-end;
     padding:26px 56px 42px;
@@ -458,7 +450,7 @@ function sharedCardCss() {
   .name-block{ min-width:0; }
   .name{
     font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
-    font-size:54px; letter-spacing:.015em; line-height:1.05;
+    font-size:58px; letter-spacing:.015em; line-height:1.05; text-transform:uppercase;
     text-shadow:0 2px 10px rgba(0,0,0,.5);
   }
   .name-sub{
@@ -475,11 +467,11 @@ function sharedCardCss() {
   .badge-icon{ font-size:22px; line-height:1; }
   .recupero-badge{ background:rgba(79,214,208,.18); border-color:rgba(79,214,208,.55); color:#bdf3ef; }
   .flavor{
-    font-style:italic; font-size:24px; color:#d9cdb9; opacity:.92; margin-bottom:14px;
+    font-style:italic; font-size:28px; color:#d9cdb9; opacity:.92; margin-bottom:14px;
     font-family:'Source Serif 4','Lora','Liberation Serif',serif;
   }
   .rule-text{
-    font-size:28px; line-height:1.4; color:#f4ede0; max-width:96%;
+    font-size:36px; line-height:1.32; color:#f4ede0; max-width:96%;
   }`;
 }
 
