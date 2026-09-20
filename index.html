@@ -87,6 +87,12 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
 .incontro-card-hero{width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
 .incontro-card-hero img{width:100%; display:block;}
+
+/* ---- landing ---- */
+.landing-hero p{margin:0 0 .7rem; max-width:70ch; color:var(--ink-soft);}
+.landing-hero p:last-child{margin-bottom:0;}
+.landing-video video{width:100%; display:block; border-radius:8px; border:1px solid var(--line); background:#000;}
+.landing-video .hint{margin-top:.6rem;}
 .lvlup-star{text-align:center; font-size:1.7rem; line-height:1; margin-bottom:.3rem; text-shadow:0 0 14px var(--ember-soft);}
 .lvlup-portrait{width:140px; height:140px; margin:0 auto .8rem; border-radius:50%; overflow:hidden; border:3px solid var(--ember); box-shadow:0 0 0 6px var(--ember-soft), 0 10px 24px var(--shadow);}
 .lvlup-portrait img{width:100%; height:100%; object-fit:cover; object-position:50% 12%; display:block;}
@@ -1008,11 +1014,42 @@ function damageBonusFor(c, stat){
 }
 
 /* ========================= RENDER ========================= */
+let landingDismissed = false;
 function render(){
   const app = document.getElementById('app');
-  if(!state){ app.innerHTML = renderSetup(); bindSetup(); return; }
+  if(!state){
+    if(!landingDismissed){ app.innerHTML = renderLanding(); bindLanding(); return; }
+    app.innerHTML = renderSetup(); bindSetup(); return;
+  }
   app.innerHTML = renderGame();
   bindGame();
+}
+/* ---------------- LANDING ---------------- */
+function renderLanding(){
+  return `
+  <div class="panel landing-hero">
+    <h2>Da dove nasce Planar Escape</h2>
+    <p>Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
+    <p>Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.</p>
+  </div>
+  <div class="grid cols-2">
+    <div class="panel landing-video">
+      <h3>⚔️ Uno scontro, una fuga</h3>
+      <video controls preload="none" poster="" src="assets/video/drago_scontro.mp4"></video>
+      <p class="hint">Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.</p>
+    </div>
+    <div class="panel landing-video">
+      <h3>🤝 Tutti per la manina</h3>
+      <video controls preload="none" poster="" src="assets/video/salto_manina.mp4"></video>
+      <p class="hint">Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.</p>
+    </div>
+  </div>
+  <div class="panel center">
+    <button class="primary" id="btnLandingStart" style="font-size:1.1rem; padding:.8rem 2rem;">🌀 Crea il tuo gruppo e inizia la fuga</button>
+  </div>`;
+}
+function bindLanding(){
+  document.getElementById('btnLandingStart').onclick=()=>{ landingDismissed=true; render(); };
 }
 /* ---------------- SETUP SCREEN ---------------- */
 let setupPlayers = [{name:'Giocatore 1', cls:'guerriero'}];
