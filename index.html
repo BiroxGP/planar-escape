@@ -1125,13 +1125,27 @@ function bindSetup(){
 /* ---------------- GAME SCREEN ---------------- */
 function renderGame(){
   if(state.players.length===0){ return `<div class="panel"><p>Nessun personaggio. <button onclick="state=null;render()">Torna al setup</button></p></div>`; }
+  const winners = state.players.filter(p=>p.status==='won');
   const anyoneCanAct = state.players.some(p=>p.status==='active'||p.status==='undead');
+  // "nessuno può più agire" significa game over SOLO se non ha vinto nessuno — se invece
+  // qualcuno (o tutto il gruppo insieme) ha vinto, non è un party spazzato via, è la fine
+  // della partita col piede giusto. Con le uscite personali (Druido/Sciamano) può anche
+  // vincere un solo personaggio mentre il resto del gruppo continua a giocare: in quel
+  // caso anyoneCanAct resta vero e si prosegue normalmente.
+  let statusPanel;
+  if(winners.length && !anyoneCanAct){
+    statusPanel = `<div class="panel center"><h2>🏆 Vittoria!</h2><p>${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} ${winners.length>1?'sono tornati':'è tornato'} a casa sani e salvi. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+  } else if(!anyoneCanAct){
+    statusPanel = `<div class="panel center"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+  } else {
+    statusPanel = renderTurnArea();
+  }
   return `
   ${renderPartyBar()}
   <div class="flex-between mb1">
     <div class="jump-counter">Salti totali: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte (${state.mazzoPianiScarti.length} già scartate) · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · Turno di: <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
   </div>
-  ${!anyoneCanAct ? `<div class="panel center"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>` : renderTurnArea()}
+  ${statusPanel}
   <div class="panel">
     <h3>📜 Diario di viaggio</h3>
     <div class="log">${state.log.slice().reverse().map(e=>`<div class="entry"><span class="t">${e.t}</span>${escapeHtml(e.msg)}</div>`).join('')}</div>
