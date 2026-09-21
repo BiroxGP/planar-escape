@@ -616,6 +616,7 @@ function newGame(){
   state = {
     players:[],
     mazzoPiani: freshDeckPiani(),
+    mazzoPianiScarti:[], // Piani già visitati e risolti: non tornano nel mazzo, il mazzo si assottiglia mano a mano — così le uscite (segnaposto __PT__, mai scartati) diventano via via più probabili.
     subdecks: Object.fromEntries(Object.entries(INCONTRI).map(([k,v])=>[k, shuffle(v.map(c=>c.id))])),
     subdecksDiscard: Object.fromEntries(Object.keys(INCONTRI).map(k=>[k,[]])),
     oggettiDeck: shuffle(OGGETTI.map(o=>o.id)),
@@ -1128,7 +1129,7 @@ function renderGame(){
   return `
   ${renderPartyBar()}
   <div class="flex-between mb1">
-    <div class="jump-counter">Salti totali: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · Turno di: <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
+    <div class="jump-counter">Salti totali: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte (${state.mazzoPianiScarti.length} già scartate) · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · Turno di: <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
   </div>
   ${!anyoneCanAct ? `<div class="panel center"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>` : renderTurnArea()}
   <div class="panel">
@@ -1305,10 +1306,19 @@ function planeHeroArt(plane, iconOverride){
 
 /* ---------------- DRAW / RESOLUTION FLOW ---------------- */
 function reinsertPianoCard(id){
-  // "le carte Piano risolte tornano nel mazzo (si ributtano dentro)": nessuna garanzia
-  // di non-ripetizione, quindi la stessa carta può ripresentarsi già al turno successivo.
+  // Usata solo per il segnaposto __PT__ quando pescato "a vuoto" (es. salto forzato in
+  // solitaria): non ha innescato una vera uscita, quindi torna nel mazzo com'era prima,
+  // non conta come consumato.
   const pos = Math.floor(Math.random()*(state.mazzoPiani.length+1));
   state.mazzoPiani.splice(pos,0,id);
+}
+function discardPianoCard(id){
+  // Un Piano vero e proprio, una volta visitato e risolto, non torna più nel mazzo: va
+  // scartato per sempre. Il mazzo si assottiglia salto dopo salto, mentre i segnaposto
+  // __PT__ (mai scartati) continuano ad accumularsi — le uscite diventano via via più
+  // probabili con l'andare avanti della partita, invece di restare diluite per sempre
+  // in un mazzo che non si riduce mai.
+  state.mazzoPianiScarti.push(id);
 }
 function doJump(){
   state.amplifySpellsActive = false; // la finestra di Amplificazione si chiude appena si salta via
@@ -1335,9 +1345,15 @@ function doJump(){
     maybeResetJumpRound();
   }
   state.jumps++;
+  // se il mazzo è già vuoto (tutti i Piani veri scartati, solo segnaposto __PT__ già
+  // pescati) si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti
+  // si vanificherebbe l'assottigliamento che rende le uscite via via più probabili.
+  if(state.mazzoPiani.length===0){
+    state.mazzoPiani = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
+    state.mazzoPianiScarti = [];
+  }
   // insert a Piano Terreno marker at the bottom for this jump
   state.mazzoPiani.push('__PT__');
-  if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
   const drawnId = state.mazzoPiani.shift();
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
@@ -1348,7 +1364,7 @@ function doJump(){
     return;
   }
   const plane = PIANI_BY_ID[drawnId];
-  reinsertPianoCard(drawnId);
+  discardPianoCard(drawnId);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
   jumpers.forEach(c=> resetResistanceForPlane(c, plane.family));
@@ -1859,7 +1875,10 @@ function soloForcedJump(group, reason){
   const newG = splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   state.jumpedThisRound[newG.id] = true; // questo salto forzato conta come il salto di questo turno per il nuovo gruppo
   maybeResetJumpRound();
-  if(state.mazzoPiani.length===0) state.mazzoPiani = freshDeckPiani();
+  if(state.mazzoPiani.length===0){
+    state.mazzoPiani = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
+    state.mazzoPianiScarti = [];
+  }
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
   if(drawnId==='__PT__'){
@@ -1868,7 +1887,7 @@ function soloForcedJump(group, reason){
     return;
   }
   const plane = PIANI_BY_ID[drawnId];
-  reinsertPianoCard(drawnId);
+  discardPianoCard(drawnId);
   logMsg(`🌀 Salto forzato da ${reason}: ${names} ${group.length>1?'finiscono':'finisce'} da ${group.length>1?'soli':'solo'} in <strong>${plane.name}</strong> (destinazione totalmente casuale, senza le informazioni del gruppo unito).`, 'warn');
   group.forEach(x=>resetResistanceForPlane(x, plane.family));
   const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
