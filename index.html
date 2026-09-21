@@ -1659,6 +1659,7 @@ function applyPlaneIntrinsic(plane){
     const fn = PLANE_EFFECTS[plane.effectKey];
     if(fn) fn(plane, acts, ctx);
     else if(plane.family==='nonmorti' && plane.girone>=2) logMsg(`🧠 ${plane.name}: la mente comincia subito a logorarsi, si rischia la Follia a fine turno.`,'warn');
+    else if(plane.family==='demoniaco' && plane.girone>=2) logMsg(`😈 ${plane.name}: la Corruzione si fa sentire subito, -1 Anima non appena si pesca l'Incontro di questo turno.`,'warn');
     else logMsg(`(Nessun effetto d'ingresso automatico per ${plane.name} — applica manualmente se necessario.)`);
   }
   if(RECUPERO_PLANES.has(plane.id) && acts.length){
