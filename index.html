@@ -654,6 +654,7 @@ function newGame(){
     pendingPersistent:null, // {planeId, entities:[...]}
     gameOver:false,
     turnConsecutive:{}, // per Piano Negativo tracking: {planeId: n}
+    stayTurn:null, // {planeId, count}: turni consecutivi passati sullo stesso piano senza saltare via
     groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
@@ -1257,6 +1258,9 @@ function renderTurnArea(){
   if(state.currentDraw.phase==='specchi-choice'){
     return renderSpecchiChoice();
   }
+  if(state.currentDraw.phase==='terra-trapped'){
+    return renderTerraTrapped();
+  }
   return renderDrawFlow();
 }
 function renderVuotoChoice(){
@@ -1293,6 +1297,16 @@ function applyVuotoLoss(c, what){
     if(c.rerolls>0){ c.rerolls--; logMsg(`🕳️ ${c.name} sceglie di perdere 1 reroll.`); }
     else if(CLASSES[c.cls].special && c.charges.special){ c.charges.special=false; logMsg(`🕳️ ${c.name} sceglie di scaricare la propria abilità di classe.`); }
   }
+}
+function renderTerraTrapped(){
+  const plane = currentPlane();
+  const attempt = state.currentDraw.terraDigAttempt||0;
+  return `<div class="panel center">
+    ${planeHeroArt(plane, '⛰️')}
+    <h2>⛰️ Sepolti sotto Terra</h2>
+    <p class="hint">Tentativo di scavo ${attempt}/3 fallito: non si può saltare finché non ci si libera. Se falliscono anche i tentativi rimasti, il gruppo muore travolto.</p>
+    <button class="primary" id="btnDigAgain">⛏️ Scava ancora (check di Forza di gruppo)</button>
+  </div>`;
 }
 function renderSpecchiChoice(){
   const plane = currentPlane();
@@ -1334,11 +1348,14 @@ function renderGroupPicker(){
     <p class="hint">${isSplit?'Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
     ${groups.map(({g,members})=>{
       const waiting = isSplit && !!state.jumpedThisRound[g.id];
+      const canStay = !isSplit && !waiting && state.stayTurn && STAY_ESCALATION_PLANES.has(state.stayTurn.planeId);
+      const stayPlane = canStay ? PIANI_BY_ID[state.stayTurn.planeId] : null;
       return `
       <div class="player-setup" style="text-align:left;">
         <strong>${members.map(c=>escapeHtml(c.name)).join(', ')}</strong>
         <div class="row mt1">
           <button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>🌀 Salta</button>
+          ${stayPlane?`<button class="small" id="btnStayMore">🏕️ Resta ancora un turno su ${escapeHtml(stayPlane.name)}</button>`:''}
           ${waiting?`<span class="hint">In attesa che gli altri gruppi separati saltino…</span>`:''}
           ${members.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
         </div>
@@ -1430,6 +1447,7 @@ function doJump(){
   jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
+    state.stayTurn = null;
     processLevelUpQueue();
     resolvePianoTerreno();
     return;
@@ -1437,6 +1455,7 @@ function doJump(){
   const plane = PIANI_BY_ID[drawnId];
   discardPianoCard(drawnId);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
+  state.stayTurn = { planeId: drawnId, count:1 };
   // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
   jumpers.forEach(c=> resetResistanceForPlane(c, plane.family));
   if(state.pendingSferaAntiplanare && state.pendingSferaAntiplanare.groupId===state.currentGroupId){
@@ -1682,6 +1701,16 @@ function applyPlaneIntrinsic(plane){
     logMsg("🪞 Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla, prima di affrontare l'Incontro del turno.",'warn');
     render();
     return;
+  } else if(plane.id==='terra' && acts.length){
+    // Sepolti all'impatto: check individuale (fallito = danno), poi si scava per liberarsi.
+    // Lo scavo è OBBLIGATORIO (non si può saltare finché non si è liberi): fino a 3
+    // tentativi, un check di gruppo come Acqua (vale il Forza più alto presente). Il 3°
+    // fallimento consecutivo travolge e uccide tutto il gruppo presente.
+    acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`⛰️ ${c.name} check impatto Forza: ${r.roll??'—'} vs ${r.val} → ${r.success?'nessun danno':'DANNO'}.`); if(!r.success) applyDamage(c,'pv',1,ctx); });
+    logMsg('⛰️ Il gruppo resta sepolto: si scava per liberarsi, massimo 3 tentativi o si muore travolti.','warn');
+    state.currentDraw.terraDigAttempt = 0;
+    attemptTerraDig(plane);
+    return;
   } else if(plane.id==='aria' && acts.length){
     // Chi viene sbalzato via affronta subito un Incontro extra da solo; SOLO dopo che
     // quello è stato risolto per intero (finishIncontro, non qui) il gruppo riunito ne
@@ -1723,12 +1752,74 @@ function applyPlaneIntrinsic(plane){
   if(turnSkippers.length){
     const names = turnSkippers.map(c=>c.name);
     const plural = names.length>1;
-    logMsg(`⏳ ${names.join(', ')} ${plural?'restano':'resta'} esclus${plural?'i':'o'} dall'Incontro di questo turno (effetto rimasto dal turno precedente).`,'warn');
+    logMsg(`⏳ ${names.join(', ')} ${plural?'restano':'resta'} esclus${plural?'i':'o'} dall'Incontro di questo turno.`,'warn');
     turnSkippers.forEach(c=>{ c.skipNextIncontro=false; });
   }
   // draw incontro after intrinsic (unless plane fully occupies the turn, none do per rules: "si pesca comunque, come sempre")
   const forcedFamily = (plane.family==='demoniaco'||plane.family==='nonmorti') ? plane.deck : null;
   drawIncontroForPlane(plane, forcedFamily, drawTargets);
+}
+function attemptTerraDig(plane){
+  const acts = activeChars();
+  if(acts.length===0){ render(); return; }
+  const attempt = (state.currentDraw.terraDigAttempt||0)+1;
+  state.currentDraw.terraDigAttempt = attempt;
+  const best = Math.max(...acts.map(c=>effectiveStat(c,'for')));
+  const r=d6(); const success = r<=best||r===6;
+  logMsg(`⛏️ Scavo, tentativo ${attempt}/3 (Forza di gruppo, valore più alto ${best}): tiro ${r} → ${success?'LIBERI':'ancora sepolti'}.`, success?'good':'warn');
+  if(success){
+    logMsg('⛰️ Il gruppo si fa strada e torna libero: si pesca il normale Incontro del turno.','good');
+    state.currentDraw.phase = 'plane';
+    acts.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: baseline PV di questo turno di scavo
+    drawIncontroForPlane(plane, null);
+    return;
+  }
+  if(attempt>=3){
+    const names = acts.map(c=>c.name);
+    acts.forEach(c=>{ c.status='dead'; });
+    logMsg(`💀 Dopo 3 tentativi il gruppo non si libera in tempo: ${names.join(', ')} ${names.length>1?'muoiono travolti':'muore travolto'} dalla terra.`,'bad');
+    state.currentDraw = null;
+    render();
+    return;
+  }
+  state.currentDraw.phase = 'terra-trapped';
+  render();
+}
+// Piani dove restare un turno in più (invece di saltare) ha un effetto meccanico definito.
+// Terra ne è escluso: lì restare non è una scelta, è obbligatorio finché non ci si libera
+// (vedi attemptTerraDig) — non si arriva mai a scegliere di restare, il gioco lo impone da sé.
+const STAY_ESCALATION_PLANES = new Set(['fuoco','acqua','decadimento','putrefazione','vuoto']);
+function stayAnotherTurn(){
+  if(!state.stayTurn) return;
+  const plane = PIANI_BY_ID[state.stayTurn.planeId];
+  if(!plane) return;
+  state.stayTurn.count++;
+  const acts = activeChars();
+  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
+  logMsg(`🏕️ Il gruppo resta ancora un turno su ${plane.name} (turno ${state.stayTurn.count} di permanenza).`);
+  state.currentDraw = { planeId: plane.id, phase:'plane', log:[] };
+  acts.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: baseline PV di questo turno, non di un salto precedente
+  if(plane.id==='fuoco'){
+    acts.forEach(c=>applyDamage(c,'pv',1,ctx));
+    logMsg('🔥 Il fuoco continua a bruciare: 1 danno extra a tutti per la permanenza.','warn');
+  } else if(plane.id==='acqua'){
+    acts.filter(c=>c.status==='active' && !CLASSES[c.cls].waterOk).forEach(c=>{
+      const r=checkRoll(c,'for');
+      logMsg(`🌊 ${c.name} check Forza per trattenere il respiro: ${r.roll??'—'} vs ${r.val} → ${r.success?'ok':'sviene'}.`);
+      if(!r.success){ c.status='unconscious'; logMsg(`🌊 ${c.name} sviene, sopraffatto dalla corrente. Il gruppo può portarlo con sé.`,'bad'); }
+    });
+  } else if(plane.id==='decadimento'){
+    PLANE_EFFECTS.decadimento(plane, acts, ctx);
+  } else if(plane.id==='putrefazione'){
+    PLANE_EFFECTS.putrefazione(plane, acts, ctx);
+  } else if(plane.id==='vuoto'){
+    state.currentDraw.phase = 'vuoto-choice';
+    state.currentDraw.vuotoChoices = {};
+    logMsg("🕳️ Il Vuoto costringe di nuovo ogni presente a scegliere cosa perdere.",'warn');
+    render();
+    return;
+  }
+  drawIncontroForPlane(plane, null);
 }
 function annihilateUndead(acts, planeName){
   acts.forEach(c=>{
@@ -1739,7 +1830,7 @@ function annihilateUndead(acts, planeName){
   });
 }
 const PLANE_EFFECTS = {
-  fuoco:(p,acts,ctx)=>{ acts.forEach(c=>applyDamage(c,'pv',1,ctx)); logMsg('🔥 Danno d\'ingresso a tutti (+1 PV danno per ogni turno di permanenza, da applicare manualmente se si resta).'); },
+  fuoco:(p,acts,ctx)=>{ acts.forEach(c=>applyDamage(c,'pv',1,ctx)); logMsg('🔥 Danno d\'ingresso a tutti (+1 danno extra automatico per ogni turno in più in cui si resta).'); },
   veleno:(p,acts,ctx)=>{ logMsg('☠️ Veleno nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), subirà danno a fine turno.'); },
   acqua:(p,acts,ctx)=>{
     if(acts.length===0) return;
@@ -1753,10 +1844,6 @@ const PLANE_EFFECTS = {
       logMsg(`🌊 ${victim.name} (Forza più bassa) viene trascinato via da solo in un portale casuale.`,'warn');
     }
     logMsg('🌊 Dal 2° turno di permanenza: chi non ha protezioni e non è Druido/Sciamano/Monaco deve superare un check di Forza o sviene.');
-  },
-  terra:(p,acts,ctx)=>{
-    acts.forEach(c=>{ const r=checkRoll(c,'for'); logMsg(`⛰️ ${c.name} check impatto Forza: ${r.roll} vs ${r.val} → ${r.success?'nessun danno':'DANNO'}.`); if(!r.success) applyDamage(c,'pv',1,ctx); });
-    logMsg('⛰️ Ora si scava: massimo 3 turni per uscire o il gruppo muore travolto. Gestisci i tentativi di scavo dal pannello Gestisci di ciascun personaggio (check di Forza, +1 con attrezzi).');
   },
   tempesta:(p,acts,ctx)=>{ logMsg('⚡ Fulmini nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), un fulmine colpirà qualcuno a fine turno.'); },
   cristallo:(p,acts,ctx)=>{ logMsg('💎 Ogni spell lanciato qui ha effetto raddoppiato (+100%, automatico). I danni fisici subiti qui sono raddoppiati: tienine conto applicandoli manualmente.'); },
@@ -3982,6 +4069,8 @@ function bindGame(){
     state.currentGroupId=gid; startJump();
   });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
+  const stayMore = document.getElementById('btnStayMore'); if(stayMore) stayMore.onclick=stayAnotherTurn;
+  const digAgain = document.getElementById('btnDigAgain'); if(digAgain) digAgain.onclick=()=>attemptTerraDig(currentPlane());
   document.querySelectorAll('[data-vuoto]').forEach(b=>b.onclick=()=>{
     const [cid,what] = b.dataset.vuoto.split(':');
     const c = state.players.find(p=>p.id===cid);
