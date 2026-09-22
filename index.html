@@ -3240,6 +3240,8 @@ function bindPianoTerrenoModal(dest){
     });
   };
   document.querySelectorAll('[data-ptstatua]').forEach(b=>b.onclick=()=>{
+    if(b.disabled) return;
+    document.querySelectorAll('[data-ptstatua]').forEach(bb=>bb.disabled=true); // una sola statua: un solo personaggio può risvegliarla e legarsi ad essa
     const c=state.players.find(x=>x.id===b.dataset.ptstatua);
     const lose=STATS[Math.floor(Math.random()*6)];
     applyPermDebuff(c, lose);
@@ -3275,6 +3277,8 @@ function bindPianoTerrenoModal(dest){
     }
   });
   document.querySelectorAll('[data-ptcontesa]').forEach(b=>b.onclick=()=>{
+    if(b.disabled) return;
+    b.disabled = true;
     const c=state.players.find(x=>x.id===b.dataset.ptcontesa);
     const r=checkRoll(c,'anima'); const eco=d6(); const ecoHit = eco<=3;
     const win = r.success && !ecoHit;
