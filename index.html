@@ -1723,7 +1723,7 @@ function applyPlaneIntrinsic(plane){
   if(turnSkippers.length){
     const names = turnSkippers.map(c=>c.name);
     const plural = names.length>1;
-    logMsg(`⏳ ${names.join(', ')} ${plural?'restano':'resta'} esclus${plural?'i':'o'} dall'Incontro di questo turno: ${plural?'avevano':'aveva'} perso il turno precedente.`,'warn');
+    logMsg(`⏳ ${names.join(', ')} ${plural?'restano':'resta'} esclus${plural?'i':'o'} dall'Incontro di questo turno (effetto rimasto dal turno precedente).`,'warn');
     turnSkippers.forEach(c=>{ c.skipNextIncontro=false; });
   }
   // draw incontro after intrinsic (unless plane fully occupies the turn, none do per rules: "si pesca comunque, come sempre")
@@ -1784,7 +1784,7 @@ const PLANE_EFFECTS = {
   sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
   stasi:(p,acts,ctx)=>{ logMsg('⏳ Qui nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.'); },
   sole:(p,acts,ctx)=>{ annihilateUndead(acts,'Sole'); acts.forEach(c=>{ if(c.status==='undead') return; if(c.stats.anima<c.start.anima){ const r=checkRoll(c,'anima'); if(!r.success){ applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]); logMsg(`☀️ ${c.name} porta Corruzione e fallisce il check extra di Anima: depotenziamento casuale.`);} } }); },
-  metallo:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'des'); logMsg(`⚙️ ${c.name} check Destrezza: ${r.roll} vs ${r.val} → ${r.success?'libero':'incastrato'}.`); if(!r.success){ applyDamage(c,'pv',1,ctx); logMsg(`⚙️ ${c.name} resta incastrato: perde il turno e 1 danno.`);} }); },
+  metallo:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'des'); logMsg(`⚙️ ${c.name} check Destrezza: ${r.roll} vs ${r.val} → ${r.success?'libero':'incastrato'}.`); if(!r.success){ applyDamage(c,'pv',1,ctx); c.skipNextIncontro=true; logMsg(`⚙️ ${c.name} resta incastrato: 1 danno e sarà escluso dal prossimo Incontro.`);} }); },
   logica:(p,acts,ctx)=>{ logMsg('🔢 Nessun reroll utilizzabile qui, da nessuna fonte.'); },
   verita:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`🔎 ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success) applyTempDebuff(c,'san'); }); },
   caos:(p,acts,ctx)=>{ logMsg('🌀 Caos: ogni check qui userà una statistica casuale. Il mazzo Piani viene rimescolato ora, incluse le carte Piano Terreno sul fondo.'); reshuffleMazzoPiani(); },
@@ -2266,7 +2266,7 @@ function consequenceLabel(cons, plane){
       return stat ? `depotenziamento temporaneo a ${STAT_LABEL[stat]}` : 'depotenziamento temporaneo';
     }
     case 'damage': return `-${cons.n||1} PV`;
-    case 'loseTurn': return 'perdita del turno';
+    case 'loseTurn': return 'esclusione dal prossimo Incontro';
     case 'loseItem': return 'perdita di un oggetto casuale';
     case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
     case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
@@ -2277,7 +2277,7 @@ function consequenceLabel(cons, plane){
   }
 }
 function onLoseExtraLabel(key){
-  if(key==='loseTurn') return 'perdita del turno';
+  if(key==='loseTurn') return 'esclusione anche dal prossimo Incontro';
   if(key==='tempDebuffSan') return 'depotenziamento temporaneo a Sanità Mentale';
   if(key==='tempDebuffRandom') return 'depotenziamento temporaneo a una caratteristica casuale';
   return null;
@@ -2290,7 +2290,7 @@ function applyConsequence(cons, targets, plane){
         applyTempDebuff(c,stat); break;
       }
       case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
-      case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} perde il turno: non parteciperà all'Incontro del prossimo piano.`,'warn'); break;
+      case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); break;
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
@@ -2531,7 +2531,7 @@ function fightRound(plane, card, acts, cb){
   }
   if(card.onLoseExtra && passThrough>0){
     acts.forEach(c=>{
-      if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} perde anche il turno: non parteciperà all'Incontro del prossimo piano.`,'warn'); }
+      if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso anche dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); }
       if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
       if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
     });
