@@ -134,13 +134,13 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .char-card.out{border-color:var(--bad);}
 .char-card .cname{font-family:'Cinzel',serif; font-weight:600; font-size:1rem; display:flex; align-items:center; gap:.4rem;}
 .char-card .ccls{font-size:.76rem; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; margin-bottom:.5rem;}
-.stat-dice{display:grid; grid-template-columns:repeat(6,1fr); gap:.3rem; margin-bottom:.5rem;}
+.stat-dice{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:.3rem; margin-bottom:.5rem;}
 .die{
-  aspect-ratio:1; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  aspect-ratio:1; min-width:0; overflow:hidden; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center;
   font-family:'JetBrains Mono',monospace; font-weight:600; font-size:.85rem; border:1px solid var(--line); background:var(--surface-2);
   position:relative;
 }
-.die .lbl{font-size:.55rem; opacity:.6; text-transform:uppercase; letter-spacing:.03em;}
+.die .lbl{font-size:.55rem; opacity:.6; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap;}
 .die.pv{color:var(--bad);} .die.san{color:var(--arcane);} .die.anima{color:var(--portal);}
 .die.debuff-t::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--ember);}
 .die.debuff-p::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--bad);}
@@ -1127,7 +1127,7 @@ function renderSetup(){
   return `
   <div class="panel">
     <h2>🌀 Prepara il party</h2>
-    <p class="hint">Da 1 a 5 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}. Ogni classe si può scegliere una sola volta.</p>
+    <p class="hint">Da 1 a 4 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}. Ogni classe si può scegliere una sola volta.</p>
     <div id="playerList">
       ${setupPlayers.map((p,i)=>{
         const usedByOthers = setupPlayers.filter((_,j)=>j!==i).map(pp=>pp.cls);
@@ -1145,7 +1145,7 @@ function renderSetup(){
       }).join('')}
     </div>
     <div class="row mt1">
-      <button id="addPlayer" ${setupPlayers.length>=5?'disabled':''}>+ Aggiungi giocatore</button>
+      <button id="addPlayer" ${setupPlayers.length>=4?'disabled':''}>+ Aggiungi giocatore</button>
       <button id="startGame" class="primary">Inizia la fuga →</button>
     </div>
   </div>
@@ -1160,7 +1160,7 @@ function bindSetup(){
   document.querySelectorAll('.pbonus').forEach(el=>el.onchange=e=>{setupPlayers[+e.target.dataset.idx].bonusStat=e.target.value;});
   document.querySelectorAll('[data-remove]').forEach(el=>el.onclick=e=>{setupPlayers.splice(+e.target.dataset.remove,1); render();});
   document.getElementById('addPlayer').onclick=()=>{
-    if(setupPlayers.length>=5) return;
+    if(setupPlayers.length>=4) return;
     const usedClasses = setupPlayers.map(p=>p.cls);
     const freeCls = Object.keys(CLASSES).find(k=>!usedClasses.includes(k)) || 'guerriero';
     setupPlayers.push({name:'Giocatore '+(setupPlayers.length+1), cls:freeCls});
