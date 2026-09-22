@@ -89,13 +89,26 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .incontro-card-hero img{width:100%; display:block;}
 
 /* ---- landing ---- */
+.landing-cover-wrap{position:relative; border-radius:18px; overflow:hidden; box-shadow:0 14px 36px var(--shadow); border:1px solid var(--line); margin-bottom:1.4rem;}
+.landing-cover-wrap img{width:100%; display:block; max-height:560px; object-fit:cover;}
+.landing-cover-caption{position:absolute; left:0; right:0; bottom:0; padding:2.6rem 1.8rem 1.5rem; background:linear-gradient(to top, rgba(12,9,16,.92), rgba(12,9,16,.45) 65%, transparent);}
+.landing-cover-caption .tagline{font-family:'Cinzel',serif; font-size:1.6rem; letter-spacing:.03em; color:#f4ecdc; text-shadow:0 2px 12px rgba(0,0,0,.65);}
+.landing-cover-caption .subtagline{margin-top:.35rem; font-size:1rem; font-style:italic; color:#d8cfc0; text-shadow:0 2px 10px rgba(0,0,0,.6);}
 .landing-hero p{margin:0 0 .7rem; max-width:70ch; color:var(--ink-soft);}
 .landing-hero p:last-child{margin-bottom:0;}
+.landing-lead{font-family:'Source Serif 4',serif; font-style:italic; font-size:1.14rem; line-height:1.75; color:var(--ink); border-left:3px solid var(--portal); padding:.1rem 0 .1rem 1.1rem; max-width:68ch;}
+.landing-lead::first-letter{font-family:'Cinzel',serif; font-style:normal; font-weight:700; font-size:2.7rem; line-height:1; float:left; margin:.03em .12em 0 0; color:var(--portal);}
+.landing-indie{margin-top:1.2rem; padding-top:1.1rem; border-top:1px dashed var(--line);}
+.landing-indie p{color:var(--ink-soft); max-width:70ch;}
+.landing-indie a{color:var(--arcane); font-weight:600; text-decoration:underline;}
 .landing-video video{width:100%; display:block; border-radius:8px; border:1px solid var(--line); background:#000;}
 .landing-video .hint{margin-top:.6rem;}
-.landing-social{display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem;}
-.landing-social a{display:inline-flex; align-items:center; gap:.5rem; padding:.55rem 1.1rem; border-radius:999px; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); text-decoration:none; font-weight:600; font-size:.92rem;}
-.landing-social a:hover{border-color:var(--portal); color:var(--portal);}
+.landing-social{display:flex; gap:.9rem; flex-wrap:wrap; margin-top:1.3rem;}
+.landing-social a{position:relative; display:inline-flex; align-items:center; gap:.6rem; padding:.7rem 1.4rem; border-radius:12px; color:#fff; text-decoration:none; font-weight:700; font-size:.95rem; letter-spacing:.02em; box-shadow:0 8px 20px var(--shadow); transition:transform .15s ease, box-shadow .15s ease;}
+.landing-social a:hover{transform:translateY(-2px); box-shadow:0 10px 24px var(--shadow);}
+.landing-social a svg{width:20px; height:20px; flex:none;}
+.landing-social a.ig{background:linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7);}
+.landing-social a.tt{background:linear-gradient(135deg,#25f4ee,#111 55%,#fe2c55);}
 
 /* ---- endgame / combat-win imagery ---- */
 .endgame-img{width:min(90%, 420px); margin:0 auto 1rem; border-radius:14px; display:block; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
@@ -1040,13 +1053,29 @@ function render(){
 /* ---------------- LANDING ---------------- */
 function renderLanding(){
   return `
+  <div class="landing-cover-wrap">
+    <img src="assets/ui/copertina.jpg" alt="Quattro avventurieri si tengono per mano davanti a un portale">
+    <div class="landing-cover-caption">
+      <div class="tagline">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
+      <div class="subtagline">Planar Escape — la fuga non è mai la fine della storia.</div>
+    </div>
+  </div>
   <div class="panel landing-hero">
     <h2>Da dove nasce Planar Escape</h2>
-    <p>Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
+    <p class="landing-lead">Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
     <p>Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.</p>
+    <div class="landing-indie">
+      <p><span class="badge">🎲 Progetto indie</span> &nbsp; Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href="https://www.idea-g.it/" target="_blank" rel="noopener noreferrer">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.</p>
+    </div>
     <div class="landing-social">
-      <a href="https://www.instagram.com/planar.escape/" target="_blank" rel="noopener noreferrer">📸 Instagram @planar.escape</a>
-      <a href="https://www.tiktok.com/@planar.escape" target="_blank" rel="noopener noreferrer">🎵 TikTok @planar.escape</a>
+      <a class="ig" href="https://www.instagram.com/planar.escape/" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
+        Instagram @planar.escape
+      </a>
+      <a class="tt" href="https://www.tiktok.com/@planar.escape" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 2c.5 2.9 2.3 4.7 5.5 5v3.2c-1.9 0-3.7-.6-5.2-1.7v6.6c0 3.8-3.1 6.9-6.9 6.9S3 19 3 15.1s3.1-6.9 6.9-6.9c.4 0 .8 0 1.1.1v3.3c-.3-.1-.7-.2-1.1-.2-1.9 0-3.4 1.5-3.4 3.4s1.5 3.4 3.4 3.4 3.5-1.4 3.5-3.4V2h3.1Z"/></svg>
+        TikTok @planar.escape
+      </a>
     </div>
   </div>
   <div class="grid cols-2">
