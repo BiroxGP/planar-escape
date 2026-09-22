@@ -1044,6 +1044,11 @@ function damageBonusFor(c, stat){
 let landingDismissed = false;
 function render(){
   const app = document.getElementById('app');
+  const onLanding = !state && !landingDismissed;
+  // Salva/Carica/Nuova partita non hanno senso prima che una partita esista: mostrarli già
+  // sulla pagina d'ingresso distrae da testo/video e fa sembrare l'app "già dentro al gioco"
+  // a chi ci arriva per la prima volta, invece di guidarlo a leggere e scorrere fino in fondo.
+  document.querySelector('.topbar-actions').style.display = onLanding ? 'none' : '';
   if(!state){
     if(!landingDismissed){ app.innerHTML = renderLanding(); bindLanding(); return; }
     app.innerHTML = renderSetup(); bindSetup(); return;
