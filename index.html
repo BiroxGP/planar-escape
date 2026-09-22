@@ -93,6 +93,15 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .landing-hero p:last-child{margin-bottom:0;}
 .landing-video video{width:100%; display:block; border-radius:8px; border:1px solid var(--line); background:#000;}
 .landing-video .hint{margin-top:.6rem;}
+
+/* ---- endgame / combat-win imagery ---- */
+.endgame-img{width:min(90%, 420px); margin:0 auto 1rem; border-radius:14px; display:block; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
+.combat-win-modal{text-align:center;}
+.combat-win-modal .combat-win-img{width:100%; border-radius:12px; margin-bottom:1rem; border:1px solid var(--line);}
+.combat-win-modal h3{margin:0 0 .8rem;}
+.combat-win-loot{list-style:none; margin:0 0 1.2rem; padding:0; text-align:left;}
+.combat-win-loot li{padding:.4rem .6rem; border-bottom:1px solid var(--line);}
+.combat-win-loot li:last-child{border-bottom:none;}
 .lvlup-star{text-align:center; font-size:1.7rem; line-height:1; margin-bottom:.3rem; text-shadow:0 0 14px var(--ember-soft);}
 .lvlup-portrait{width:140px; height:140px; margin:0 auto .8rem; border-radius:50%; overflow:hidden; border:3px solid var(--ember); box-shadow:0 0 0 6px var(--ember-soft), 0 10px 24px var(--shadow);}
 .lvlup-portrait img{width:100%; height:100%; object-fit:cover; object-position:50% 12%; display:block;}
@@ -1146,9 +1155,9 @@ function renderGame(){
   // caso anyoneCanAct resta vero e si prosegue normalmente.
   let statusPanel;
   if(winners.length && !anyoneCanAct){
-    statusPanel = `<div class="panel center"><h2>🏆 Vittoria!</h2><p>${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} ${winners.length>1?'sono tornati':'è tornato'} a casa sani e salvi. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+    statusPanel = `<div class="panel center"><img src="assets/ui/vittoria.jpg" alt="Vittoria" class="endgame-img"><h2>🏆 Vittoria!</h2><p>${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} ${winners.length>1?'sono tornati':'è tornato'} a casa sani e salvi. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
   } else if(!anyoneCanAct){
-    statusPanel = `<div class="panel center"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+    statusPanel = `<div class="panel center"><img src="assets/ui/sconfitta.jpg" alt="Sconfitta" class="endgame-img"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
   } else {
     statusPanel = renderTurnArea();
   }
@@ -2494,9 +2503,25 @@ function fightRound(plane, card, acts, cb){
   const allDead = cb.entities.every(e=>e.hp<=0);
   if(allDead){
     logMsg('🏆 Tutte le entità sono state sconfitte.');
+    const logStart = state.log.length;
     grantCombatReward(plane, card, acts, cb);
+    const lootLines = state.log.slice(logStart).map(e=>e.msg);
     finishIncontro();
+    showCombatWinModal(lootLines);
   }
+}
+function showCombatWinModal(lootLines){
+  const lootHtml = lootLines.length
+    ? `<ul class="combat-win-loot">${lootLines.map(l=>`<li>${escapeHtml(l)}</li>`).join('')}</ul>`
+    : `<p class="hint">Nessun bottino da questo scontro.</p>`;
+  openModal(`
+    <div class="combat-win-modal">
+      <img src="assets/ui/vincitori_battaglia.jpg" alt="Scontro vinto" class="combat-win-img">
+      <h3>⚔️ Scontro vinto!</h3>
+      ${lootHtml}
+      <button class="primary" onclick="closeModal()">Continua</button>
+    </div>
+  `);
 }
 function persistCombat(plane, cb){
   state.pendingPersistent = state.pendingPersistent||{};
