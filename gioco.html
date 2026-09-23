@@ -87,6 +87,10 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
 .incontro-card-hero{width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
 .incontro-card-hero img{width:100%; display:block;}
+.class-gallery{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.1rem;}
+.class-chip{position:relative; display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .7rem .4rem .6rem; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); font-size:.82rem;}
+.class-chip.locked{opacity:.45; filter:grayscale(.5);}
+.class-chip .lock{position:absolute; top:-7px; right:-7px; font-size:.8rem; line-height:1; background:var(--surface); border-radius:50%; padding:2px; border:1px solid var(--line);}
 
 /* ---- landing ---- */
 .landing-cover-wrap{position:relative; border-radius:18px; overflow:hidden; box-shadow:0 14px 36px var(--shadow); border:1px solid var(--line); margin-bottom:1.4rem;}
@@ -343,6 +347,57 @@ const FAMILIES = {
   entropia:{name:"Entropia",icon:"🌀",type:"etereo"},
   generico:{name:"Generico",icon:"🌐",type:"etereo"},
 };
+
+/* ---------------- REVEAL A ONDE ---------------- */
+// Il simulatore pubblico rivela un piano dimensionale alla volta, di pari passo col reveal
+// sui social: Elementare (onda 1) → Eterei (2) → Armonia (3) → Entropia (4) → Demoniaco e
+// Non-morti insieme (5). onda 0 = sempre disponibile: Spell, Oggetti, Piano Terreno e gli
+// Incontri "generico" servono a poter giocare una partita completa fin dal primo giorno.
+//
+// Piani/Incontri non ancora rivelati sono esclusi DEL TUTTO dal mazzo (vedi freshDeckPiani
+// e newGame più sotto) — non pescabili, non solo bloccati. Le Classi invece restano visibili
+// in fase di creazione personaggio ma non selezionabili, con un lucchetto, come vetrina di
+// ciò che arriverà (vedi renderSetup).
+//
+// unlockedWave/unlockedTier sono impostati una sola volta all'avvio, dopo la verifica della
+// password (vedi BOOT in fondo al file): 'master' vede sempre tutto, a prescindere dall'onda.
+const FAMILY_WAVE = {
+  generico: 0,
+  elementare: 1,
+  eterei: 2,
+  armonia: 3,
+  entropia: 4,
+  demoniaco: 5,
+  nonmorti: 5,
+};
+// Override manuale per singola carta Piano/Incontro, per id: {} vuoto = nessuna eccezione,
+// ogni carta segue l'onda della propria famiglia. Esempio se un giorno serve: {"fuoco":0}
+// la rende disponibile subito, indipendentemente dall'onda Elementare.
+const CARD_WAVE_OVERRIDE = {};
+const CLASS_WAVE = {
+  // Onda 1: le quattro classi già mostrate in tutti i video promozionali.
+  guerriero: 1, ladro: 1, veggente: 1, chierico: 1,
+  // Le altre nove: valore di partenza uguale per tutte (2), solo un placeholder — MODIFICA
+  // QUESTI NUMERI quando decidi in che onda farle comparire (tra parentesi la Resistenza di
+  // ciascuna, solo per orientarti; 0 = visibile da subito insieme alle prime quattro).
+  barbaro: 2,     // nessuna resistenza
+  mago: 2,        // resistenza Elementare
+  druido: 2,      // resistenza Terrestre
+  warlock: 2,     // resistenza Demoniaco
+  negromante: 2,  // resistenza Non-morti
+  sciamano: 2,    // resistenza Elementare
+  saltimbanco: 2, // nessuna resistenza
+  monaco: 2,      // nessuna resistenza
+  paladino: 2,    // resistenza Armonia
+};
+let unlockedTier = 'public'; // 'public' | 'master', impostato al login (vedi BOOT)
+let unlockedWave = 0;
+function effectiveWave(){ return unlockedTier==='master' ? Infinity : unlockedWave; }
+function canonicalFamily(famOrDeck){ return famOrDeck==='demoni' ? 'demoniaco' : famOrDeck; }
+function waveOfFamily(fam){ return FAMILY_WAVE[canonicalFamily(fam)] ?? 0; }
+function isFamilyUnlocked(fam){ return waveOfFamily(fam) <= effectiveWave(); }
+function waveOfCard(id, deckKeyOrFamily){ return CARD_WAVE_OVERRIDE[id] ?? waveOfFamily(deckKeyOrFamily); }
+function isClassUnlocked(clsKey){ return (CLASS_WAVE[clsKey] ?? 1) <= effectiveWave(); }
 
 /* ---------------- MAZZO PIANI (36 carte) ---------------- */
 function P(id,name,family,check,recupero,text,effectKey,extra){
@@ -644,7 +699,9 @@ const PIANO_TERRENO = [
 let state = null;
 
 function freshDeckPiani(){
-  const ids = PIANI.map(p=>p.id);
+  // Piani della famiglia non ancora rivelata: esclusi del tutto dal mazzo, non solo bloccati —
+  // non possono proprio uscire pescando.
+  const ids = PIANI.filter(p=>waveOfCard(p.id, p.family) <= effectiveWave()).map(p=>p.id);
   return shuffle(ids);
 }
 function shuffle(arr){
@@ -659,7 +716,10 @@ function newGame(){
     players:[],
     mazzoPiani: freshDeckPiani(),
     mazzoPianiScarti:[], // Piani già visitati e risolti: non tornano nel mazzo, il mazzo si assottiglia mano a mano — così le uscite (segnaposto __PT__, mai scartati) diventano via via più probabili.
-    subdecks: Object.fromEntries(Object.entries(INCONTRI).map(([k,v])=>[k, shuffle(v.map(c=>c.id))])),
+    // Incontri della famiglia non ancora rivelata: stesso trattamento dei Piani, esclusi del
+    // tutto dal sotto-mazzo. In pratica non vengono mai pescati comunque (il piano che li
+    // pescherebbe non può uscire), ma restano fuori anche a scanso di equivoci.
+    subdecks: Object.fromEntries(Object.entries(INCONTRI).map(([k,v])=>[k, shuffle(v.filter(c=>waveOfCard(c.id, k) <= effectiveWave()).map(c=>c.id))])),
     subdecksDiscard: Object.fromEntries(Object.keys(INCONTRI).map(k=>[k,[]])),
     oggettiDeck: shuffle(OGGETTI.map(o=>o.id)),
     spellDecks: Object.fromEntries(Object.entries(SPELLS).map(([k,v])=>[k, shuffle(v.map(s=>s.id))])),
@@ -1150,6 +1210,10 @@ function renderSetup(){
   <div class="panel">
     <h2>🌀 Prepara il party</h2>
     <p class="hint">Da 1 a 4 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}. Ogni classe si può scegliere una sola volta.</p>
+    <div class="class-gallery">${Object.entries(CLASSES).map(([k,c])=>{
+      const locked = !isClassUnlocked(k);
+      return `<div class="class-chip ${locked?'locked':''}" title="${escapeHtml(c.name)}${locked?' — in arrivo':''}">${locked?'<span class="lock">🔒</span>':''}<span class="ic">${c.icon}</span><span class="nm">${escapeHtml(c.name)}</span></div>`;
+    }).join('')}</div>
     <div id="playerList">
       ${setupPlayers.map((p,i)=>{
         const usedByOthers = setupPlayers.filter((_,j)=>j!==i).map(pp=>pp.cls);
@@ -1157,7 +1221,10 @@ function renderSetup(){
         <div class="player-setup">
           <div class="row">
             <input type="text" data-idx="${i}" class="pname" value="${p.name}" style="width:180px;">
-            <select data-idx="${i}" class="pclass">${Object.entries(CLASSES).filter(([k])=>!usedByOthers.includes(k)).map(([k,c])=>`<option value="${k}" ${p.cls===k?'selected':''}>${c.icon} ${c.name}</option>`).join('')}</select>
+            <select data-idx="${i}" class="pclass">${Object.entries(CLASSES).filter(([k])=>!usedByOthers.includes(k)).map(([k,c])=>{
+              const locked = !isClassUnlocked(k);
+              return `<option value="${k}" ${p.cls===k?'selected':''} ${locked?'disabled':''}>${locked?'🔒 ':''}${c.icon} ${c.name}${locked?' (in arrivo)':''}</option>`;
+            }).join('')}</select>
             ${n<=2?`<select data-idx="${i}" class="pbonus stat-sel"><option value="">Bonus su...</option>${STATS.map(s=>`<option value="${s}" ${p.bonusStat===s?'selected':''}>${STAT_LABEL[s]}</option>`).join('')}</select>`:''}
             ${setupPlayers.length>1?`<button class="small danger" data-remove="${i}">✕</button>`:''}
           </div>
@@ -1184,7 +1251,7 @@ function bindSetup(){
   document.getElementById('addPlayer').onclick=()=>{
     if(setupPlayers.length>=4) return;
     const usedClasses = setupPlayers.map(p=>p.cls);
-    const freeCls = Object.keys(CLASSES).find(k=>!usedClasses.includes(k)) || 'guerriero';
+    const freeCls = Object.keys(CLASSES).find(k=>!usedClasses.includes(k) && isClassUnlocked(k)) || 'guerriero';
     setupPlayers.push({name:'Giocatore '+(setupPlayers.length+1), cls:freeCls});
     render();
   };
@@ -4148,12 +4215,19 @@ function openSplitGroupModal(gid){
 
 /* ---------------- BOOT (dietro password gate) ---------------- */
 const PLAYTEST_UNLOCK_KEY = 'planarEscapePlaytestUnlocked';
+const PLAYTEST_TIER_KEY = 'planarEscapePlaytestTier';
+const PLAYTEST_WAVE_KEY = 'planarEscapePlaytestWave';
 function unlockAndBoot(){
   document.getElementById('passwordGate').style.display = 'none';
   document.querySelector('.wrap').style.display = '';
   render();
 }
 if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1'){
+  // sessione già sbloccata in un turno precedente di questa stessa scheda: rileggi onda/tier
+  // salvati allora, senza rifare la verifica della password (nessuna sicurezza vera in gioco).
+  unlockedTier = sessionStorage.getItem(PLAYTEST_TIER_KEY) || 'public';
+  const cachedWave = parseInt(sessionStorage.getItem(PLAYTEST_WAVE_KEY), 10);
+  unlockedWave = Number.isFinite(cachedWave) ? cachedWave : 0;
   unlockAndBoot();
 } else {
   document.getElementById('gateForm').onsubmit = async (e)=>{
@@ -4171,7 +4245,11 @@ if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1'){
       });
       const data = await res.json();
       if(data.ok){
+        unlockedTier = data.tier || 'public';
+        unlockedWave = Number.isFinite(data.currentWave) ? data.currentWave : 0;
         sessionStorage.setItem(PLAYTEST_UNLOCK_KEY, '1');
+        sessionStorage.setItem(PLAYTEST_TIER_KEY, unlockedTier);
+        sessionStorage.setItem(PLAYTEST_WAVE_KEY, String(unlockedWave));
         unlockAndBoot();
       } else {
         errEl.textContent = data.error ? `Configurazione mancante: ${data.error}` : 'Password sbagliata, riprova.';
