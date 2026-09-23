@@ -4214,20 +4214,26 @@ function openSplitGroupModal(gid){
 }
 
 /* ---------------- BOOT (dietro password gate) ---------------- */
-const PLAYTEST_UNLOCK_KEY = 'planarEscapePlaytestUnlocked';
-const PLAYTEST_TIER_KEY = 'planarEscapePlaytestTier';
-const PLAYTEST_WAVE_KEY = 'planarEscapePlaytestWave';
+// _v2: chi aveva sbloccato con la versione precedente (senza onde) aveva in sessionStorage
+// solo il flag di sblocco, senza tier/wave — saltava il gate ma partiva a onda 0 (tutto
+// bloccato). Cambiando chiave si forza un nuovo login una tantum, che ripopola tutto insieme.
+const PLAYTEST_UNLOCK_KEY = 'planarEscapePlaytestUnlocked_v2';
+const PLAYTEST_TIER_KEY = 'planarEscapePlaytestTier_v2';
+const PLAYTEST_WAVE_KEY = 'planarEscapePlaytestWave_v2';
 function unlockAndBoot(){
   document.getElementById('passwordGate').style.display = 'none';
   document.querySelector('.wrap').style.display = '';
   render();
 }
-if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1'){
+// La cache è valida solo se TUTTE e tre le chiavi sono presenti — un flag di sblocco senza
+// wave salvata (versione vecchia, o storage corrotto/parziale) non basta: si torna al gate.
+const cachedWaveRaw = sessionStorage.getItem(PLAYTEST_WAVE_KEY);
+const cachedWave = parseInt(cachedWaveRaw, 10);
+if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1' && cachedWaveRaw!=null && Number.isFinite(cachedWave)){
   // sessione già sbloccata in un turno precedente di questa stessa scheda: rileggi onda/tier
   // salvati allora, senza rifare la verifica della password (nessuna sicurezza vera in gioco).
   unlockedTier = sessionStorage.getItem(PLAYTEST_TIER_KEY) || 'public';
-  const cachedWave = parseInt(sessionStorage.getItem(PLAYTEST_WAVE_KEY), 10);
-  unlockedWave = Number.isFinite(cachedWave) ? cachedWave : 0;
+  unlockedWave = cachedWave;
   unlockAndBoot();
 } else {
   document.getElementById('gateForm').onsubmit = async (e)=>{
