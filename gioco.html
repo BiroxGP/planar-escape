@@ -280,6 +280,8 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
       </div>
     </div>
     <div class="topbar-actions">
+      <span id="tierBadge" class="hint mono" style="align-self:center;"></span>
+      <button id="btnRelogin" class="small" title="Torna al gate per inserire un'altra password (es. la master)">🔑 Cambia password</button>
       <button id="btnSave" class="small">💾 Salva</button>
       <button id="btnLoad" class="small">📂 Carica</button>
       <button id="btnReset" class="small danger">↺ Nuova partita</button>
@@ -4224,8 +4226,21 @@ const PLAYTEST_WAVE_KEY = 'planarEscapePlaytestWave_v2';
 function unlockAndBoot(){
   document.getElementById('passwordGate').style.display = 'none';
   document.querySelector('.wrap').style.display = '';
+  const badge = document.getElementById('tierBadge');
+  if(badge) badge.textContent = unlockedTier==='master' ? 'accesso: master (tutto sbloccato)' : `accesso: pubblico (onda ${unlockedWave})`;
   render();
 }
+// Una volta sbloccato, il gate non ricompare più da solo — se si è entrati con la password
+// pubblica non c'è altrimenti modo di passare alla master (o viceversa) nella stessa sessione
+// senza toccare gli strumenti sviluppatore. Questo pulsante svuota la cache e ricarica, così
+// il gate torna a chiedere la password.
+const reloginBtn = document.getElementById('btnRelogin');
+if(reloginBtn) reloginBtn.onclick = ()=>{
+  sessionStorage.removeItem(PLAYTEST_UNLOCK_KEY);
+  sessionStorage.removeItem(PLAYTEST_TIER_KEY);
+  sessionStorage.removeItem(PLAYTEST_WAVE_KEY);
+  location.reload();
+};
 // La cache è valida solo se TUTTE e tre le chiavi sono presenti — un flag di sblocco senza
 // wave salvata (versione vecchia, o storage corrotto/parziale) non basta: si torna al gate.
 const cachedWaveRaw = sessionStorage.getItem(PLAYTEST_WAVE_KEY);
