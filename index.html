@@ -100,6 +100,17 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .landing-cta .secondary-link{margin-top:1.1rem; font-size:.85rem;}
 .landing-cta .secondary-link a{color:var(--ink-faint);}
 
+.howto-list{margin:0; padding-left:1.2rem; color:var(--ink-soft); max-width:70ch;}
+.howto-list li{margin-bottom:.55rem;}
+.howto-list li:last-child{margin-bottom:0;}
+.class-showcase{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:.9rem; margin-top:.9rem;}
+.class-showcase-card{background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:.9rem 1rem;}
+.class-showcase-card .head{display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem;}
+.class-showcase-card .ic{font-size:1.4rem;}
+.class-showcase-card h4{font-family:'Cinzel',serif; font-size:1rem; margin:0;}
+.class-showcase-card p{margin:0; font-size:.85rem; color:var(--ink-soft);}
+.class-showcase-teaser{margin-top:1.1rem; padding-top:.9rem; border-top:1px dashed var(--line); font-size:.85rem; color:var(--ink-faint); font-style:italic;}
+
 .hint{font-size:.8rem; color:var(--ink-faint); font-style:italic;}
 .center{text-align:center;}
 </style>
@@ -140,6 +151,39 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
         TikTok @planar.escape
       </a>
     </div>
+  </div>
+  <div class="panel">
+    <h2>Come si gioca</h2>
+    <ul class="howto-list">
+      <li>Si crea un party da 1 a 4 avventurieri, ognuno con una classe diversa: nessuna doppia in tavola.</li>
+      <li>Ogni turno il gruppo salta attraverso un portale verso un piano dimensionale ignoto — nessuno sa dove porti finché non ci si trova già dentro.</li>
+      <li>Il piano fa subito sentire il suo effetto, poi arriva l'Incontro: uno scontro, una prova, o un evento da affrontare insieme o da soli.</li>
+      <li>Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.</li>
+      <li>L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>Le classi</h2>
+    <p class="hint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sopra:</p>
+    <div class="class-showcase">
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">⚔️</span><h4>Guerriero</h4></div>
+        <p>Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.</p>
+      </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">🗡️</span><h4>Ladro</h4></div>
+        <p>Si muove nell'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.</p>
+      </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">🪄</span><h4>Mago</h4></div>
+        <p>Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.</p>
+      </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">🙏</span><h4>Chierico</h4></div>
+        <p>Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.</p>
+      </div>
+    </div>
+    <div class="class-showcase-teaser">🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
