@@ -88,10 +88,16 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .landing-social a.ig{background:linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7);}
 .landing-social a.tt{background:linear-gradient(135deg,#25f4ee,#111 55%,#fe2c55);}
 
-.landing-cta{margin-top:.5rem; padding-top:1.1rem; border-top:1px dashed var(--line);}
-.landing-cta p{color:var(--ink-soft); max-width:70ch;}
-.landing-cta a.contact{color:var(--portal); font-weight:700; text-decoration:underline;}
-.landing-cta .secondary-link{margin-top:.6rem; font-size:.85rem;}
+.landing-cta{margin-top:.5rem; padding-top:1.3rem; border-top:1px dashed var(--line);}
+.landing-cta p{color:var(--ink-soft); max-width:56ch; margin-left:auto; margin-right:auto;}
+.landing-cta .contact-btn{
+  display:inline-flex; align-items:center; gap:.6rem; margin-top:.4rem; padding:.75rem 1.5rem;
+  border-radius:12px; background:var(--portal); color:#fff; text-decoration:none; font-weight:700;
+  font-size:1.02rem; box-shadow:0 8px 20px var(--shadow); transition:transform .15s ease, box-shadow .15s ease;
+}
+.landing-cta .contact-btn:hover{transform:translateY(-2px); box-shadow:0 10px 24px var(--shadow); color:#fff;}
+.landing-cta .contact-btn svg{width:20px; height:20px; flex:none;}
+.landing-cta .secondary-link{margin-top:1.1rem; font-size:.85rem;}
 .landing-cta .secondary-link a{color:var(--ink-faint);}
 
 .hint{font-size:.8rem; color:var(--ink-faint); font-style:italic;}
@@ -162,7 +168,10 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
   <div class="panel center landing-cta">
     <h2>Vuoi provare il gioco vero?</h2>
     <p>Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
-    <p><a class="contact" href="mailto:planarescape@gmail.com">planarescape@gmail.com</a></p>
+    <a class="contact-btn" href="mailto:planarescape@gmail.com">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      planarescape@gmail.com
+    </a>
     <div class="secondary-link"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
   </div>
 </div>
