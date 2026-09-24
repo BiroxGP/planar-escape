@@ -16,7 +16,10 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 
 ## Da ristampare (non ancora confermato)
 
-*(nessuna, in attesa del prossimo cambiamento)*
+| Data | Carta | Tipo | Cosa è cambiato |
+|---|---|---|---|
+| 2026-09-24 | Eco dal Fondo (Spell essenza, `sp_ecofondo`) | Testo | Vedeva la carta in fondo al mazzo Piani e poteva portarla in cima garantita — troppo forte, rischiava di far vincere troppo facilmente scegliendo la destinazione. Ora: rimescola il mazzo, poi guarda la nuova cima e può rimandarla in fondo se non convince (come Sguardo Fugace, ma con reshuffle prima). |
+| 2026-09-24 | Richiamo dal Fondo (Spell divinazione, `sp_richiamofondo`) | Testo | Stesso nerf di Eco dal Fondo, stessa ragione (era la versione gratuita dello stesso problema). |
 
 ## Già ristampate / in attesa di conferma stampa
 

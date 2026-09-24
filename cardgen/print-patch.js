@@ -17,7 +17,8 @@ const PAGE_W_MM = 210, PAGE_H_MM = 297;
 
 // items: {id, back, x, y, w, h} — posizione/formato espliciti, niente griglia automatica.
 const ITEMS = [
-  { id: 'o_auraassorbente', back: 'retro_oggetto', x: 20, y: 15, w: 63.5, h: 88 },
+  { id: 'sp_ecofondo', back: 'retro_spell_essenza', x: 20, y: 15, w: 63.5, h: 88 },
+  { id: 'sp_richiamofondo', back: 'retro_spell_divinazione', x: 90, y: 15, w: 63.5, h: 88 },
 ];
 
 function cellsHtml(items, mirror){

@@ -87,7 +87,7 @@
     "id": "sp_ecofondo",
     "name": "Eco dal Fondo",
     "school": "essenza",
-    "text": "Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",
+    "text": "Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Costa 1 risorsa planare.",
     "cost": 1
   },
   {
@@ -213,7 +213,7 @@
     "id": "sp_richiamofondo",
     "name": "Richiamo dal Fondo",
     "school": "divinazione",
-    "text": "Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Gratuito. Rischio: può essere una destinazione epica del Piano Terreno.",
+    "text": "Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Gratuito.",
     "cost": 0
   }
 ]

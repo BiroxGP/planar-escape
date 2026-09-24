@@ -316,11 +316,15 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
    rompere nulla. REGOLA per il futuro: ogni nuova stringa statica di interfaccia (non di
    carta, non di diario) va avvolta in t('...') e la sua traduzione aggiunta a I18N_EN. */
 const I18N_LANG_KEY = 'planarEscapeLang';
-let LANG = (localStorage.getItem(I18N_LANG_KEY) === 'en') ? 'en' : 'it';
+// try/catch: localStorage non esiste nel sandbox Node usato da cardgen/extract-data.js per
+// leggere i dati di gioco (vm.createContext senza DOM), e potrebbe anche essere bloccato dal
+// browser (navigazione privata, cookie disattivati) — mai lasciare che l'assenza rompa il boot.
+let LANG = 'it';
+try { if(typeof localStorage!=='undefined' && localStorage.getItem(I18N_LANG_KEY)==='en') LANG='en'; } catch(e){}
 function t(s){ return LANG==='en' ? (I18N_EN[s] ?? s) : s; }
 function setLang(l){
   LANG = l==='en' ? 'en' : 'it';
-  localStorage.setItem(I18N_LANG_KEY, LANG);
+  try{ localStorage.setItem(I18N_LANG_KEY, LANG); } catch(e){}
   applyI18nStatic();
   if(typeof state!=='undefined' && state) render();
 }
@@ -775,7 +779,7 @@ const SPELLS = {
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{trasmutazioneSpell:true}),
     S("sp_veloint","Velo Interplanare","Evita del tutto l'Incontro del turno, anche in Demoniaco/Piano Negativo.",{stealthLikeSpell:true,bypassDemonRestriction:true}),
-    S("sp_ecofondo","Eco dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Costa 1 risorsa planare. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},cost:1,daTestare:true}),
+    S("sp_ecofondo","Eco dal Fondo","Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Costa 1 risorsa planare.",{reward:{type:"peek",n:1,discard:true,noRedraw:true,reshuffleFirst:true},cost:1}),
   ],
   flusso:[
     S("sp_manirisan","Mani Risananti","Cura 2 PV a un compagno.",{reward:{type:"healOther",n:2}}),
@@ -797,7 +801,7 @@ const SPELLS = {
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
     S("sp_vaticinio","Vaticinio","Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",{vaticinioSpell:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
-    S("sp_richiamofondo","Richiamo dal Fondo","Guarda la carta in fondo al mazzo Piani e, se vuole, la porta in cima. Gratuito. Rischio: può essere una destinazione epica del Piano Terreno.",{reward:{type:"peekBottom"},daTestare:true}),
+    S("sp_richiamofondo","Richiamo dal Fondo","Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Gratuito.",{reward:{type:"peek",n:1,discard:true,noRedraw:true,reshuffleFirst:true}}),
   ],
 };
 const SPELLS_BY_ID = Object.fromEntries(Object.values(SPELLS).flat().map(s=>[s.id,s]));
@@ -4189,6 +4193,7 @@ function useSpell(c, idx){
   if(sp.reward){
     const r=sp.reward;
     if(r.type==='peek'||r.type==='peekBottom'){
+      if(r.reshuffleFirst) reshuffleMazzoPiani(); // Eco dal Fondo/Richiamo dal Fondo: rimescola prima di guardare la nuova cima, invece di garantire una carta scelta dal fondo
       showPeekModal(r, false, render);
       c.spells.splice(idx,1);
       return true;
