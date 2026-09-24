@@ -157,7 +157,7 @@ async function generateCategory(catName, cat, browser, outDir) {
     const htmlPath = path.join(__dirname, '_print-tmp-' + catName + '.html');
     fs.writeFileSync(htmlPath, html);
     const page = await browser.newPage();
-    await page.goto('file://' + htmlPath);
+    await page.goto('file://' + htmlPath + '?t=' + Date.now()); // cache-buster: Chromium può cache-are l'URL file:// per path, servendo una versione vecchia se il contenuto cambia tra run
     await page.pdf({ path: outFile, printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
     await page.close();
     fs.unlinkSync(htmlPath);

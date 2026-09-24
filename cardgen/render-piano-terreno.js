@@ -29,7 +29,7 @@ async function main() {
     executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium',
   });
   const page = await browser.newPage({ viewport: { width: CARD_W + 200, height: CARD_H + 100 } });
-  await page.goto('file://' + htmlPath);
+  await page.goto('file://' + htmlPath + '?t=' + Date.now()); // cache-buster: Chromium può cache-are l'URL file:// per path, servendo una versione vecchia se il contenuto cambia tra run
   await page.waitForTimeout(3000);
 
   let missing = 0;

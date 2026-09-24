@@ -1,7 +1,8 @@
 // Rigenera piani-data.json e piano-terreno-data.json leggendo i dati direttamente
-// da ../index.html, così restano sempre sincronizzati con l'ultima versione delle
-// regole (utile da rilanciare se cambi il testo di un Piano o di una destinazione
-// del Piano Terreno in index.html).
+// da ../gioco.html (il simulatore vero e proprio — index.html è solo la vetrina
+// pubblica statica, senza motore di gioco), così restano sempre sincronizzati con
+// l'ultima versione delle regole (utile da rilanciare se cambi il testo di un Piano
+// o di una destinazione del Piano Terreno in gioco.html).
 //
 // Uso: node extract-data.js
 
@@ -9,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const indexPath = path.join(__dirname, '..', 'index.html');
+const indexPath = path.join(__dirname, '..', 'gioco.html');
 const src = fs.readFileSync(indexPath, 'utf8');
 
 // tagliamo lo script subito prima della sezione di stato/persistenza:

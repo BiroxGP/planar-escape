@@ -27,7 +27,10 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
 
   const html = itemPageHtml(items, fs.existsSync(artDir) ? artDir : null);
-  const htmlPath = path.join(__dirname, '_render-oggetti.html');
+  // nome file univoco per ogni run: Chromium può cache-are un URL file:// per path anche con
+  // query string diversa, servendo una versione vecchia se il contenuto cambia tra run — un
+  // path mai visto prima elimina qualunque possibilità di cache-hit.
+  const htmlPath = path.join(__dirname, '_render-oggetti-' + Date.now() + '.html');
   fs.writeFileSync(htmlPath, html);
 
   const browser = await chromium.launch({
@@ -49,6 +52,7 @@ async function main() {
   }
 
   await browser.close();
+  fs.unlinkSync(htmlPath);
   console.log(`\nFatto: ${items.length} carte renderizzate in ${outDir}`);
   if (missing) console.log(`${missing} carte usano ancora il segnaposto (immagine non trovata in ${artDir}).`);
 }

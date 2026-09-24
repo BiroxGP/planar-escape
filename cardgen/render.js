@@ -42,7 +42,7 @@ async function main() {
     executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium',
   });
   const page = await browser.newPage({ viewport: { width: CARD_W + 100, height: CARD_H + 100 } });
-  await page.goto('file://' + htmlPath);
+  await page.goto('file://' + htmlPath + '?t=' + Date.now()); // cache-buster: Chromium può cache-are l'URL file:// per path, servendo una versione vecchia se il contenuto cambia tra run
   // dai tempo a font e alle 36 illustrazioni (2-3MB l'una, tutte sulla stessa
   // pagina) di caricare e decodificare prima dello screenshot.
   await page.waitForTimeout(3000);

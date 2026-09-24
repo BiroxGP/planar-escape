@@ -347,7 +347,7 @@
     "id": "o_auraassorbente",
     "name": "Aura Assorbente",
     "cat": "protezione",
-    "text": "In ogni Contesa, il primo danno subito dal team è sempre parato (illimitato).",
+    "text": "Il primo danno subito in Contesa da chi la indossa è sempre parato (si ricarica a ogni nuovo piano).",
     "tier": null,
     "slot": null
   },

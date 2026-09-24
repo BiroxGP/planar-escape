@@ -17,9 +17,7 @@ const PAGE_W_MM = 210, PAGE_H_MM = 297;
 
 // items: {id, back, x, y, w, h} — posizione/formato espliciti, niente griglia automatica.
 const ITEMS = [
-  { id: 'ombra', back: 'retro_piani', x: 45, y: 15, w: 120, h: 70 },
-  { id: 'ar_bagliore', back: 'retro_incontro_armonia', x: 20, y: 100, w: 63.5, h: 88 },
-  { id: 'nm_spettro', back: 'retro_incontro_nonmorti', x: 93.5, y: 100, w: 63.5, h: 88 },
+  { id: 'o_auraassorbente', back: 'retro_oggetto', x: 20, y: 15, w: 63.5, h: 88 },
 ];
 
 function cellsHtml(items, mirror){
@@ -60,7 +58,7 @@ async function main(){
     const htmlPath = path.join(__dirname, '_print-patch-tmp.html');
     fs.writeFileSync(htmlPath, html);
     const page = await browser.newPage();
-    await page.goto('file://' + htmlPath);
+    await page.goto('file://' + htmlPath + '?t=' + Date.now()); // cache-buster: Chromium può cache-are l'URL file:// per path, servendo una versione vecchia se il contenuto cambia tra run
     await page.pdf({ path: outFile, printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top:0, right:0, bottom:0, left:0 } });
     await page.close();
     fs.unlinkSync(htmlPath);
