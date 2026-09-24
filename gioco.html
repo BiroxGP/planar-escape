@@ -2265,7 +2265,12 @@ function renderIncontroAction(){
     ? `<p class="hint">⚠️ Agire qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)}.</p>` : '';
   if(card.type==='nessun'){
     el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
-    document.getElementById('btnResolveDone').onclick=finishIncontro;
+    document.getElementById('btnResolveDone').onclick=()=>{
+      // nessun evento da affrontare: c'è tutto il tempo per ritirarsi nel portale prima
+      // che il turno finisca, quindi si evita anche l'effetto di fine turno del piano.
+      state.currentDraw.skipFineTurno = true;
+      finishIncontro();
+    };
     return;
   }
   if(card.manual){
