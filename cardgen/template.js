@@ -380,8 +380,8 @@ function classPageHtml(classes, artDir) {
     background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:10px;
     width:70px; padding:8px 0;
   }
-  .stat-ic{ font-size:22px; line-height:1; }
-  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:29px; font-weight:700; }
+  .stat-ic{ font-size:24px; line-height:1; }
+  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:33px; font-weight:700; }
   .affinity-row{ display:flex; gap:10px; margin-bottom:10px; }
   .affinity-chip{
     display:flex; align-items:center; gap:8px;
@@ -392,8 +392,8 @@ function classPageHtml(classes, artDir) {
   .affinity-chip .aff-fallback{ font-size:26px; width:40px; text-align:center; }
   .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:26px; font-weight:700; }
   .class-badges{ gap:6px; min-width:0; }
-  .class-badges .badge{ font-size:17px; padding:4px 12px; gap:6px; }
-  .class-badges .badge-icon{ font-size:19px; }
+  .class-badges .badge{ font-size:20px; padding:4px 11px; gap:6px; }
+  .class-badges .badge-icon{ font-size:22px; }
 </style></head>
 <body><div class="stage">
 ${cards}
