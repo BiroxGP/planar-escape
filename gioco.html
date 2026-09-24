@@ -1529,7 +1529,10 @@ function doJump(){
       }
     }
   });
-  applyPendingMadnessActions();
+  // Se Follia/Corruzione fanno scattare un salto forzato, quel gruppo (nuovo, separato)
+  // diventa quello attivo a schermo con il proprio Incontro da risolvere — il salto di QUESTO
+  // gruppo si interrompe qui: premerà di nuovo Salta per il proprio turno una volta finito.
+  if(applyPendingMadnessActions()) return;
   activeChars().forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
   if(state.currentGroupId){
     state.jumpedThisRound[state.currentGroupId] = true;
@@ -2133,6 +2136,9 @@ function resolveForceContest(a,b){
   return a;
 }
 function soloForcedJump(group, reason){
+  // Restituisce true se ha preso in carico lo schermo con un Incontro da risolvere (il
+  // chiamante, a metà del proprio doJump(), deve interrompersi subito dopo) — false se non
+  // c'è nulla da mostrare (es. __PT__) e il chiamante può proseguire il proprio salto normale.
   group.forEach(c=>{ revertFormaSelvatica(c); revertMirrorBoost(c); revertPlaneDebuffs(c); revertPerPlaneBuffs(c); });
   const newG = splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   state.jumpedThisRound[newG.id] = true; // questo salto forzato conta come il salto di questo turno per il nuovo gruppo
@@ -2146,30 +2152,41 @@ function soloForcedJump(group, reason){
   if(drawnId==='__PT__'){
     reinsertPianoCard('__PT__');
     logMsg(`🌀 Salto forzato da ${reason}: ${names} pesca un segnaposto Piano Terreno — nessun effetto speciale, si tratta come una carta normale.`, 'warn');
-    return;
+    return false;
   }
   const plane = PIANI_BY_ID[drawnId];
   discardPianoCard(drawnId);
   logMsg(`🌀 Salto forzato da ${reason}: ${names} ${group.length>1?'finiscono':'finisce'} da ${group.length>1?'soli':'solo'} in <strong>${plane.name}</strong> (destinazione totalmente casuale, senza le informazioni del gruppo unito).`, 'warn');
+  logMsg(`(${names} ${group.length>1?'formano':'forma'} ora un gruppo separato: da qui in poi ${group.length>1?'salteranno':'salterà'} per conto proprio.)`);
   group.forEach(x=>resetResistanceForPlane(x, plane.family));
-  const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
-  const fn = PLANE_EFFECTS[plane.effectKey];
-  if(fn) fn(plane, group, ctx);
-  logMsg(`(${names} ${group.length>1?'formano':'forma'} ora un gruppo separato: da qui in poi ${group.length>1?'salteranno':'salterà'} per conto proprio. Applicato solo l'effetto intrinseco del piano di questo primo salto forzato — l'eventuale Incontro va gestito manualmente dal tavolo.)`);
+  // Come un salto normale: si applica l'effetto intrinseco del piano E si pesca/risolve subito
+  // il vero Incontro del turno tramite applyPlaneIntrinsic() — lo stesso meccanismo già usato
+  // da doJump(), non più solo l'effetto d'ingresso con l'Incontro lasciato al tavolo. Il nuovo
+  // gruppo diventa quello attivo a schermo: il gruppo originale (la cui doJump() ha chiamato
+  // questa funzione) premerà di nuovo Salta per il proprio turno una volta risolto questo.
+  state.currentGroupId = newG.id;
+  state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
+  state.stayTurn = { planeId: drawnId, count:1 };
+  applyPlaneIntrinsic(plane);
+  return true;
 }
 function applyPendingMadnessActions(){
-  activeChars().forEach(c=>{
+  // Restituisce true se un salto forzato ha preso in carico lo schermo con un proprio
+  // Incontro da risolvere: il chiamante (doJump(), a metà del salto del gruppo originale)
+  // deve interrompersi subito, senza processare oltre — compresi eventuali altri personaggi
+  // con Follia/Corruzione pendente, che verranno gestiti al prossimo giro utile.
+  for(const c of activeChars()){
     if(c.pendingFollia){
       const action = c.pendingFollia; c.pendingFollia=null;
-      if(action==='salto'){ soloForcedJump([c], 'Follia'); }
+      if(action==='salto'){ if(soloForcedJump([c], 'Follia')) return true; }
       else {
         const others = activeChars().filter(x=>x.id!==c.id);
-        if(others.length===0){ soloForcedJump([c], 'Follia'); }
+        if(others.length===0){ if(soloForcedJump([c], 'Follia')) return true; }
         else {
           const target = others[Math.floor(Math.random()*others.length)];
           const winner = resolveForceContest(c, target);
-          if(winner===c){ logMsg(`🌀 ${c.name} (Follia) trascina con sé ${target.name}, afferrandolo per la manina a forza: Contesa di Forza vinta.`, 'warn'); soloForcedJump([c,target], 'Follia'); }
-          else { logMsg(`🌀 ${target.name} resiste alla presa di ${c.name} (Follia): solo ${c.name} si lancia comunque da solo.`, 'warn'); soloForcedJump([c], 'Follia'); }
+          if(winner===c){ logMsg(`🌀 ${c.name} (Follia) trascina con sé ${target.name}, afferrandolo per la manina a forza: Contesa di Forza vinta.`, 'warn'); if(soloForcedJump([c,target], 'Follia')) return true; }
+          else { logMsg(`🌀 ${target.name} resiste alla presa di ${c.name} (Follia): solo ${c.name} si lancia comunque da solo.`, 'warn'); if(soloForcedJump([c], 'Follia')) return true; }
         }
       }
     }
@@ -2192,7 +2209,8 @@ function applyPendingMadnessActions(){
         }
       }
     }
-  });
+  }
+  return false;
 }
 
 /* -------- Incontro drawing / d6 generic crossover -------- */
