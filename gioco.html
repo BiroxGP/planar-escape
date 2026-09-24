@@ -326,7 +326,10 @@ function setLang(l){
   LANG = l==='en' ? 'en' : 'it';
   try{ localStorage.setItem(I18N_LANG_KEY, LANG); } catch(e){}
   applyI18nStatic();
-  if(typeof state!=='undefined' && state) render();
+  // sempre, non solo a partita iniziata: altrimenti il toggle sulla schermata di setup (la
+  // primissima cosa che si vede) cambiava la topbar ma lasciava "Prepara il party" in
+  // italiano, sembrando rotto — render() gestisce già correttamente il caso state===null.
+  render();
 }
 function applyI18nStatic(){
   // pezzi di HTML statico fuori da render() (esistono già nel DOM prima che una partita
