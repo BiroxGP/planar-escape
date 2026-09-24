@@ -261,8 +261,8 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
 <body>
 <div id="passwordGate" class="gate-wrap">
   <div class="panel center">
-    <h2>🔒 Accesso al simulatore</h2>
-    <p class="hint">Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su <a href="/">planar-escape.vercel.app</a>.</p>
+    <h2 id="gateTitle">🔒 Accesso al simulatore</h2>
+    <p class="hint" id="gateHint">Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su <a href="/">planar-escape.vercel.app</a>.</p>
     <form id="gateForm">
       <input type="password" id="gatePassword" placeholder="Password" autocomplete="off" required>
       <button type="submit" id="gateSubmit" class="primary">Entra</button>
@@ -276,11 +276,12 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
       <span class="dot"></span>
       <div>
         <h1>Planar Escape</h1>
-        <div class="sub">Simulatore di playtest · v0.1</div>
+        <div class="sub" id="headerSub">Simulatore di playtest · v0.1</div>
       </div>
     </div>
     <div class="topbar-actions">
       <span id="tierBadge" class="hint mono" style="align-self:center;"></span>
+      <button id="btnLangToggle" class="small" title="Switch interface language (game log and card text stay Italian)">🌐 EN</button>
       <button id="btnRelogin" class="small" title="Torna al gate per inserire un'altra password (es. la master)">🔑 Cambia password</button>
       <button id="btnSave" class="small">💾 Salva</button>
       <button id="btnLoad" class="small">📂 Carica</button>
@@ -304,6 +305,116 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
    Follia/Corruzione, resistenze, progressione) è automatico.
    ========================================================================= */
 
+/* ---------------- LINGUA INTERFACCIA (IT/EN) ----------------
+   Solo l'interfaccia (bottoni, intestazioni, schermate) è traducibile. Il Diario di
+   viaggio (narrazione dinamica dagli Incontri) e tutti i dati delle carte (nomi/testi di
+   Piani, Incontri, Oggetti, Spell, Classi, Piano Terreno) restano SEMPRE in italiano,
+   come sul sito e sulle carte stampate — non toccarli.
+   Pattern: t("Testo italiano esatto") cerca quella stringa in I18N_EN e restituisce la
+   traduzione se LANG è 'en', altrimenti (o se manca ancora la voce) l'italiano originale
+   — degradazione morbida: si può ampliare la copertura un pezzo alla volta senza mai
+   rompere nulla. REGOLA per il futuro: ogni nuova stringa statica di interfaccia (non di
+   carta, non di diario) va avvolta in t('...') e la sua traduzione aggiunta a I18N_EN. */
+const I18N_LANG_KEY = 'planarEscapeLang';
+let LANG = (localStorage.getItem(I18N_LANG_KEY) === 'en') ? 'en' : 'it';
+function t(s){ return LANG==='en' ? (I18N_EN[s] ?? s) : s; }
+function setLang(l){
+  LANG = l==='en' ? 'en' : 'it';
+  localStorage.setItem(I18N_LANG_KEY, LANG);
+  applyI18nStatic();
+  if(typeof state!=='undefined' && state) render();
+}
+function applyI18nStatic(){
+  // pezzi di HTML statico fuori da render() (esistono già nel DOM prima che una partita
+  // inizi, quindi t() da solo non basta: vanno aggiornati a mano qui, chiamata al boot e
+  // a ogni cambio lingua).
+  const map = {
+    gateTitle: '🔒 Accesso al simulatore',
+    headerSub: 'Simulatore di playtest · v0.1',
+    btnRelogin: '🔑 Cambia password',
+    btnSave: '💾 Salva',
+    btnLoad: '📂 Carica',
+    btnReset: '↺ Nuova partita',
+    gateSubmit: 'Entra',
+  };
+  Object.entries(map).forEach(([id,it])=>{ const el=document.getElementById(id); if(el && !el.disabled) el.textContent = t(it); });
+  const gateHint = document.getElementById('gateHint');
+  if(gateHint) gateHint.innerHTML = `${t('Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su')} <a href="/">planar-escape.vercel.app</a>.`;
+  const pwField = document.getElementById('gatePassword');
+  if(pwField) pwField.placeholder = t('Password');
+  const langBtn = document.getElementById('btnLangToggle');
+  if(langBtn) langBtn.textContent = LANG==='en' ? '🌐 IT' : '🌐 EN';
+}
+const I18N_EN = {
+  "🔒 Accesso al simulatore": "🔒 Simulator access",
+  "Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su": "This is the playtest build, for people who received a password. The public showcase is at",
+  "Password": "Password",
+  "Entra": "Log in",
+  "Verifica…": "Checking…",
+  "Password sbagliata, riprova.": "Wrong password, try again.",
+  "Errore di rete, riprova.": "Network error, try again.",
+  "🔑 Cambia password": "🔑 Change password",
+  "💾 Salva": "💾 Save",
+  "📂 Carica": "📂 Load",
+  "↺ Nuova partita": "↺ New game",
+  "Simulatore di playtest · v0.1": "Playtest simulator · v0.1",
+  "accesso: master (tutto sbloccato)": "access: master (everything unlocked)",
+  // --- schermata di preparazione del party ---
+  "+2 a una statistica a scelta": "+2 to a stat of choice",
+  "+1 a una statistica a scelta": "+1 to a stat of choice",
+  "nessun bonus (configurazione normale)": "no bonus (normal setup)",
+  "Prepara il party": "Prepare the party",
+  "Da 1 a 4 giocatori. Bilanciamento attuale:": "1 to 4 players. Current balance:",
+  "giocatore/i →": "player(s) →",
+  "Ogni classe si può scegliere una sola volta.": "Each class can only be picked once.",
+  "in arrivo": "coming soon",
+  "Bonus su...": "Bonus on...",
+  "Aggiungi giocatore": "Add player",
+  "Inizia la fuga →": "Start the escape →",
+  "Come funziona questa app": "How this app works",
+  "Motore di regole completo: mazzi, check, Contese/combattimenti, Follia/Corruzione, Resistenze, Recupero e progressione sono automatici. Le carte dall'effetto molto narrativo mostrano il testo esatto e un piccolo pannello di pulsanti generici per applicarlo in un tap, invece di essere indovinate dal motore — sono segnalate con il tag": "Full rules engine: decks, checks, Contests/combat, Madness/Corruption, Resistances, Recovery and progression are all automatic. Cards with a very narrative effect show the exact text plus a small panel of generic buttons to apply it in one tap, instead of being guessed by the engine — they're flagged with the tag",
+  "manuale": "manual",
+  "Le immagini delle carte sono segnaposto: mettile in": "Card images are placeholders: put them in",
+  "vedi i nomi file nel pannello Note": "see the file names in the Notes panel",
+  "e appariranno automaticamente.": "and they'll appear automatically.",
+  "Giocatore": "Player",
+  "Eroe": "Hero",
+  // --- selettore del gruppo davanti al portale ---
+  "Il portale attende — il gruppo è separato": "The portal is waiting — the group is split",
+  "Il gruppo davanti al portale": "The group in front of the portal",
+  "Il gruppo è davanti al portale": "The group is in front of the portal",
+  "Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.": "Each split group jumps once per turn, then they wait for each other: jumps happen in sync, no group can jump again before the others have had their turn. You can't reunite at will: you need Planar Teleport, a Ring of Binding, or a reward like Recall Signal/Distant Bond.",
+  "Nessuno sa dove porti. Premi per saltare.": "No one knows where it leads. Press to jump.",
+  "In attesa che gli altri gruppi separati saltino…": "Waiting for the other split groups to jump…",
+  "Dividi il gruppo": "Split the group",
+  // --- schermata di gioco: cornice generale, diario, scheda personaggio ---
+  "Nessun personaggio.": "No characters.",
+  "Torna al setup": "Back to setup",
+  "Vittoria": "Victory",
+  "Vittoria!": "Victory!",
+  "Sconfitta": "Defeat",
+  "Il party è stato spazzato via": "The party has been wiped out",
+  "Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.": "No character is active anymore. You can start a new game from the button up top.",
+  "Salti totali:": "Total jumps:",
+  "Mazzo Piani:": "Plane deck:",
+  "carte": "cards",
+  "già scartate": "already discarded",
+  "Piano Terreno accumulati sul fondo:": "Piano Terreno markers at the bottom:",
+  "Turno di:": "Turn:",
+  "Diario di viaggio": "Travel log",
+  "Vedi la carta della classe": "View the class card",
+  "Morto": "Dead",
+  "Svenuto": "Unconscious",
+  "Non-morto": "Undead",
+  "Gruppo": "Group",
+  "salti personali": "personal jumps",
+  "Depotenziato per tutta la permanenza nel piano": "Weakened for the whole stay on this plane",
+  "Bonus temporaneo, dura fino al prossimo Recupero": "Temporary bonus, lasts until the next Recovery",
+  "risorse": "resources",
+  "oggetti": "items",
+  "Nessun oggetto": "No items",
+  "Gestisci": "Manage",
+};
 const STATS = ["for","int","des","pv","san","anima"];
 const STAT_LABEL = {for:"Forza",int:"Intelletto",des:"Destrezza",pv:"Punti Vita",san:"Sanità Mentale",anima:"Anima"};
 const STAT_ICON = {for:"💪",int:"🧠",des:"🏃",pv:"❤️",san:"🌀",anima:"🕯️"};
@@ -1205,7 +1316,7 @@ function bindLanding(){
   document.getElementById('btnLandingStart').onclick=()=>{ landingDismissed=true; render(); };
 }
 /* ---------------- SETUP SCREEN ---------------- */
-let setupPlayers = [{name:'Giocatore 1', cls:'guerriero'}];
+let setupPlayers = [{name:t('Giocatore')+' 1', cls:'guerriero'}];
 function classCardPreview(clsKey){
   const cls = CLASSES[clsKey];
   return `<div class="class-card-preview">
@@ -1217,14 +1328,14 @@ function classCardPreview(clsKey){
 }
 function renderSetup(){
   const n = setupPlayers.length;
-  const bonus = n===1? '+2 a una statistica a scelta' : (n===2? '+1 a una statistica a scelta' : 'nessun bonus (configurazione normale)');
+  const bonus = n===1? t('+2 a una statistica a scelta') : (n===2? t('+1 a una statistica a scelta') : t('nessun bonus (configurazione normale)'));
   return `
   <div class="panel">
-    <h2>🌀 Prepara il party</h2>
-    <p class="hint">Da 1 a 4 giocatori. Bilanciamento attuale: <strong>${n}</strong> giocatore/i → ${bonus}. Ogni classe si può scegliere una sola volta.</p>
+    <h2>🌀 ${t('Prepara il party')}</h2>
+    <p class="hint">${t('Da 1 a 4 giocatori. Bilanciamento attuale:')} <strong>${n}</strong> ${t('giocatore/i →')} ${bonus}. ${t('Ogni classe si può scegliere una sola volta.')}</p>
     <div class="class-gallery">${Object.entries(CLASSES).map(([k,c])=>{
       const locked = !isClassUnlocked(k);
-      return `<div class="class-chip ${locked?'locked':''}" title="${escapeHtml(c.name)}${locked?' — in arrivo':''}">${locked?'<span class="lock">🔒</span>':''}<span class="ic">${c.icon}</span><span class="nm">${escapeHtml(c.name)}</span></div>`;
+      return `<div class="class-chip ${locked?'locked':''}" title="${escapeHtml(c.name)}${locked?' — '+t('in arrivo'):''}">${locked?'<span class="lock">🔒</span>':''}<span class="ic">${c.icon}</span><span class="nm">${escapeHtml(c.name)}</span></div>`;
     }).join('')}</div>
     <div id="playerList">
       ${setupPlayers.map((p,i)=>{
@@ -1235,9 +1346,9 @@ function renderSetup(){
             <input type="text" data-idx="${i}" class="pname" value="${p.name}" style="width:180px;">
             <select data-idx="${i}" class="pclass">${Object.entries(CLASSES).filter(([k])=>!usedByOthers.includes(k)).map(([k,c])=>{
               const locked = !isClassUnlocked(k);
-              return `<option value="${k}" ${p.cls===k?'selected':''} ${locked?'disabled':''}>${locked?'🔒 ':''}${c.icon} ${c.name}${locked?' (in arrivo)':''}</option>`;
+              return `<option value="${k}" ${p.cls===k?'selected':''} ${locked?'disabled':''}>${locked?'🔒 ':''}${c.icon} ${c.name}${locked?' ('+t('in arrivo')+')':''}</option>`;
             }).join('')}</select>
-            ${n<=2?`<select data-idx="${i}" class="pbonus stat-sel"><option value="">Bonus su...</option>${STATS.map(s=>`<option value="${s}" ${p.bonusStat===s?'selected':''}>${STAT_LABEL[s]}</option>`).join('')}</select>`:''}
+            ${n<=2?`<select data-idx="${i}" class="pbonus stat-sel"><option value="">${t('Bonus su...')}</option>${STATS.map(s=>`<option value="${s}" ${p.bonusStat===s?'selected':''}>${STAT_LABEL[s]}</option>`).join('')}</select>`:''}
             ${setupPlayers.length>1?`<button class="small danger" data-remove="${i}">✕</button>`:''}
           </div>
           ${classCardPreview(p.cls)}
@@ -1246,13 +1357,13 @@ function renderSetup(){
       }).join('')}
     </div>
     <div class="row mt1">
-      <button id="addPlayer" ${setupPlayers.length>=4?'disabled':''}>+ Aggiungi giocatore</button>
-      <button id="startGame" class="primary">Inizia la fuga →</button>
+      <button id="addPlayer" ${setupPlayers.length>=4?'disabled':''}>+ ${t('Aggiungi giocatore')}</button>
+      <button id="startGame" class="primary">${t('Inizia la fuga →')}</button>
     </div>
   </div>
   <div class="panel">
-    <h3>ℹ️ Come funziona questa app</h3>
-    <p style="font-size:.88rem;color:var(--ink-soft);">Motore di regole completo: mazzi, check, Contese/combattimenti, Follia/Corruzione, Resistenze, Recupero e progressione sono automatici. Le carte dall'effetto molto narrativo mostrano il testo esatto e un piccolo pannello di pulsanti generici per applicarlo in un tap, invece di essere indovinate dal motore — sono segnalate con il tag <span class="badge" style="background:var(--ember-soft);color:var(--ember);border-color:var(--ember);">manuale</span>. Le immagini delle carte sono segnaposto: mettile in <code>assets/cards/&lt;id&gt;.png</code> (vedi i nomi file nel pannello Note) e appariranno automaticamente.</p>
+    <h3>ℹ️ ${t('Come funziona questa app')}</h3>
+    <p style="font-size:.88rem;color:var(--ink-soft);">${t("Motore di regole completo: mazzi, check, Contese/combattimenti, Follia/Corruzione, Resistenze, Recupero e progressione sono automatici. Le carte dall'effetto molto narrativo mostrano il testo esatto e un piccolo pannello di pulsanti generici per applicarlo in un tap, invece di essere indovinate dal motore — sono segnalate con il tag")} <span class="badge" style="background:var(--ember-soft);color:var(--ember);border-color:var(--ember);">${t('manuale')}</span>. ${t('Le immagini delle carte sono segnaposto: mettile in')} <code>assets/cards/&lt;id&gt;.png</code> (${t('vedi i nomi file nel pannello Note')}) ${t('e appariranno automaticamente.')}</p>
   </div>`;
 }
 function bindSetup(){
@@ -1264,7 +1375,7 @@ function bindSetup(){
     if(setupPlayers.length>=4) return;
     const usedClasses = setupPlayers.map(p=>p.cls);
     const freeCls = Object.keys(CLASSES).find(k=>!usedClasses.includes(k) && isClassUnlocked(k)) || 'guerriero';
-    setupPlayers.push({name:'Giocatore '+(setupPlayers.length+1), cls:freeCls});
+    setupPlayers.push({name:t('Giocatore')+' '+(setupPlayers.length+1), cls:freeCls});
     render();
   };
   document.getElementById('startGame').onclick=()=>{
@@ -1273,7 +1384,7 @@ function bindSetup(){
     const bonusAmount = n===1?2:(n===2?1:0);
     setupPlayers.forEach(p=>{
       const bonus = bonusAmount>0 && p.bonusStat ? {stat:p.bonusStat, amount:bonusAmount} : null;
-      state.players.push(makeChar(p.name||('Eroe'), p.cls, bonus));
+      state.players.push(makeChar(p.name||t('Eroe'), p.cls, bonus));
     });
     initGroups();
     logMsg('🌀 Il party fugge attraverso il portale. Inizia l\'avventura!');
@@ -1283,7 +1394,7 @@ function bindSetup(){
 
 /* ---------------- GAME SCREEN ---------------- */
 function renderGame(){
-  if(state.players.length===0){ return `<div class="panel"><p>Nessun personaggio. <button onclick="state=null;render()">Torna al setup</button></p></div>`; }
+  if(state.players.length===0){ return `<div class="panel"><p>${t('Nessun personaggio.')} <button onclick="state=null;render()">${t('Torna al setup')}</button></p></div>`; }
   const winners = state.players.filter(p=>p.status==='won');
   const anyoneCanAct = state.players.some(p=>p.status==='active'||p.status==='undead');
   // "nessuno può più agire" significa game over SOLO se non ha vinto nessuno — se invece
@@ -1293,20 +1404,23 @@ function renderGame(){
   // caso anyoneCanAct resta vero e si prosegue normalmente.
   let statusPanel;
   if(winners.length && !anyoneCanAct){
-    statusPanel = `<div class="panel center"><img src="assets/ui/vittoria.jpg" alt="Vittoria" class="endgame-img"><h2>🏆 Vittoria!</h2><p>${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} ${winners.length>1?'sono tornati':'è tornato'} a casa sani e salvi. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+    const winP = LANG==='en'
+      ? `${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} made it home safe. You can start a new game from the button up top.`
+      : `${winners.map(c=>`<strong>${escapeHtml(c.name)}</strong> (${escapeHtml(c.winType||'')})`).join(', ')} ${winners.length>1?'sono tornati':'è tornato'} a casa sani e salvi. Puoi iniziare una nuova partita dal tasto in alto.`;
+    statusPanel = `<div class="panel center"><img src="assets/ui/vittoria.jpg" alt="${t('Vittoria')}" class="endgame-img"><h2>🏆 ${t('Vittoria!')}</h2><p>${winP}</p></div>`;
   } else if(!anyoneCanAct){
-    statusPanel = `<div class="panel center"><img src="assets/ui/sconfitta.jpg" alt="Sconfitta" class="endgame-img"><h2>💀 Il party è stato spazzato via</h2><p>Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.</p></div>`;
+    statusPanel = `<div class="panel center"><img src="assets/ui/sconfitta.jpg" alt="${t('Sconfitta')}" class="endgame-img"><h2>💀 ${t('Il party è stato spazzato via')}</h2><p>${t('Nessun personaggio è più attivo. Puoi iniziare una nuova partita dal tasto in alto.')}</p></div>`;
   } else {
     statusPanel = renderTurnArea();
   }
   return `
   ${renderPartyBar()}
   <div class="flex-between mb1">
-    <div class="jump-counter">Salti totali: <strong>${state.jumps}</strong> · Mazzo Piani: ${state.mazzoPiani.length} carte (${state.mazzoPianiScarti.length} già scartate) · Piano Terreno accumulati sul fondo: ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · Turno di: <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
+    <div class="jump-counter">${t('Salti totali:')} <strong>${state.jumps}</strong> · ${t('Mazzo Piani:')} ${state.mazzoPiani.length} ${t('carte')} (${state.mazzoPianiScarti.length} ${t('già scartate')}) · ${t('Piano Terreno accumulati sul fondo:')} ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · ${t('Turno di:')} <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
   </div>
   ${statusPanel}
   <div class="panel">
-    <h3>📜 Diario di viaggio</h3>
+    <h3>📜 ${t('Diario di viaggio')}</h3>
     <div class="log">${state.log.slice().reverse().map(e=>`<div class="entry"><span class="t">${e.t}</span>${escapeHtml(e.msg)}</div>`).join('')}</div>
   </div>
   `;
@@ -1325,22 +1439,22 @@ function renderCharCard(c){
   ensureGroups();
   const groupIdx = state.groups.length>1 ? state.groups.findIndex(g=>g.memberIds.includes(c.id)) : -1;
   return `<div class="char-card ${dead?'dead':''} ${out?'out':''}">
-    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="Vedi la carta della classe" style="padding:.1rem .4rem;">🃏</button> ${won?'<span class="badge win">Vittoria</span>':''} ${dead?'<span class="badge dead">Morto</span>':''} ${out?'<span class="badge">Svenuto</span>':''} ${c.status==='undead'?'<span class="badge">Non-morto</span>':''} ${groupIdx>=0?`<span class="badge">Gruppo ${groupIdx+1}</span>`:''}</div>
-    <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} salti personali</div>
+    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="${t('Vedi la carta della classe')}" style="padding:.1rem .4rem;">🃏</button> ${won?`<span class="badge win">${t('Vittoria')}</span>`:''} ${dead?`<span class="badge dead">${t('Morto')}</span>`:''} ${out?`<span class="badge">${t('Svenuto')}</span>`:''} ${c.status==='undead'?`<span class="badge">${t('Non-morto')}</span>`:''} ${groupIdx>=0?`<span class="badge">${t('Gruppo')} ${groupIdx+1}</span>`:''}</div>
+    <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} ${t('salti personali')}</div>
     <div class="stat-dice">
-      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?'Depotenziato per tutta la permanenza nel piano':(c.tempBonus?.[s]?'Bonus temporaneo, dura fino al prossimo Recupero':'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
+      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?t('Depotenziato per tutta la permanenza nel piano'):(c.tempBonus?.[s]?t('Bonus temporaneo, dura fino al prossimo Recupero'):'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
     </div>
     <div class="char-meta">
       <span>🔁 ${c.rerolls} reroll</span>
-      <span>💠 ${c.resources} risorse</span>
-      <span>🎒 ${c.inventory.length} oggetti</span>
+      <span>💠 ${c.resources} ${t('risorse')}</span>
+      <span>🎒 ${c.inventory.length} ${t('oggetti')}</span>
       <span>📖 ${c.spells.length} spell</span>
       ${c.companion?`<span>🗿 ${escapeHtml(c.companion.name)} (${c.companion.value})</span>`:''}
       ${c.protectedItemId?`<span>⏳ ${escapeHtml(OGGETTI_BY_ID[c.protectedItemId]?.name||c.protectedItemId)}</span>`:''}
     </div>
-    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}${id===c.protectedItemId?' ⏳':''}</span>`).join('')||'<span class="hint">Nessun oggetto</span>'}</div>
+    <div class="char-inv">${c.inventory.map(id=>`<span class="item-chip" style="cursor:pointer;" data-quickinfo-item="${id}">${escapeHtml(OGGETTI_BY_ID[id]?.name||id)}${id===c.protectedItemId?' ⏳':''}</span>`).join('')||`<span class="hint">${t('Nessun oggetto')}</span>`}</div>
     <div class="char-actions">
-      ${c.status==='active'||c.status==='undead' ? `<button class="small" data-open-char="${c.id}">Gestisci</button>` : ''}
+      ${c.status==='active'||c.status==='undead' ? `<button class="small" data-open-char="${c.id}">${t('Gestisci')}</button>` : ''}
     </div>
   </div>`;
 }
@@ -1449,12 +1563,12 @@ function renderGroupPicker(){
   if(groups.length===0) return '';
   const isSplit = groups.length>1;
   return `<div class="panel center">
-    ${isSplit?`<h2>Il portale attende — il gruppo è separato</h2>`:`<div class="plane-hero">
-      <img src="assets/cards/portale_gruppo.jpg" alt="Il gruppo davanti al portale" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    ${isSplit?`<h2>${t('Il portale attende — il gruppo è separato')}</h2>`:`<div class="plane-hero">
+      <img src="assets/cards/portale_gruppo.jpg" alt="${t('Il gruppo davanti al portale')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
       <div class="plane-hero-fallback" style="display:none;"><div class="ic">🌀</div></div>
-      <div class="plane-hero-caption"><h2>Il gruppo è davanti al portale</h2></div>
+      <div class="plane-hero-caption"><h2>${t('Il gruppo è davanti al portale')}</h2></div>
     </div>`}
-    <p class="hint">${isSplit?'Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
+    <p class="hint">${isSplit?t('Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.'):t('Nessuno sa dove porti. Premi per saltare.')}</p>
     ${groups.map(({g,roster})=>{
       const waiting = isSplit && !!state.jumpedThisRound[g.id];
       // "Resta ancora un turno" non è più un'opzione generica: decima il mazzo Incontri, quindi
@@ -1468,16 +1582,28 @@ function renderGroupPicker(){
       const recNames = recovering.map(c=>escapeHtml(c.name)).join(', ');
       const canStay = !isSplit && !waiting && recovering.length>0 && state.stayTurn;
       const stayPlane = canStay ? PIANI_BY_ID[state.stayTurn.planeId] : null;
+      // frasi con accordo singolare/plurale: l'italiano ha bisogno di più forme (devono/deve,
+      // li/lo/la) di quante ne servano in inglese, quindi qui le due lingue si scrivono per
+      // intero invece di passare per t() pezzo a pezzo.
+      const recoveringHint = LANG==='en'
+        ? `⏳ ${recNames} still need${recovering.length>1?'':'s'} to recover: no one else here to drag them along, all you can do is wait.`
+        : `⏳ ${recNames} ${recovering.length>1?'devono':'deve'} ancora recuperare: nessun altro presente per trascinar${recovering.length>1?'li':'lo/la'}, non resta che aspettare.`;
+      const jumpLabel = LANG==='en'
+        ? `🌀 Jump${recovering.length?` (dragging along ${recNames})`:''}`
+        : `🌀 Salta${recovering.length?` (trascinando ${recNames})`:''}`;
+      const stayLabel = stayPlane ? (LANG==='en'
+        ? `🏕️ Stay one more turn on ${escapeHtml(stayPlane.name)}${recovering.length?` (${recNames} recovers)`:''}`
+        : `🏕️ Resta ancora un turno su ${escapeHtml(stayPlane.name)}${recovering.length?` (${recNames} recupera)`:''}`) : '';
       return `
       <div class="player-setup" style="text-align:left;">
         <strong>${roster.map(c=>escapeHtml(c.name)).join(', ')}</strong>
         <div class="row mt1">
           ${everyoneRecovering
-            ? `<span class="hint">⏳ ${recNames} ${recovering.length>1?'devono':'deve'} ancora recuperare: nessun altro presente per trascinar${recovering.length>1?'li':'lo/la'}, non resta che aspettare.</span>`
-            : `<button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>🌀 Salta${recovering.length?` (trascinando ${recNames})`:''}</button>`}
-          ${stayPlane?`<button class="small" data-staymore="${g.id}">🏕️ Resta ancora un turno su ${escapeHtml(stayPlane.name)}${recovering.length?` (${recNames} recupera)`:''}</button>`:''}
-          ${waiting?`<span class="hint">In attesa che gli altri gruppi separati saltino…</span>`:''}
-          ${!everyoneRecovering && roster.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
+            ? `<span class="hint">${recoveringHint}</span>`
+            : `<button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>${jumpLabel}</button>`}
+          ${stayPlane?`<button class="small" data-staymore="${g.id}">${stayLabel}</button>`:''}
+          ${waiting?`<span class="hint">${t('In attesa che gli altri gruppi separati saltino…')}</span>`:''}
+          ${!everyoneRecovering && roster.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ ${t('Dividi il gruppo')}</button>`:''}
         </div>
       </div>`;
     }).join('')}
@@ -4391,9 +4517,16 @@ function unlockAndBoot(){
   document.getElementById('passwordGate').style.display = 'none';
   document.querySelector('.wrap').style.display = '';
   const badge = document.getElementById('tierBadge');
-  if(badge) badge.textContent = unlockedTier==='master' ? 'accesso: master (tutto sbloccato)' : `accesso: pubblico (onda ${unlockedWave})`;
+  if(badge){
+    badge.textContent = unlockedTier==='master'
+      ? t('accesso: master (tutto sbloccato)')
+      : (LANG==='en' ? `access: public (wave ${unlockedWave})` : `accesso: pubblico (onda ${unlockedWave})`);
+  }
+  applyI18nStatic();
   render();
 }
+document.getElementById('btnLangToggle').onclick = ()=> setLang(LANG==='en' ? 'it' : 'en');
+applyI18nStatic();
 // Una volta sbloccato, il gate non ricompare più da solo — se si è entrati con la password
 // pubblica non c'è altrimenti modo di passare alla master (o viceversa) nella stessa sessione
 // senza toccare gli strumenti sviluppatore. Questo pulsante svuota la cache e ricarica, così
@@ -4422,7 +4555,7 @@ if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1' && cachedWaveRaw!=null && N
     const btn = document.getElementById('gateSubmit');
     const errEl = document.getElementById('gateError');
     errEl.textContent = '';
-    btn.disabled = true; btn.textContent = 'Verifica…';
+    btn.disabled = true; btn.textContent = t('Verifica…');
     try{
       const res = await fetch('/api/verify-password', {
         method:'POST',
@@ -4438,13 +4571,13 @@ if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1' && cachedWaveRaw!=null && N
         sessionStorage.setItem(PLAYTEST_WAVE_KEY, String(unlockedWave));
         unlockAndBoot();
       } else {
-        errEl.textContent = data.error ? `Configurazione mancante: ${data.error}` : 'Password sbagliata, riprova.';
+        errEl.textContent = data.error ? `Configurazione mancante: ${data.error}` : t('Password sbagliata, riprova.');
         pwField.value=''; pwField.focus();
       }
     } catch(err){
-      errEl.textContent = 'Errore di rete, riprova.';
+      errEl.textContent = t('Errore di rete, riprova.');
     } finally {
-      btn.disabled = false; btn.textContent = 'Entra';
+      btn.disabled = false; btn.textContent = t('Entra');
     }
   };
 }
