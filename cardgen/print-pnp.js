@@ -43,12 +43,9 @@ const CATEGORIES = {
   // visto che 4 carte per pagina entrano davvero (già testato su carta vera).
   piani: { cardWmm: 120, cardHmm: 70, ruler: false, items: loadIds('piani-data.json').map(id => ({ id, back: 'retro_piani' })) },
   piano_terreno: { cardWmm: 120, cardHmm: 70, ruler: false, items: loadIds('piano-terreno-data.json').map(id => ({ id, back: 'retro_piani' })) },
-  // Classi: arte NON ricomposta a formato Poker reale — manca l'illustrazione grezza in
-  // cards_raw per 11 classi su 13 (solo druido/sciamano ce l'hanno), quindi ricomporre
-  // avrebbe voluto dire ritagliare/deformare le altre 11 senza un originale pulito da cui
-  // ripartire. Restano al formato precedente (63x94mm) finché non arrivano le illustrazioni
-  // grezze mancanti — leggermente più alto delle altre carte Poker (94 vs 88mm).
-  classi: { cardWmm: 63, cardHmm: 94, items: loadIds('classes-data.json').map(id => ({ id, back: 'retro_classi' })) },
+  // Classi: stesso formato Poker reale delle altre carte ritratto (assets/cards_raw/ ha
+  // ormai l'illustrazione grezza per tutte e 13 — non più solo druido/sciamano come un tempo).
+  classi: { cardWmm: 63.5, cardHmm: 88, items: loadIds('classes-data.json').map(id => ({ id, back: 'retro_classi' })) },
   // formato Poker reale (63,5x88mm)
   oggetti: { cardWmm: 63.5, cardHmm: 88, items: loadIds('oggetti-data.json').map(id => ({ id, back: 'retro_oggetto' })) },
   spell: { cardWmm: 63.5, cardHmm: 88, items: spellsData.map(s => ({ id: s.id, back: SPELL_BACK[s.school] })) },
