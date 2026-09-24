@@ -113,6 +113,11 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 
 .hint{font-size:.8rem; color:var(--ink-faint); font-style:italic;}
 .center{text-align:center;}
+.lang-switch{display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+.lang-switch .lang-opt{border:none; border-radius:0; padding:.5rem .9rem; font-size:.85rem; background:var(--surface);}
+.lang-switch .lang-opt:hover{color:var(--portal);}
+.lang-switch .lang-opt.active{background:var(--portal); color:#fff; font-weight:600;}
+.lang-switch .lang-opt.active:hover{color:#fff;}
 </style>
 </head>
 <body>
@@ -122,24 +127,28 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
       <span class="dot"></span>
       <div>
         <h1>Planar Escape</h1>
-        <div class="sub">Gioco di ruolo da tavolo · vetrina del progetto</div>
+        <div class="sub" id="headerSub">Gioco di ruolo da tavolo · vetrina del progetto</div>
       </div>
+    </div>
+    <div class="lang-switch" id="langSwitch" title="Switch language / Cambia lingua">
+      <button class="lang-opt" data-lang="it">🇮🇹 IT</button>
+      <button class="lang-opt" data-lang="en">🇬🇧 EN</button>
     </div>
   </header>
 
   <div class="landing-cover-wrap">
-    <img src="assets/ui/copertina.jpg" alt="Quattro avventurieri si tengono per mano davanti a un portale">
+    <img id="coverImg" src="assets/ui/copertina.jpg" alt="Quattro avventurieri si tengono per mano davanti a un portale">
     <div class="landing-cover-caption">
-      <div class="tagline">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
-      <div class="subtagline">Planar Escape — la fuga non è mai la fine della storia.</div>
+      <div class="tagline" id="tagline">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
+      <div class="subtagline" id="subtagline">Planar Escape — la fuga non è mai la fine della storia.</div>
     </div>
   </div>
   <div class="panel landing-hero">
-    <h2>Da dove nasce Planar Escape</h2>
-    <p class="landing-lead">Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
-    <p>Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.</p>
+    <h2 id="heroTitle">Da dove nasce Planar Escape</h2>
+    <p class="landing-lead" id="heroLead">Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
+    <p id="heroBody">Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.</p>
     <div class="landing-indie">
-      <p><span class="badge" style="font-family:'JetBrains Mono',monospace; font-size:.65rem; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .45rem; border-radius:99px; background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line);">🎲 Progetto indie</span> &nbsp; Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href="https://www.idea-g.it/" target="_blank" rel="noopener noreferrer">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.</p>
+      <p><span class="badge" id="indieBadge" style="font-family:'JetBrains Mono',monospace; font-size:.65rem; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .45rem; border-radius:99px; background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line);">🎲 Progetto indie</span> &nbsp; <span id="indieText">Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href="https://www.idea-g.it/" target="_blank" rel="noopener noreferrer">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.</span></p>
     </div>
     <div class="landing-social">
       <a class="ig" href="https://www.instagram.com/planar.escape/" target="_blank" rel="noopener noreferrer">
@@ -153,71 +162,163 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
     </div>
   </div>
   <div class="panel">
-    <h2>Come si gioca</h2>
+    <h2 id="howtoTitle">Come si gioca</h2>
     <ul class="howto-list">
-      <li>Si crea un party da 1 a 4 avventurieri, ognuno con una classe diversa: nessuna doppia in tavola.</li>
-      <li>Ogni turno il gruppo salta attraverso un portale verso un piano dimensionale ignoto — nessuno sa dove porti finché non ci si trova già dentro.</li>
-      <li>Il piano fa subito sentire il suo effetto, poi arriva l'Incontro: uno scontro, una prova, o un evento da affrontare insieme o da soli.</li>
-      <li>Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.</li>
-      <li>L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.</li>
+      <li id="howto1">Si crea un party da 1 a 4 avventurieri, ognuno con una classe diversa: nessuna doppia in tavola.</li>
+      <li id="howto2">Ogni turno il gruppo salta attraverso un portale verso un piano dimensionale ignoto — nessuno sa dove porti finché non ci si trova già dentro.</li>
+      <li id="howto3">Il piano fa subito sentire il suo effetto, poi arriva l'Incontro: uno scontro, una prova, o un evento da affrontare insieme o da soli.</li>
+      <li id="howto4">Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.</li>
+      <li id="howto5">L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.</li>
     </ul>
   </div>
   <div class="panel">
-    <h2>Le classi</h2>
-    <p class="hint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sopra:</p>
+    <h2 id="classesTitle">Le classi</h2>
+    <p class="hint" id="classesHint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sopra:</p>
     <div class="class-showcase">
       <div class="class-showcase-card">
         <div class="head"><span class="ic">⚔️</span><h4>Guerriero</h4></div>
-        <p>Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.</p>
+        <p id="classDescGuerriero">Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.</p>
       </div>
       <div class="class-showcase-card">
         <div class="head"><span class="ic">🗡️</span><h4>Ladro</h4></div>
-        <p>Si muove nell'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.</p>
+        <p id="classDescLadro">Si muove nell'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.</p>
       </div>
       <div class="class-showcase-card">
         <div class="head"><span class="ic">🪄</span><h4>Mago</h4></div>
-        <p>Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.</p>
+        <p id="classDescMago">Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.</p>
       </div>
       <div class="class-showcase-card">
         <div class="head"><span class="ic">🙏</span><h4>Chierico</h4></div>
-        <p>Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.</p>
+        <p id="classDescChierico">Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.</p>
       </div>
     </div>
-    <div class="class-showcase-teaser">🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
+    <div class="class-showcase-teaser" id="classesTeaser">🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
-      <h3>⚔️ Uno scontro, una fuga</h3>
+      <h3><span id="vidTitle1">⚔️ Uno scontro, una fuga</span></h3>
       <video controls preload="none" poster="assets/video/drago_scontro_poster.jpg" src="assets/video/drago_scontro.mp4"></video>
-      <p class="hint">Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.</p>
+      <p class="hint" id="vidCaption1">Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.</p>
     </div>
     <div class="panel landing-video">
-      <h3>🤝 Tutti per la manina</h3>
+      <h3><span id="vidTitle2">🤝 Tutti per la manina</span></h3>
       <video controls preload="none" poster="assets/video/salto_manina_poster.jpg" src="assets/video/salto_manina.mp4"></video>
-      <p class="hint">Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.</p>
+      <p class="hint" id="vidCaption2">Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.</p>
     </div>
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
-      <h3>🌋 Fuga dal Baratro <span class="badge" style="font-family:'JetBrains Mono',monospace; font-size:.6rem; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .5rem; border-radius:99px; background:var(--ember-soft); color:var(--ember); border:1px solid var(--ember); vertical-align:middle;">⚠️ Spoiler</span></h3>
+      <h3><span id="vidTitle3">🌋 Fuga dal Baratro</span> <span class="badge" id="spoilerBadge" style="font-family:'JetBrains Mono',monospace; font-size:.6rem; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .5rem; border-radius:99px; background:var(--ember-soft); color:var(--ember); border:1px solid var(--ember); vertical-align:middle;">⚠️ Spoiler</span></h3>
       <video controls preload="none" poster="assets/video/fuga_baratro_poster.jpg" src="assets/video/fuga_baratro.mp4"></video>
-      <p class="hint">Un assaggio di un piano ancora da rivelare — il gruppo salta via prima che il turno finisca.</p>
+      <p class="hint" id="vidCaption3">Un assaggio di un piano ancora da rivelare — il gruppo salta via prima che il turno finisca.</p>
     </div>
     <div class="panel landing-video">
-      <h3>⚡ Fuga dalla Tempesta</h3>
+      <h3><span id="vidTitle4">⚡ Fuga dalla Tempesta</span></h3>
       <video controls preload="none" poster="assets/video/fuga_tempesta_poster.jpg" src="assets/video/fuga_tempesta.mp4"></video>
-      <p class="hint">Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.</p>
+      <p class="hint" id="vidCaption4">Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.</p>
     </div>
   </div>
   <div class="panel center landing-cta">
-    <h2>Vuoi provare il gioco vero?</h2>
-    <p>Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
+    <h2 id="ctaTitle">Vuoi provare il gioco vero?</h2>
+    <p id="ctaBody">Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
     <a class="contact-btn" href="mailto:planarescape@gmail.com">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
       planarescape@gmail.com
     </a>
-    <div class="secondary-link"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
+    <div class="secondary-link" id="ctaSecondary"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
   </div>
 </div>
+<script>
+const I18N_LANG_KEY = 'planarEscapeLang';
+let LANG = 'it';
+try { if (localStorage.getItem(I18N_LANG_KEY) === 'en') LANG = 'en'; } catch(e){}
+function t(s){ return LANG==='en' ? (I18N_EN[s] ?? s) : s; }
+const I18N_EN = {
+  "Gioco di ruolo da tavolo · vetrina del progetto": "Tabletop role-playing game · project showcase",
+  "Quattro avventurieri si tengono per mano davanti a un portale": "Four adventurers holding hands in front of a portal",
+  "Un ultimo respiro. Un portale. Un salto nell'ignoto.": "One last breath. A portal. A leap into the unknown.",
+  "Planar Escape — la fuga non è mai la fine della storia.": "Planar Escape — escaping is never the end of the story.",
+  "Da dove nasce Planar Escape": "Where Planar Escape comes from",
+  "Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.": "A group of adventurers is about to be wiped out by an enemy too strong for them. At the last moment, holding hands, they open a portal and flee — without knowing where it leads.",
+  "Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.": "That's where the real game begins: a journey through randomly generated dimensional planes (elemental, the Negative Plane of the undead, the demonic one, planes of light, darkness, madness...) with one true goal: getting home safe.",
+  "🎲 Progetto indie": "🎲 Indie project",
+  "indieText": "Planar Escape is developed independently, with no studio behind it — just time, playtesting and a lot of patience. The game will be at the <a href=\"https://www.idea-g.it/\" target=\"_blank\" rel=\"noopener noreferrer\">IDEAG Nazionale 2027</a>, the Italian fair dedicated to independent games.",
+  "Come si gioca": "How to play",
+  "Si crea un party da 1 a 4 avventurieri, ognuno con una classe diversa: nessuna doppia in tavola.": "You create a party of 1 to 4 adventurers, each with a different class: no duplicates at the table.",
+  "Ogni turno il gruppo salta attraverso un portale verso un piano dimensionale ignoto — nessuno sa dove porti finché non ci si trova già dentro.": "Each turn the group jumps through a portal to an unknown dimensional plane — no one knows where it leads until they're already inside.",
+  "Il piano fa subito sentire il suo effetto, poi arriva l'Incontro: uno scontro, una prova, o un evento da affrontare insieme o da soli.": "The plane's effect kicks in right away, then the Encounter arrives: a fight, a trial, or an event to face together or alone.",
+  "Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.": "Everything is resolved with dice rolls on six stats — Strength, Intellect, Dexterity, Hit Points, Sanity, Soul — with Madness and Corruption always lurking if Sanity or Soul drop too low.",
+  "L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.": "The goal: find a way out before the group is wiped out for good.",
+  "Le classi": "The classes",
+  "Le prime quattro, già protagoniste dei video qui sopra:": "The first four, already starring in the videos above:",
+  "Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.": "No magic, but heavy weapons and armor: withstands everything the physical planes can throw at it.",
+  "Si muove nell'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.": "Moves in the shadows: can stay hidden instead of facing an Encounter, and always has a backup attempt.",
+  "Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.": "Its Enchanted Dart never misses: a sure hit right when it matters most, ready again after every rest.",
+  "Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.": "Heals with a touch and carries more Soul than anyone else: the group's spiritual backbone.",
+  "🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.": "🔒 Nine more classes are coming with the reveal, one at a time — follow us on social to not miss them.",
+  "⚔️ Uno scontro, una fuga": "⚔️ A fight, an escape",
+  "Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.": "A fight against a legendary monster, resolved with a last-breath retreat.",
+  "🤝 Tutti per la manina": "🤝 Everyone holding hands",
+  "Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.": "The whole group holds hands before jumping: the next plane's card is revealed to everyone, together.",
+  "🌋 Fuga dal Baratro": "🌋 Escape from the Pit",
+  "⚠️ Spoiler": "⚠️ Spoiler",
+  "Un assaggio di un piano ancora da rivelare — il gruppo salta via prima che il turno finisca.": "A taste of a plane not yet revealed — the group jumps away before the turn ends.",
+  "⚡ Fuga dalla Tempesta": "⚡ Escape from the Storm",
+  "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.": "Lightning at the end of the turn: the only way to avoid paying the price is to jump away before the turn ends.",
+  "Vuoi provare il gioco vero?": "Want to try the real game?",
+  "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:": "The full playtest simulator is reserved for people closely following development. Email me to get the access password:",
+  "ctaSecondary": "Already have a password? Enter the simulator →",
+};
+function applyLang(){
+  const map = {
+    headerSub: 'Gioco di ruolo da tavolo · vetrina del progetto',
+    tagline: "Un ultimo respiro. Un portale. Un salto nell'ignoto.",
+    subtagline: 'Planar Escape — la fuga non è mai la fine della storia.',
+    heroTitle: 'Da dove nasce Planar Escape',
+    heroLead: "Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.",
+    heroBody: 'Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.',
+    indieBadge: '🎲 Progetto indie',
+    howtoTitle: 'Come si gioca',
+    howto1: 'Si crea un party da 1 a 4 avventurieri, ognuno con una classe diversa: nessuna doppia in tavola.',
+    howto2: 'Ogni turno il gruppo salta attraverso un portale verso un piano dimensionale ignoto — nessuno sa dove porti finché non ci si trova già dentro.',
+    howto3: "Il piano fa subito sentire il suo effetto, poi arriva l'Incontro: uno scontro, una prova, o un evento da affrontare insieme o da soli.",
+    howto4: 'Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.',
+    howto5: "L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.",
+    classesTitle: 'Le classi',
+    classesHint: 'Le prime quattro, già protagoniste dei video qui sopra:',
+    classDescGuerriero: 'Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.',
+    classDescLadro: 'Si muove nell\'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.',
+    classDescMago: 'Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.',
+    classDescChierico: 'Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.',
+    classesTeaser: '🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.',
+    vidTitle1: '⚔️ Uno scontro, una fuga',
+    vidCaption1: "Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.",
+    vidTitle2: '🤝 Tutti per la manina',
+    vidCaption2: 'Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.',
+    vidTitle3: '🌋 Fuga dal Baratro',
+    spoilerBadge: '⚠️ Spoiler',
+    vidCaption3: 'Un assaggio di un piano ancora da rivelare — il gruppo salta via prima che il turno finisca.',
+    vidTitle4: '⚡ Fuga dalla Tempesta',
+    vidCaption4: "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.",
+    ctaTitle: 'Vuoi provare il gioco vero?',
+    ctaBody: "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:",
+  };
+  Object.entries(map).forEach(([id, itText]) => { const el = document.getElementById(id); if (el) el.textContent = t(itText); });
+  const coverImg = document.getElementById('coverImg');
+  if (coverImg) coverImg.alt = t('Quattro avventurieri si tengono per mano davanti a un portale');
+  const indieText = document.getElementById('indieText');
+  if (indieText) indieText.innerHTML = LANG === 'en' ? I18N_EN.indieText : "Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href=\"https://www.idea-g.it/\" target=\"_blank\" rel=\"noopener noreferrer\">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.";
+  const ctaSecondary = document.getElementById('ctaSecondary');
+  if (ctaSecondary) ctaSecondary.innerHTML = LANG === 'en' ? `<a href="/gioco">${I18N_EN.ctaSecondary}</a>` : '<a href="/gioco">Hai già una password? Entra nel simulatore →</a>';
+  document.querySelectorAll('.lang-switch .lang-opt').forEach(b => { b.classList.toggle('active', b.dataset.lang === LANG); });
+}
+function setLang(l){
+  LANG = l === 'en' ? 'en' : 'it';
+  try { localStorage.setItem(I18N_LANG_KEY, LANG); } catch(e){}
+  applyLang();
+}
+document.querySelectorAll('.lang-switch .lang-opt').forEach(b => { b.onclick = () => setLang(b.dataset.lang); });
+applyLang();
+</script>
 </body>
 </html>

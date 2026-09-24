@@ -64,6 +64,15 @@ header.top .brand .dot{width:.6rem;height:.6rem;border-radius:50%;background:var
 header.top h1{font-size:1.5rem;}
 header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains Mono',monospace;}
 .topbar-actions{display:flex; gap:.5rem; flex-wrap:wrap;}
+.lang-switch{display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+.lang-switch .lang-opt{border:none; border-radius:0; padding:.32rem .6rem; font-size:.8rem; background:var(--surface);}
+.lang-switch .lang-opt:hover{color:var(--portal);}
+.lang-switch .lang-opt.active{background:var(--portal); color:#fff; font-weight:600;}
+.lang-switch .lang-opt.active:hover{color:#fff;}
+.lang-switch.lang-switch-lg .lang-opt{padding:.7rem 1.4rem; font-size:1rem;}
+.landing-lang-switch{position:absolute; top:1rem; right:1rem; z-index:3; background:rgba(12,9,16,.55); backdrop-filter:blur(2px); border-color:rgba(255,255,255,.35);}
+.landing-lang-switch .lang-opt{color:#f4ecdc;}
+.landing-lang-switch .lang-opt:hover{color:#fff;}
 
 .hidden{display:none !important;}
 .panel{
@@ -281,7 +290,10 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
     </div>
     <div class="topbar-actions">
       <span id="tierBadge" class="hint mono" style="align-self:center;"></span>
-      <button id="btnLangToggle" class="small" title="Switch interface language (game log and card text stay Italian)">🌐 EN</button>
+      <div class="lang-switch" title="Switch interface language (game log and card text stay Italian)">
+        <button class="lang-opt" data-lang="it">IT</button>
+        <button class="lang-opt" data-lang="en">EN</button>
+      </div>
       <button id="btnRelogin" class="small" title="Torna al gate per inserire un'altra password (es. la master)">🔑 Cambia password</button>
       <button id="btnSave" class="small">💾 Salva</button>
       <button id="btnLoad" class="small">📂 Carica</button>
@@ -325,16 +337,17 @@ function t(s){ return LANG==='en' ? (I18N_EN[s] ?? s) : s; }
 function setLang(l){
   LANG = l==='en' ? 'en' : 'it';
   try{ localStorage.setItem(I18N_LANG_KEY, LANG); } catch(e){}
-  applyI18nStatic();
   // sempre, non solo a partita iniziata: altrimenti il toggle sulla schermata di setup (la
   // primissima cosa che si vede) cambiava la topbar ma lasciava "Prepara il party" in
-  // italiano, sembrando rotto — render() gestisce già correttamente il caso state===null.
+  // italiano, sembrando rotto — render() gestisce già correttamente il caso state===null, e
+  // ora chiama applyI18nStatic() da sé a ogni passaggio (vedi render()).
   render();
 }
 function applyI18nStatic(){
   // pezzi di HTML statico fuori da render() (esistono già nel DOM prima che una partita
-  // inizi, quindi t() da solo non basta: vanno aggiornati a mano qui, chiamata al boot e
-  // a ogni cambio lingua).
+  // inizi, quindi t() da solo non basta: vanno aggiornati a mano qui). Chiamata da render()
+  // a ogni passaggio, così resta sincronizzata sia sul selettore in topbar sia su quello,
+  // identico, nella landing (bindLanding() lo inserisce dinamicamente).
   const map = {
     gateTitle: '🔒 Accesso al simulatore',
     headerSub: 'Simulatore di playtest · v0.1',
@@ -349,8 +362,15 @@ function applyI18nStatic(){
   if(gateHint) gateHint.innerHTML = `${t('Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su')} <a href="/">planar-escape.vercel.app</a>.`;
   const pwField = document.getElementById('gatePassword');
   if(pwField) pwField.placeholder = t('Password');
-  const langBtn = document.getElementById('btnLangToggle');
-  if(langBtn) langBtn.textContent = LANG==='en' ? '🌐 IT' : '🌐 EN';
+  // ogni selettore lingua presente nel DOM (topbar + eventualmente landing) mostra sempre la
+  // lingua ATTIVA evidenziata — non "quella a cui passeresti" come il vecchio pulsante
+  // singolo, che aveva confuso chi lo leggeva come "sono già in EN".
+  document.querySelectorAll('.lang-switch').forEach(sw=>{
+    sw.querySelectorAll('.lang-opt').forEach(b=>{
+      b.classList.toggle('active', b.dataset.lang===LANG);
+      b.onclick = ()=> setLang(b.dataset.lang);
+    });
+  });
 }
 const I18N_EN = {
   "🔒 Accesso al simulatore": "🔒 Simulator access",
@@ -421,6 +441,25 @@ const I18N_EN = {
   "oggetti": "items",
   "Nessun oggetto": "No items",
   "Gestisci": "Manage",
+  // --- landing (prima pagina, mostrata dopo il gate prima di creare il party) ---
+  "Quattro avventurieri si tengono per mano davanti a un portale": "Four adventurers holding hands in front of a portal",
+  "Un ultimo respiro. Un portale. Un salto nell'ignoto.": "One last breath. A portal. A leap into the unknown.",
+  "Planar Escape — la fuga non è mai la fine della storia.": "Planar Escape — escaping is never the end of the story.",
+  "Da dove nasce Planar Escape": "Where Planar Escape comes from",
+  "Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.": "A group of adventurers is about to be wiped out by an enemy too strong for them. At the last moment, holding hands, they open a portal and flee — without knowing where it leads.",
+  "Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.": "That's where the real game begins: a journey through randomly generated dimensional planes (elemental, the Negative Plane of the undead, the demonic one, planes of light, darkness, madness...) with one true goal: getting home safe.",
+  "Progetto indie": "Indie project",
+  "Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'": "Planar Escape is developed independently, with no studio behind it — just time, playtesting and a lot of patience. The game will be at the",
+  "la fiera italiana dedicata ai giochi indipendenti.": "the Italian fair dedicated to independent games.",
+  "Uno scontro, una fuga": "A fight, an escape",
+  "Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.": "A fight against a legendary monster, resolved with a last-breath retreat.",
+  "Tutti per la manina": "Everyone holding hands",
+  "Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.": "The whole group holds hands before jumping: the next plane's card is revealed to everyone, together.",
+  "Fuga dal Baratro": "Escape from the Pit",
+  "Il Baratro in Fiamme, uno dei gironi del Piano Demoniaco: il gruppo salta via prima che il turno finisca.": "The Burning Pit, one of the Demonic Plane's rings: the group jumps away before the turn ends.",
+  "Fuga dalla Tempesta": "Escape from the Storm",
+  "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.": "Lightning at the end of the turn: the only way to avoid paying the price is to jump away before the turn ends.",
+  "Crea il tuo gruppo e inizia la fuga": "Create your party and start the escape",
 };
 const STATS = ["for","int","des","pv","san","anima"];
 const STAT_LABEL = {for:"Forza",int:"Intelletto",des:"Destrezza",pv:"Punti Vita",san:"Sanità Mentale",anima:"Anima"};
@@ -1265,29 +1304,34 @@ function render(){
   // a chi ci arriva per la prima volta, invece di guidarlo a leggere e scorrere fino in fondo.
   document.querySelector('.topbar-actions').style.display = onLanding ? 'none' : '';
   if(!state){
-    if(!landingDismissed){ app.innerHTML = renderLanding(); bindLanding(); return; }
-    app.innerHTML = renderSetup(); bindSetup(); return;
+    if(!landingDismissed){ app.innerHTML = renderLanding(); bindLanding(); applyI18nStatic(); return; }
+    app.innerHTML = renderSetup(); bindSetup(); applyI18nStatic(); return;
   }
   app.innerHTML = renderGame();
   bindGame();
+  applyI18nStatic();
   renderPendingMadnessPopup();
 }
 /* ---------------- LANDING ---------------- */
 function renderLanding(){
   return `
   <div class="landing-cover-wrap">
-    <img src="assets/ui/copertina.jpg" alt="Quattro avventurieri si tengono per mano davanti a un portale">
+    <div class="lang-switch lang-switch-lg landing-lang-switch">
+      <button class="lang-opt" data-lang="it">🇮🇹 IT</button>
+      <button class="lang-opt" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <img src="assets/ui/copertina.jpg" alt="${t("Quattro avventurieri si tengono per mano davanti a un portale")}">
     <div class="landing-cover-caption">
-      <div class="tagline">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
-      <div class="subtagline">Planar Escape — la fuga non è mai la fine della storia.</div>
+      <div class="tagline">${t("Un ultimo respiro. Un portale. Un salto nell'ignoto.")}</div>
+      <div class="subtagline">${t('Planar Escape — la fuga non è mai la fine della storia.')}</div>
     </div>
   </div>
   <div class="panel landing-hero">
-    <h2>Da dove nasce Planar Escape</h2>
-    <p class="landing-lead">Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.</p>
-    <p>Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.</p>
+    <h2>${t('Da dove nasce Planar Escape')}</h2>
+    <p class="landing-lead">${t("Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte per loro. All'ultimo momento, tenendosi per mano, aprono un portale e fuggono — senza sapere dove porti.")}</p>
+    <p>${t('Da lì inizia la partita vera e propria: un viaggio tra piani dimensionali generati a caso (elementali, il Piano Negativo dei non-morti, quello demoniaco, piani di luce, tenebre, follia...) con un solo vero obiettivo: tornare a casa sani e salvi.')}</p>
     <div class="landing-indie">
-      <p><span class="badge">🎲 Progetto indie</span> &nbsp; Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href="https://www.idea-g.it/" target="_blank" rel="noopener noreferrer">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.</p>
+      <p><span class="badge">🎲 ${t('Progetto indie')}</span> &nbsp; ${t("Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'")}<a href="https://www.idea-g.it/" target="_blank" rel="noopener noreferrer">IDEAG Nazionale 2027</a>, ${t('la fiera italiana dedicata ai giochi indipendenti.')}</p>
     </div>
     <div class="landing-social">
       <a class="ig" href="https://www.instagram.com/planar.escape/" target="_blank" rel="noopener noreferrer">
@@ -1302,30 +1346,30 @@ function renderLanding(){
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
-      <h3>⚔️ Uno scontro, una fuga</h3>
+      <h3>⚔️ ${t('Uno scontro, una fuga')}</h3>
       <video controls preload="none" poster="assets/video/drago_scontro_poster.jpg" src="assets/video/drago_scontro.mp4"></video>
-      <p class="hint">Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.</p>
+      <p class="hint">${t("Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.")}</p>
     </div>
     <div class="panel landing-video">
-      <h3>🤝 Tutti per la manina</h3>
+      <h3>🤝 ${t('Tutti per la manina')}</h3>
       <video controls preload="none" poster="assets/video/salto_manina_poster.jpg" src="assets/video/salto_manina.mp4"></video>
-      <p class="hint">Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.</p>
+      <p class="hint">${t('Il gruppo al completo si tiene per mano prima di saltare: la carta del prossimo piano si rivela a tutti, insieme.')}</p>
     </div>
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
-      <h3>🌋 Fuga dal Baratro</h3>
+      <h3>🌋 ${t('Fuga dal Baratro')}</h3>
       <video controls preload="none" poster="assets/video/fuga_baratro_poster.jpg" src="assets/video/fuga_baratro.mp4"></video>
-      <p class="hint">Il Baratro in Fiamme, uno dei gironi del Piano Demoniaco: il gruppo salta via prima che il turno finisca.</p>
+      <p class="hint">${t('Il Baratro in Fiamme, uno dei gironi del Piano Demoniaco: il gruppo salta via prima che il turno finisca.')}</p>
     </div>
     <div class="panel landing-video">
-      <h3>⚡ Fuga dalla Tempesta</h3>
+      <h3>⚡ ${t('Fuga dalla Tempesta')}</h3>
       <video controls preload="none" poster="assets/video/fuga_tempesta_poster.jpg" src="assets/video/fuga_tempesta.mp4"></video>
-      <p class="hint">Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.</p>
+      <p class="hint">${t("Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.")}</p>
     </div>
   </div>
   <div class="panel center">
-    <button class="primary" id="btnLandingStart" style="font-size:1.1rem; padding:.8rem 2rem;">🌀 Crea il tuo gruppo e inizia la fuga</button>
+    <button class="primary" id="btnLandingStart" style="font-size:1.1rem; padding:.8rem 2rem;">🌀 ${t('Crea il tuo gruppo e inizia la fuga')}</button>
   </div>`;
 }
 function bindLanding(){
@@ -4548,7 +4592,6 @@ function unlockAndBoot(){
   applyI18nStatic();
   render();
 }
-document.getElementById('btnLangToggle').onclick = ()=> setLang(LANG==='en' ? 'it' : 'en');
 applyI18nStatic();
 // Una volta sbloccato, il gate non ricompare più da solo — se si è entrati con la password
 // pubblica non c'è altrimenti modo di passare alla master (o viceversa) nella stessa sessione
