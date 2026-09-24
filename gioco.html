@@ -3902,7 +3902,21 @@ function useSpell(c, idx){
     return;
   }
   if(sp.sferaSpell){
-    if(state.currentDraw && (state.currentDraw.phase==='vuoto-choice'||state.currentDraw.phase==='specchi-choice')){ logMsg(`⚠️ ${sp.name}: aspetta di aver risolto la scelta in corso.`,'warn'); return; }
+    // "Annulla del tutto l'effetto intrinseco del piano CORRENTE" (testo della carta) —
+    // se il gruppo è già nel mezzo di una scelta forzata (Vuoto/Specchi), lanciarla ORA la
+    // interrompe sul posto e si passa dritti al normale Incontro del turno, come se l'effetto
+    // non fosse mai scattato. Non annulla scelte già fatte da chi ha già scelto prima di questo
+    // lancio — solo quelle ancora in sospeso.
+    const inForcedChoice = state.currentDraw && (state.currentDraw.phase==='vuoto-choice'||state.currentDraw.phase==='specchi-choice');
+    if(inForcedChoice){
+      const plane = currentPlane();
+      logMsg(`🔮 ${c.name} lancia ${sp.name}: annulla sul posto l'effetto intrinseco di ${plane.name}, ancora in corso.`,'good');
+      c.spells.splice(idx,1);
+      state.currentDraw.phase = 'plane';
+      closeModal(); // si esce dal pannello Gestisci: sotto c'è già la nuova carta Incontro
+      drawIncontroForPlane(plane, null);
+      return true;
+    }
     const g = groupOf(c);
     state.pendingSferaAntiplanare = { groupId: g?g.id:null };
     logMsg(`🔮 ${c.name} lancia ${sp.name}: l'effetto intrinseco del prossimo piano in cui il gruppo entra sarà completamente annullato.`,'good');
