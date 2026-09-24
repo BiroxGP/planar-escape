@@ -335,18 +335,18 @@ function classCardHtml(cls, artDir) {
         <div class="name-block">
           <div class="name">${cls.icon} ${esc(cls.name)}</div>
         </div>
+        <div class="badges class-badges">
+          <span class="badge"><span class="badge-icon">⚔️</span>${WEAPONS_LABEL[cls.weapons]||cls.weapons}</span>
+          ${cls.reroll ? `<span class="badge"><span class="badge-icon">🔁</span>${cls.reroll} reroll</span>` : ''}
+          ${cls.stealth ? `<span class="badge"><span class="badge-icon">🥷</span>Furtività</span>` : ''}
+          ${cls.waterOk ? `<span class="badge"><span class="badge-icon">💧</span>A suo agio in acqua</span>` : ''}
+          ${resistBadges}
+        </div>
       </div>
       <div class="stat-block">
         ${['for','int','des','pv','san','anima'].map(s => `<div class="stat-cell"><div class="stat-ic">${STAT_ICON[s]}</div><div class="stat-v">${stats[s]}</div></div>`).join('')}
       </div>
       ${affinityHtml}
-      <div class="badges class-badges">
-        <span class="badge"><span class="badge-icon">⚔️</span>${WEAPONS_LABEL[cls.weapons]||cls.weapons}</span>
-        ${cls.reroll ? `<span class="badge"><span class="badge-icon">🔁</span>${cls.reroll} reroll</span>` : ''}
-        ${cls.stealth ? `<span class="badge"><span class="badge-icon">🥷</span>Furtività</span>` : ''}
-        ${cls.waterOk ? `<span class="badge"><span class="badge-icon">💧</span>A suo agio in acqua</span>` : ''}
-        ${resistBadges}
-      </div>
       <div class="rule-text class-desc">${esc(cls.desc)}</div>
     </div>
   </div>`;
@@ -359,26 +359,28 @@ function classPageHtml(classes, artDir) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
   .class-panel{ height:60%; padding:16px 26px 24px; }
-  .stat-block{ display:flex; gap:7px; margin-bottom:10px; }
+  .stat-block{ display:flex; gap:8px; margin-bottom:12px; }
   .stat-cell{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:9px;
-    width:66px; padding:7px 0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:10px;
+    width:80px; padding:9px 0;
   }
-  .stat-ic{ font-size:19px; line-height:1; }
-  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:24px; font-weight:700; }
-  .affinity-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .stat-ic{ font-size:24px; line-height:1; }
+  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:32px; font-weight:700; }
+  .affinity-row{ display:flex; gap:10px; margin-bottom:10px; }
   .affinity-chip{
-    display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; gap:8px;
     background:rgba(255,255,255,.10); border:1px solid var(--school); border-radius:999px;
-    padding:3px 14px 3px 3px;
+    padding:4px 18px 4px 4px;
   }
-  .affinity-chip img{ width:30px; height:30px; border-radius:50%; object-fit:cover; box-shadow:0 0 8px 1px var(--school); }
-  .affinity-chip .aff-fallback{ font-size:20px; width:30px; text-align:center; }
-  .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:19px; font-weight:700; }
-  .class-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
-  .class-badges .badge{ font-size:12px; padding:4px 10px; gap:5px; }
-  .class-badges .badge-icon{ font-size:15px; }
+  .affinity-chip img{ width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 10px 1px var(--school); }
+  .affinity-chip .aff-fallback{ font-size:26px; width:40px; text-align:center; }
+  .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:26px; font-weight:700; }
+  /* riga del nome: badges (armi/reroll/furtività/acqua/resistenze) spostati qui a destra,
+     in colonna come su Spell/Incontro (eredita .badges condivisa), invece che in una riga
+     in fondo alla carta — libera spazio sotto per statistiche/affinità più grandi. */
+  .class-badges .badge{ font-size:14px; padding:5px 12px; gap:6px; }
+  .class-badges .badge-icon{ font-size:17px; }
 </style></head>
 <body><div class="stage">
 ${cards}
