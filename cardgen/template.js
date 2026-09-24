@@ -373,7 +373,7 @@ function classPageHtml(classes, artDir) {
      alla carta: stanno a destra delle statistiche, alla stessa altezza, centrate sull'intera
      riga (eredita la colonna verticale di .badges condivisa con Spell/Incontro). Le label
      sono accorciate ("Leggere"/"Pesanti", niente prefisso "Resist.") apposta per starci. */
-  .stats-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; }
+  .stats-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px; }
   .stat-block{ display:flex; gap:7px; flex:none; }
   .stat-cell{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
@@ -392,9 +392,8 @@ function classPageHtml(classes, artDir) {
   .affinity-chip .aff-fallback{ font-size:26px; width:40px; text-align:center; }
   .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:26px; font-weight:700; }
   .class-badges{ gap:6px; min-width:0; }
-  .class-badges .badge{ font-size:13px; padding:4px 10px; gap:5px; }
-  .class-badges .badge-icon{ font-size:15px; }
-  .class-badges .badge-icon{ font-size:17px; }
+  .class-badges .badge{ font-size:17px; padding:4px 12px; gap:6px; }
+  .class-badges .badge-icon{ font-size:19px; }
 </style></head>
 <body><div class="stage">
 ${cards}
