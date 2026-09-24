@@ -1439,7 +1439,11 @@ function renderSpecchiChoice(){
 }
 function renderGroupPicker(){
   ensureGroups();
-  const groups = state.groups.map(g=>({g, members:groupMembers(g)})).filter(x=>x.members.length>0);
+  // roster = tutti i presenti nel gruppo non morti/non già vincitori, INCLUSI gli svenuti —
+  // a differenza di groupMembers()/activeChars() (che escludono gli svenuti, essendo pensate
+  // per "chi può agire ora"), qui serve sapere anche di chi è semplicemente svenuto, per
+  // poterlo elencare e offrire l'attesa invece di trascinarlo alla cieca.
+  const groups = state.groups.map(g=>({g, roster:g.memberIds.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && c.status!=='dead' && c.status!=='won')})).filter(x=>x.roster.length>0);
   if(groups.length===0) return '';
   const isSplit = groups.length>1;
   return `<div class="panel center">
@@ -1449,18 +1453,29 @@ function renderGroupPicker(){
       <div class="plane-hero-caption"><h2>Il gruppo è davanti al portale</h2></div>
     </div>`}
     <p class="hint">${isSplit?'Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.':'Nessuno sa dove porti. Premi per saltare.'}</p>
-    ${groups.map(({g,members})=>{
+    ${groups.map(({g,roster})=>{
       const waiting = isSplit && !!state.jumpedThisRound[g.id];
-      const canStay = !isSplit && !waiting && state.stayTurn && STAY_ESCALATION_PLANES.has(state.stayTurn.planeId);
+      // "Resta ancora un turno" non è più un'opzione generica: decima il mazzo Incontri, quindi
+      // ha senso solo come vera eccezione per lasciar recuperare chi ha perso il turno o è
+      // svenuto — mai offerta a un party integro e attivo. Trascinarlo con sé saltando è sempre
+      // gratuito/consenziente (nessun check), "Resta" è solo l'alternativa per chi preferisce
+      // aspettare invece di saltare subito con un compagno in condizioni precarie.
+      const recovering = roster.filter(c=>c.skipNextIncontro || c.status==='unconscious');
+      const capable = roster.filter(c=>isConscious(c) && !recovering.includes(c));
+      const everyoneRecovering = recovering.length>0 && capable.length===0;
+      const recNames = recovering.map(c=>escapeHtml(c.name)).join(', ');
+      const canStay = !isSplit && !waiting && recovering.length>0 && state.stayTurn;
       const stayPlane = canStay ? PIANI_BY_ID[state.stayTurn.planeId] : null;
       return `
       <div class="player-setup" style="text-align:left;">
-        <strong>${members.map(c=>escapeHtml(c.name)).join(', ')}</strong>
+        <strong>${roster.map(c=>escapeHtml(c.name)).join(', ')}</strong>
         <div class="row mt1">
-          <button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>🌀 Salta</button>
-          ${stayPlane?`<button class="small" id="btnStayMore">🏕️ Resta ancora un turno su ${escapeHtml(stayPlane.name)}</button>`:''}
+          ${everyoneRecovering
+            ? `<span class="hint">⏳ ${recNames} ${recovering.length>1?'devono':'deve'} ancora recuperare: nessun altro presente per trascinar${recovering.length>1?'li':'lo/la'}, non resta che aspettare.</span>`
+            : `<button class="primary small" data-groupjump="${g.id}" ${waiting?'disabled':''}>🌀 Salta${recovering.length?` (trascinando ${recNames})`:''}</button>`}
+          ${stayPlane?`<button class="small" data-staymore="${g.id}">🏕️ Resta ancora un turno su ${escapeHtml(stayPlane.name)}${recovering.length?` (${recNames} recupera)`:''}</button>`:''}
           ${waiting?`<span class="hint">In attesa che gli altri gruppi separati saltino…</span>`:''}
-          ${members.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
+          ${!everyoneRecovering && roster.length>1?`<button class="small" data-groupsplit="${g.id}">✂️ Dividi il gruppo</button>`:''}
         </div>
       </div>`;
     }).join('')}
@@ -1891,10 +1906,10 @@ function attemptTerraDig(plane){
   state.currentDraw.phase = 'terra-trapped';
   render();
 }
-// Piani dove restare un turno in più (invece di saltare) ha un effetto meccanico definito.
-// Terra ne è escluso: lì restare non è una scelta, è obbligatorio finché non ci si libera
-// (vedi attemptTerraDig) — non si arriva mai a scegliere di restare, il gioco lo impone da sé.
-const STAY_ESCALATION_PLANES = new Set(['fuoco','acqua','decadimento','putrefazione','vuoto']);
+// Piani con un effetto meccanico extra per la permanenza (fuoco/acqua/decadimento/putrefazione/
+// vuoto): gli altri usano il fallthrough generico in fondo alla funzione. Terra è escluso: lì
+// restare non è una scelta, è obbligatorio finché non ci si libera (vedi attemptTerraDig) — non
+// si arriva mai a scegliere di restare, il gioco lo impone da sé.
 function stayAnotherTurn(){
   if(!state.stayTurn) return;
   const plane = PIANI_BY_ID[state.stayTurn.planeId];
@@ -4282,7 +4297,7 @@ function bindGame(){
     state.currentGroupId=gid; startJump();
   });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
-  const stayMore = document.getElementById('btnStayMore'); if(stayMore) stayMore.onclick=stayAnotherTurn;
+  document.querySelectorAll('[data-staymore]').forEach(b=>b.onclick=()=>{ state.currentGroupId=b.dataset.staymore; stayAnotherTurn(); });
   const digAgain = document.getElementById('btnDigAgain'); if(digAgain) digAgain.onclick=()=>attemptTerraDig(currentPlane());
   document.querySelectorAll('[data-vuoto]').forEach(b=>b.onclick=()=>{
     const [cid,what] = b.dataset.vuoto.split(':');
