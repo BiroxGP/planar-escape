@@ -448,6 +448,15 @@ const CLASSES = {
   paladino:{name:"Paladino",icon:"🛡️",for:3,int:2,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"heavy",resistance:["armonia"],special:"paladino_extra",
     desc:"Armi e armature pesanti pur avendo un'affinità. A ogni avanzamento pesca anche una carta Flusso extra. Resistenza Armonia."},
 };
+// cls.special non è sempre un'abilità a carica attivabile a piacere: furia (Barbaro) e
+// resurrezione (Negromante) sono automatiche (vedi useDamage/checkRoll più sotto),
+// paladino_extra è passiva alla progressione di livello (vedi checkLevelUp/openLevelUpModal).
+// Solo queste sei sono davvero "usa l'abilità, poi si scarica finché non trovi un Recupero":
+// da qui la distinzione, altrimenti Barbaro/Negromante/Paladino mostrerebbero un pulsante
+// "Usa abilità di classe" che non fa nulla di concreto (finisce nel case di default di
+// useClassSpecial), e potrebbero anche "perdere" quell'abilità alla Voragine del Vuoto senza
+// che perderla abbia un vero effetto meccanico.
+const ACTIVE_SPECIALS = new Set(['dardo','forma_selvatica','evocazione','resistenza_universale','vista_piani','cura_diretta']);
 
 /* ---------------- FAMILIES ---------------- */
 const FAMILIES = {
@@ -1488,7 +1497,7 @@ function renderVuotoChoice(){
     <p class="hint">Ogni presente deve scegliere cosa perdere — obbligatorio, una sola volta a testa.</p>
     ${acts.map(c=>{
       const done = !!choices[c.id];
-      const hasAbility = c.rerolls>0 || (CLASSES[c.cls].special && c.charges.special);
+      const hasAbility = c.rerolls>0 || (ACTIVE_SPECIALS.has(CLASSES[c.cls].special) && c.charges.special);
       return `<div class="row" style="margin-bottom:.5rem; align-items:center;">
         <span style="min-width:110px;">${escapeHtml(c.name)}${done?' ✓':''}</span>
         <button class="small" data-vuoto="${c.id}:pv" ${done?'disabled':''}>-1 PV</button>
@@ -1514,7 +1523,7 @@ function applyVuotoLoss(c, what){
   else if(what==='spell' && c.spells.length){ const idx=Math.floor(Math.random()*c.spells.length); const lost=c.spells.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di dimenticare ${SPELLS_BY_ID[lost]?.name}.`); }
   else if(what==='ability'){
     if(c.rerolls>0){ c.rerolls--; logMsg(`🕳️ ${c.name} sceglie di perdere 1 reroll.`); }
-    else if(CLASSES[c.cls].special && c.charges.special){ c.charges.special=false; logMsg(`🕳️ ${c.name} sceglie di scaricare la propria abilità di classe.`); }
+    else if(ACTIVE_SPECIALS.has(CLASSES[c.cls].special) && c.charges.special){ c.charges.special=false; logMsg(`🕳️ ${c.name} sceglie di scaricare la propria abilità di classe.`); }
   }
 }
 function renderTerraTrapped(){
@@ -3112,7 +3121,7 @@ function renderChoiceLossCard(acts){
   // scelto tutti.
   return `<div>${acts.map(c=>{
     const canSpell = c.spells.length>0;
-    const canAbility = c.rerolls>0 || (CLASSES[c.cls].special && c.charges.special);
+    const canAbility = c.rerolls>0 || (ACTIVE_SPECIALS.has(CLASSES[c.cls].special) && c.charges.special);
     return `<div class="row" style="margin-bottom:.5rem; flex-wrap:wrap;" data-voidlossrow="${c.id}">
       <span style="min-width:120px;">${escapeHtml(c.name)}</span>
       <button class="small" data-voidloss="${c.id}:pv">-1 PV</button>
@@ -3747,7 +3756,7 @@ function openCharManageModal(id){
     </div>`:''}
     <h4 class="mt1">Azioni rapide</h4>
     <div class="row mb1">
-      ${cls.special ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
+      ${ACTIVE_SPECIALS.has(cls.special) ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
     </div>
     <h4 class="mt1">Equipaggiamento</h4>
