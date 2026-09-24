@@ -3332,7 +3332,12 @@ function openPianoTerrenoModal(dest){
     // portano via un solo personaggio alla volta.
     body += `<div class="row mt1"><button class="primary" id="btnWinAll">Il gruppo torna a casa (vittoria)</button><button id="btnPTClose">Nessuno per ora</button></div>`;
   } else if(dest.kind==='boss'){
-    body += `<div class="row mt1"><button class="primary" id="btnStartBoss">Affronta ${dest.boss.name}</button><button id="btnPTClose">Ignora e continua</button></div>`;
+    // Un vero Finale (dest.finale, es. Antro della Creatura) resta ignorabile "per ora" come
+    // gli altri Finali: il gruppo può non sentirsi pronto. Un boss "di passaggio" come il
+    // Fondo del Mare invece non è opzionale — è l'unico modo per proseguire da lì, quindi
+    // niente pulsante per ignorarlo. Si può comunque tentare la fuga a scontro iniziato, come
+    // in ogni altro combattimento, dal 1° giro in poi.
+    body += `<div class="row mt1"><button class="primary" id="btnStartBoss">Affronta ${dest.boss.name}</button>${dest.finale?`<button id="btnPTClose">Ignora e continua</button>`:''}</div>`;
   } else if(dest.kind==='bonus'){
     body += `<div class="row mt1"><button class="primary" id="btnCuoreBonus">Ogni presente +1 oggetto e +1 risorsa</button></div>`;
   } else if(dest.kind==='check'){
