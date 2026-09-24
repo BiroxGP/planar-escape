@@ -1801,8 +1801,12 @@ function startJump(){
   const btn=document.getElementById('btnConfirmJump');
   if(btn) btn.onclick=()=>{ closeModal(); doJump(); };
 }
+// Si avanza ogni 5 salti personali, fino a un massimo di 3 avanzamenti (Lv 1 → Lv 4): la
+// partita è pensata per chiudersi ogni 15-20 salti, quindi oltre il 3° non se ne concedono
+// altri anche se il gruppo continua a giocare più a lungo del previsto.
+const MAX_LEVEL_UPS = 3;
 function checkLevelUp(c){
-  if(c.jumps>0 && c.jumps%5===0){
+  if(c.jumps>0 && c.jumps%5===0 && c.level<=MAX_LEVEL_UPS){
     c.level++;
     logMsg(`⭐ ${c.name} avanza di livello (Lv ${c.level})! +1 a scelta e progresso di classe.`);
     // in coda: se più personaggi salgono di livello nello stesso salto sincronizzato,
@@ -3517,8 +3521,10 @@ function openPianoTerrenoModal(dest){
   if(dest.kind==='finaleA'){
     // un vero Finale (A/B/C) è una vittoria di TUTTO il gruppo insieme, non una scelta
     // individuale — solo le uscite personali (Druido/Sciamano, kind:'terrestre' più sotto)
-    // portano via un solo personaggio alla volta.
-    body += `<div class="row mt1"><button class="primary" id="btnWinAll">Il gruppo torna a casa (vittoria)</button><button id="btnPTClose">Nessuno per ora</button></div>`;
+    // portano via un solo personaggio alla volta. Ed è una VITTORIA: niente "Nessuno per
+    // ora" da rifiutare — a differenza del tentare o no un boss (dest.kind==='boss' più
+    // sotto), qui non c'è nulla da "non sentirsi pronti" a fare, si è già vinto.
+    body += `<div class="row mt1"><button class="primary" id="btnWinAll">Il gruppo torna a casa (vittoria)</button></div>`;
   } else if(dest.kind==='boss'){
     // Un vero Finale (dest.finale, es. Antro della Creatura) resta ignorabile "per ora" come
     // gli altri Finali: il gruppo può non sentirsi pronto. Un boss "di passaggio" come il
