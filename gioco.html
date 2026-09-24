@@ -1017,6 +1017,11 @@ function applyTempDebuff(c, stat){
     c.stats[stat]=Math.max(1,c.stats[stat]-1);
     logMsg(`⬇️ ${c.name} subisce un depotenziamento TEMPORANEO a ${STAT_LABEL[stat]} (guarisce a Recupero).`);
   }
+  // ogni perdita di un punto di Sanità o Anima — temporanea o permanente, da qualunque fonte —
+  // rischia rispettivamente Follia o Corruzione: stesso check di applySanLoss/applyAnimaLoss,
+  // qui applicato anche ai depotenziamenti (che riducono la stessa statistica per altra via).
+  if(stat==='san') triggerFollia(c);
+  else if(stat==='anima') triggerCorruzione(c);
 }
 function applyPermDebuff(c, stat){
   if(stat==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); return; } // niente "permDebuffN.pv": il PV non ha quel contatore, è danno diretto
@@ -1028,6 +1033,8 @@ function applyPermDebuff(c, stat){
   c.permDebuffN[stat]++;
   c.stats[stat]=Math.max(1,c.stats[stat]-1);
   logMsg(`⬇️⬇️ ${c.name} subisce un depotenziamento PERMANENTE a ${STAT_LABEL[stat]}.`,'bad');
+  if(stat==='san') triggerFollia(c);
+  else if(stat==='anima') triggerCorruzione(c);
 }
 function applyTempBonus(c, stat, n){
   n = n||1;
@@ -3447,7 +3454,7 @@ function bindPianoTerrenoModal(dest){
         document.getElementById('ptCheckResult').innerHTML='';
       });
     }
-    else { applyDamage(c,'anima',1,{ignoreResistance:true}); logMsg(`👑 ${c.name} perde la Contesa: 1 danno diretto ad Anima.`); }
+    else { logMsg(`👑 ${c.name} perde la Contesa del Trono Vuoto: 1 danno diretto ad Anima.`); applyAnimaLoss(c,1); }
   });
 }
 function openEquipBoostModal(){
