@@ -2194,14 +2194,18 @@ function applyPendingMadnessActions(){
       const action = c.pendingCorruzione; c.pendingCorruzione=null;
       if(action==='contrario') logMsg(`👹 ${c.name} (Corruzione): in questo turno fa esattamente il contrario di quello che fa il resto del gruppo — il tavolo interpreta l'azione.`, 'warn');
       else {
-        // agire ostile reale: attacca il compagno più debole di lui nella sua caratteristica
-        // migliore, un solo giro di scontro (non il ciclo di combattimento completo).
+        // agire ostile reale: attacca chi ha la statistica più bassa fra i presenti (il più
+        // vulnerabile relativo) nella caratteristica migliore del corrotto — non più "solo se
+        // qualcuno è strettamente più debole DI LUI": con party di classi simili o statistiche
+        // pari, quel confronto non trovava mai un bersaglio e l'esito restava senza alcun
+        // effetto concreto, nonostante il messaggio di log.
         const topStat = ['for','int','des'].reduce((best,s)=>effectiveStat(c,s)>effectiveStat(c,best)?s:best,'for');
         const others = activeChars().filter(x=>x.id!==c.id);
-        const targets = others.filter(x=>effectiveStat(x,topStat)<effectiveStat(c,topStat));
-        if(targets.length===0){
-          logMsg(`👹 ${c.name} (Corruzione): agisce contro il team, ma nessun compagno è più debole di lui in ${STAT_LABEL[topStat]} — l'aggressione non trova bersaglio.`, 'warn');
+        if(others.length===0){
+          logMsg(`👹 ${c.name} (Corruzione): agisce contro il team, ma è solo — l'aggressione non trova bersaglio.`, 'warn');
         } else {
+          const minVal = Math.min(...others.map(x=>effectiveStat(x,topStat)));
+          const targets = others.filter(x=>effectiveStat(x,topStat)===minVal);
           const target = targets[Math.floor(Math.random()*targets.length)];
           const r = checkRoll(c, topStat);
           logMsg(`👹 ${c.name} (Corruzione) attacca ${target.name} su ${STAT_LABEL[topStat]}: ${r.roll} vs ${r.val} → ${r.success?'colpito':'mancato'}.`, 'warn');
