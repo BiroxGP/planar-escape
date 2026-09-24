@@ -743,6 +743,7 @@ function newGame(){
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
     pattoOnoreActive:false, // Patto d'Onore: da quando si prende la ricompensa, ogni vittoria in combattimento nell'Entropia frutta un oggetto
     amplifySpellsActive:false, // Amplificazione: +1 all'effetto di ogni spell di danno o cura lanciato, finché il gruppo non salta via
+    pendingMadnessPopups:[], // [{name,kind:'follia'|'corruzione',text}]: popup con illustrazione in coda, mostrati uno alla volta da renderPendingMadnessPopup()
   };
   render();
 }
@@ -1142,6 +1143,7 @@ function render(){
   }
   app.innerHTML = renderGame();
   bindGame();
+  renderPendingMadnessPopup();
 }
 /* ---------------- LANDING ---------------- */
 function renderLanding(){
@@ -2117,28 +2119,42 @@ function applySanLoss(c,n){
     triggerFollia(c);
   }
 }
+// Follia/Corruzione sono innescate da decine di punti diversi in giro per il codice (ogni
+// perdita di Sanità/Anima, temporanea o permanente): un popup bloccante aperto lì per lì
+// finirebbe sovrascritto da eventuali chiamate successive nello stesso giro sincrono (es. più
+// personaggi che perdono Sanità nello stesso Incontro). Si accoda invece l'evento e lo mostra
+// renderPendingMadnessPopup(), agganciata in cima a render(): uno per volta, nell'ordine in cui
+// sono avvenuti, senza dover toccare ogni singolo punto di chiamata.
+function queueMadnessPopup(c, kind, text){
+  state.pendingMadnessPopups = state.pendingMadnessPopups || [];
+  state.pendingMadnessPopups.push({ name:c.name, kind, text });
+}
 function triggerFollia(c){
   const check = checkRoll(c,'san');
   logMsg(`🎲 ${c.name}: check di Sanità contro la Follia: ${check.roll} vs ${check.val} → ${check.success?'superato, nessun effetto':'FALLITO'}.`, check.success?'good':'warn');
   if(check.success) return;
   const r=d6();
+  let outcome;
   // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
-  if(r>=5){ logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
-  if(r>=3){ c.pendingFollia='salto'; logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno si lancerà da solo in un portale casuale.`, 'warn'); return; }
-  c.pendingFollia='trascina';
-  logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza).`, 'warn');
+  if(r>=5) outcome = 'nulla, nonostante il campanello d\'allarme';
+  else if(r>=3){ c.pendingFollia='salto'; outcome = 'al prossimo turno si lancerà da solo in un portale casuale'; }
+  else { c.pendingFollia='trascina'; outcome = 'al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza)'; }
+  logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): ${outcome}.`, 'warn');
+  queueMadnessPopup(c, 'follia', `Check di Sanità fallito (${check.roll} vs ${check.val}): ${outcome}.`);
 }
 function triggerCorruzione(c){
   const check = checkRoll(c,'anima');
   logMsg(`🎲 ${c.name}: check di Anima contro la Corruzione: ${check.roll} vs ${check.val} → ${check.success?'superato, nessun effetto':'FALLITO'}.`, check.success?'good':'warn');
   if(check.success) return;
   const r=d6();
+  let outcome;
   // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
-  if(r>=5){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): nulla, nonostante il campanello d'allarme.`, 'warn'); return; }
-  if(r>=3){ c.pendingCorruzione='contrario'; logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno farà il contrario del resto del gruppo.`, 'warn'); return; }
-  if(c.sigilloActive){ logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): agirebbe contro il team, ma il Sigillo lo impedisce.`, 'good'); return; }
-  c.pendingCorruzione='ostile';
-  logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): al prossimo turno agirà contro il team.`, 'warn');
+  if(r>=5) outcome = 'nulla, nonostante il campanello d\'allarme';
+  else if(r>=3){ c.pendingCorruzione='contrario'; outcome = 'al prossimo turno farà il contrario del resto del gruppo'; }
+  else if(c.sigilloActive) outcome = 'agirebbe contro il team, ma il Sigillo lo impedisce';
+  else { c.pendingCorruzione='ostile'; outcome = 'al prossimo turno agirà contro il team'; }
+  logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): ${outcome}.`, c.pendingCorruzione==='ostile'||c.pendingCorruzione==='contrario'?'warn':'good');
+  queueMadnessPopup(c, 'corruzione', `Check di Anima fallito (${check.roll} vs ${check.val}): ${outcome}.`);
 }
 /* -------- risoluzione delle azioni dovute a Follia/Corruzione al turno successivo -------- */
 function resolveForceContest(a,b){
@@ -4284,6 +4300,22 @@ function openModal(html){
   if(!d.open) d.showModal();
 }
 function closeModal(){ document.getElementById('modalRoot').close(); }
+function renderPendingMadnessPopup(){
+  if(!state.pendingMadnessPopups || !state.pendingMadnessPopups.length) return false;
+  // non scavalcare un'altra modale già aperta da un flusso più prioritario (avanzamento di
+  // livello, scelta del Vuoto, ecc.): l'evento resta in coda e si mostra al prossimo render()
+  // "libero", invece di sovrascrivere quello che l'utente ha davanti in quel momento.
+  if(document.getElementById('modalRoot').open) return false;
+  const ev = state.pendingMadnessPopups[0];
+  const isFollia = ev.kind==='follia';
+  openModal(`<img src="assets/ui/${isFollia?'follia':'corruzione'}.jpg" alt="${isFollia?'Follia':'Corruzione'}" class="endgame-img" onerror="this.style.display='none';">
+    <h3 style="text-align:center;">${isFollia?'🌀 Follia':'👹 Corruzione'} — ${escapeHtml(ev.name)}</h3>
+    <p>${escapeHtml(ev.text)}</p>
+    <div class="row mt1"><button class="primary" id="btnMadnessPopupClose">Continua</button></div>`);
+  const btn = document.getElementById('btnMadnessPopupClose');
+  if(btn) btn.onclick=()=>{ state.pendingMadnessPopups.shift(); closeModal(); render(); };
+  return true;
+}
 
 /* ---------- bind game-level events ---------- */
 function bindGame(){
