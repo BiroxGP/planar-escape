@@ -2257,12 +2257,16 @@ function renderIncontroAction(){
   if(!el || !state.currentDraw) return;
   const plane = currentPlane(); const card = currentIncontro();
   const acts = state.currentDraw.targets.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && (c.status==='active'||c.status==='undead'));
-  // Qualsiasi azione che non sia un semplice check (un'interazione: commerciare, aprire
-  // qualcosa, raccogliere un oggetto...) fa scattare l'effetto di fine turno del piano, se
-  // presente — a differenza di uno scontro (dove si può ancora tentare la fuga) qui non c'è
-  // modo di evitarlo una volta scelto di agire, quindi lo si avvisa prima.
+  // Regola: l'unico modo di evitare l'effetto di fine turno del piano (Veleno/Tempesta/
+  // Follia) è non aver avuto nulla da affrontare — "Nessun evento", o rifiutare del tutto
+  // un'interazione opzionale (mercante, patto, ecc: niente scambio, niente danno). Qualsiasi
+  // interazione vera — anche solo scegliere di commerciare — lo fa scattare; uno scontro lo fa
+  // scattare SEMPRE, anche fuggendo con successo o restando nascosti: c'è comunque un nemico
+  // di mezzo, niente "situazione tranquilla".
+  const DECLINE_REWARD_TYPES = new Set(['heal','resourceForSacrifice','tradeItemForItemOrResource','tradeForItem','tradeResourceForItem','removePermDebuff']);
+  const hasDeclineOption = card.oblioCard || card.statuaCard || card.randagioCard || (card.type==='ricompensa' && DECLINE_REWARD_TYPES.has(card.reward?.type));
   const fineTurnoWarning = (hasFineTurnoRisk(plane) && card.type!=='nessun' && !card.safeRespite)
-    ? `<p class="hint">⚠️ Agire qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)}.</p>` : '';
+    ? `<p class="hint">⚠️ ${hasDeclineOption ? `Interagire qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)} — puoi rifiutare per evitarlo.` : `Qui farà scattare l'effetto di fine turno di ${escapeHtml(plane.name)}, qualunque cosa tu scelga di fare.`}</p>` : '';
   if(card.type==='nessun'){
     el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
     document.getElementById('btnResolveDone').onclick=()=>{
@@ -2358,22 +2362,21 @@ function renderIncontroAction(){
       stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, niente da tentare.`));
     }
     if(stealthEligible.length){
-      el.innerHTML = renderStealthPanel(stealthEligible);
+      el.innerHTML = fineTurnoWarning + renderStealthPanel(stealthEligible);
       bindStealthPanel(stealthEligible);
       return;
     }
     const hidden = state.currentDraw.hidden||[];
     const fighters = acts.filter(c=>!hidden.includes(c.id));
     if(fighters.length===0){
-      el.innerHTML = `<p class="hint">🥷 Tutti i presenti sono riusciti a restare nascosti: nessuno scontro, né rischi né ricompense.</p><button class="primary" id="btnResolveDone">Continua</button>`;
-      document.getElementById('btnResolveDone').onclick=()=>{
-        // nascosti dall'Incontro: si evitano anche gli effetti di fine turno del piano.
-        state.currentDraw.skipFineTurno = true;
-        finishIncontro();
-      };
+      // restare nascosti evita lo scontro in sé, ma non è una "situazione tranquilla": c'è
+      // comunque un nemico nei paraggi, quindi l'effetto di fine turno del piano resta.
+      const stillFineTurno = hasFineTurnoRisk(plane) ? ` Il rischio di fine turno di ${escapeHtml(plane.name)} resta comunque.` : '';
+      el.innerHTML = `<p class="hint">🥷 Tutti i presenti sono riusciti a restare nascosti: nessuno scontro, né rischi né ricompense.${stillFineTurno}</p><button class="primary" id="btnResolveDone">Continua</button>`;
+      document.getElementById('btnResolveDone').onclick=finishIncontro;
       return;
     }
-    el.innerHTML = renderCombatPanel(plane, card, fighters);
+    el.innerHTML = fineTurnoWarning + renderCombatPanel(plane, card, fighters);
     bindCombatPanel(plane, card, fighters);
     return;
   }
@@ -2651,8 +2654,8 @@ function bindCombatPanel(plane, card, acts){
     if(success){
       logMsg('↩️ Il gruppo raggiunge il portale e interrompe lo scontro.','good');
       if(card.persistent){ persistCombat(plane, cb); }
-      // scappati in tempo: si evitano anche gli effetti di fine turno del piano (Veleno/Tempesta).
-      state.currentDraw.skipFineTurno = true;
+      // la fuga interrompe lo scontro, ma c'era comunque un nemico da affrontare: l'effetto
+      // di fine turno del piano (Veleno/Tempesta) scatta lo stesso, fuga riuscita o no.
       finishIncontro();
     } else {
       logMsg('↩️ La ritirata fallisce: le entità hanno un altro giro per colpire prima di poter riprovare a scappare.','warn');
@@ -2875,7 +2878,13 @@ function bindRewardPanel(card, acts){
     else if(mode==='peek'){ showPeekModal({type:'peek', n:2, chooseBottom:true}); }
   });
   const declineBtn=document.getElementById('btnDeclineReward');
-  if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo rinuncia alla ricompensa: nessun sacrificio, nessuna risorsa.'); done(); };
+  if(declineBtn) declineBtn.onclick=()=>{
+    logMsg('🚫 Il gruppo rinuncia alla ricompensa: nessun sacrificio, nessuna risorsa.');
+    // rifiutare l'interazione è come non aver avuto nulla da affrontare: si evita anche
+    // l'effetto di fine turno del piano.
+    if(state.currentDraw) state.currentDraw.skipFineTurno = true;
+    done();
+  };
   document.querySelectorAll('[data-sacrifice]').forEach(b=>b.onclick=()=>{
     const [id,what]=b.dataset.sacrifice.split('-'); const c=acts.find(x=>x.id===id);
     let sacrificed=false;
@@ -3064,7 +3073,11 @@ function bindOblioCard(acts){
     finishIncontro();
   });
   const declineBtn=document.getElementById('btnDeclineReward');
-  if(declineBtn) declineBtn.onclick=()=>{ logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.'); finishIncontro(); };
+  if(declineBtn) declineBtn.onclick=()=>{
+    logMsg('🚫 Il gruppo lascia perdere: nessun oggetto, nessun oblio.');
+    if(state.currentDraw) state.currentDraw.skipFineTurno = true;
+    finishIncontro();
+  };
 }
 function renderStatuaCard(acts){
   const withItems = acts.filter(c=>allOwnedItemIds(c).length);
@@ -3088,7 +3101,10 @@ function bindStatuaCard(acts){
     finishIncontro();
   });
   const btn=document.getElementById('btnResolveDone');
-  if(btn) btn.onclick=finishIncontro;
+  if(btn) btn.onclick=()=>{
+    if(state.currentDraw) state.currentDraw.skipFineTurno = true;
+    finishIncontro();
+  };
 }
 function renderRandagioCard(acts){
   return `<div class="manual-box">
@@ -3105,7 +3121,10 @@ function bindRandagioCard(acts){
     finishIncontro();
   });
   const btn=document.getElementById('btnResolveDone');
-  if(btn) btn.onclick=finishIncontro;
+  if(btn) btn.onclick=()=>{
+    if(state.currentDraw) state.currentDraw.skipFineTurno = true;
+    finishIncontro();
+  };
 }
 function renderEsattoreCard(acts){
   const used = (state.currentDraw && state.currentDraw.esattoreDone) || {};
@@ -3147,11 +3166,13 @@ function bindEsattoreCard(acts, plane){
   const btn=document.getElementById('btnResolveDone');
   if(btn) btn.onclick=finishIncontro;
 }
-// Piani con un effetto "a fine turno" invece che d'ingresso: colpiscono solo se il gruppo
-// non è riuscito a evitare del tutto l'Incontro del turno (scontro fuggito con successo, o
-// tutti riusciti a restare nascosti) — in quel caso state.currentDraw.skipFineTurno viene
-// impostato prima di chiamare finishIncontro(). Nessuna gestione di più turni di permanenza:
-// si applica una volta sola, a fine di QUESTO turno.
+// Piani con un effetto "a fine turno" invece che d'ingresso: si evita SOLO se non c'era
+// nulla da affrontare — "Nessun evento", o un'interazione opzionale rifiutata del tutto
+// (mercante/patto/oggetto declinato: nessuno scambio, nessun danno). In quel caso
+// state.currentDraw.skipFineTurno viene impostato prima di chiamare finishIncontro().
+// Uno scontro invece lo fa scattare SEMPRE — fuga riuscita, tutti nascosti o combattuto fino
+// alla fine, non importa: c'era comunque un nemico di mezzo. Nessuna gestione di più turni di
+// permanenza: si applica una volta sola, a fine di QUESTO turno.
 const FINE_TURNO_PLANES = new Set(['veleno','tempesta']);
 function hasFineTurnoRisk(plane){
   if(!plane) return false;
