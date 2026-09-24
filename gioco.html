@@ -1383,7 +1383,11 @@ function applyVuotoLoss(c, what){
   // un messaggio fisso "sceglie di perdere 1 PV" qui sopra sarebbe fuorviante quando
   // il colpo viene parato subito dopo.
   if(what==='pv'){ applyDamage(c,'pv',1,{ignoreResistance:true}); }
-  else if(what==='item' && c.inventory.length){ const idx=Math.floor(Math.random()*c.inventory.length); const lost=c.inventory.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di perdere ${OGGETTI_BY_ID[lost]?.name}.`); }
+  else if(what==='item' && c.inventory.length){
+    const idx=pickLosableItemIndex(c);
+    if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di perdere ${OGGETTI_BY_ID[lost]?.name}.`); }
+    else logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`);
+  }
   else if(what==='spell' && c.spells.length){ const idx=Math.floor(Math.random()*c.spells.length); const lost=c.spells.splice(idx,1)[0]; logMsg(`🕳️ ${c.name} sceglie di dimenticare ${SPELLS_BY_ID[lost]?.name}.`); }
   else if(what==='ability'){
     if(c.rerolls>0){ c.rerolls--; logMsg(`🕳️ ${c.name} sceglie di perdere 1 reroll.`); }
@@ -2432,6 +2436,14 @@ function renderIncontroAction(){
     };
     return;
   }
+  if(card.type==='ricompensa' && card.reward?.type==='choiceLoss'){
+    // A differenza delle altre ricompense (un click chiude subito l'Incontro), qui il vuoto
+    // reclama qualcosa da OGNI presente: serve che ciascuno scelga la propria perdita prima
+    // di poter continuare, non solo il primo che clicca.
+    el.innerHTML = fineTurnoWarning + renderChoiceLossCard(acts);
+    bindChoiceLossCard(acts);
+    return;
+  }
   if(card.type==='ricompensa'){
     el.innerHTML = fineTurnoWarning + renderRewardPanel(card, acts);
     bindRewardPanel(card, acts);
@@ -2817,7 +2829,6 @@ function renderRewardPanel(card, acts){
     }
     case 'sanheal': return `<div>${acts.map(c=>`<button class="small" data-sanheal="${c.id}">+1 San a ${c.name}</button>`).join(' ')}</div>`;
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
-    case 'choiceLoss': return `<div>${acts.map(c=>`<span style="display:block;margin-bottom:.3rem;">${c.name}: <button class="small" data-lose="${c.id}-pv">-1 PV</button> <button class="small" data-lose="${c.id}-item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button></span>`).join('')}</div>`;
     case 'choice3': return `<div>${acts.length?`<button class="small" data-choice3="resistance">🛡️ Resistenza per tutto il gruppo (prossimo piano)</button>`:''}<button class="small" data-choice3="peek">👁️ Guarda 2 carte in cima al mazzo Piani, scegli quale resta in cima</button><button class="small" data-choice3="reshuffle">🔀 Rimescola il mazzo Piani</button></div>`;
     case 'itemPlusCheck': return `<p class="hint">⚠️ Se il check di Sanità fallisce: depotenziamento temporaneo a San.</p><div>${acts.map(c=>`<button class="small" data-itemcheck="${c.id}">Pesca oggetto e fai il check di Sanità → ${c.name}</button>`).join(' ')}</div>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
@@ -2861,7 +2872,6 @@ function bindRewardPanel(card, acts){
   document.querySelectorAll('[data-rmperm]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.rmperm); openRemovePermModal(c); });
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
-  document.querySelectorAll('[data-lose]').forEach(b=>b.onclick=()=>{ const [id,what]=b.dataset.lose.split('-'); const c=acts.find(x=>x.id===id); if(what==='pv') applyDamage(c,'pv',1,{ignoreResistance:true}); else if(c.inventory.length){ c.inventory.pop(); } done(); });
   document.querySelectorAll('[data-itemcheck]').forEach(b=>b.onclick=()=>{
     const c=acts.find(x=>x.id===b.dataset.itemcheck);
     const it=drawOggetto();
@@ -2908,6 +2918,39 @@ function bindRewardPanel(card, acts){
     const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🤝 ${c.name} paga ${mode==='resource'?'1 risorsa':'1 Anima'} e ottiene ${OGGETTI_BY_ID[it].name}.`,'good'); }
     done();
   });
+}
+function renderChoiceLossCard(acts){
+  // Voragine del Vuoto: "il vuoto reclama qualcosa da OGNI presente", non solo da chi sceglie
+  // per primo — ogni personaggio ha le sue 4 opzioni (le stesse della scelta forzata del piano
+  // Vuoto, vedi applyVuotoLoss) e il pulsante Continua resta disabilitato finché non hanno
+  // scelto tutti.
+  return `<div>${acts.map(c=>{
+    const canSpell = c.spells.length>0;
+    const canAbility = c.rerolls>0 || (CLASSES[c.cls].special && c.charges.special);
+    return `<div class="row" style="margin-bottom:.5rem; flex-wrap:wrap;" data-voidlossrow="${c.id}">
+      <span style="min-width:120px;">${escapeHtml(c.name)}</span>
+      <button class="small" data-voidloss="${c.id}:pv">-1 PV</button>
+      <button class="small" data-voidloss="${c.id}:item" ${c.inventory.length?'':'disabled'}>Perdi oggetto</button>
+      <button class="small" data-voidloss="${c.id}:spell" ${canSpell?'':'disabled'}>Perdi uno spell</button>
+      <button class="small" data-voidloss="${c.id}:ability" ${canAbility?'':'disabled'}>Perdi un'abilità</button>
+    </div>`;
+  }).join('')}<button class="primary mt1" id="btnResolveDone" ${acts.length?'disabled':''}>Continua</button></div>`;
+}
+function bindChoiceLossCard(acts){
+  const chosen = {};
+  document.querySelectorAll('[data-voidloss]').forEach(b=>{
+    b.onclick=()=>{
+      const [cid,what]=b.dataset.voidloss.split(':');
+      if(chosen[cid]) return;
+      chosen[cid]=true;
+      const c=acts.find(x=>x.id===cid);
+      applyVuotoLoss(c, what);
+      document.querySelectorAll(`[data-voidlossrow="${cid}"] button`).forEach(bb=>bb.disabled=true);
+      if(Object.keys(chosen).length>=acts.length) document.getElementById('btnResolveDone').disabled=false;
+    };
+  });
+  const btn=document.getElementById('btnResolveDone');
+  if(btn) btn.onclick=finishIncontro;
 }
 function eternitaEligible(c){
   // "ciò che era perduto per sempre": un depotenziamento permanente su una caratteristica,
