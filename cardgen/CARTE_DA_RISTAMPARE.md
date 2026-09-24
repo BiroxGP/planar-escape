@@ -20,6 +20,7 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 |---|---|---|---|
 | 2026-09-24 | Eco dal Fondo (Spell essenza, `sp_ecofondo`) | Testo | Vedeva la carta in fondo al mazzo Piani e poteva portarla in cima garantita — troppo forte, rischiava di far vincere troppo facilmente scegliendo la destinazione. Ora: rimescola il mazzo, poi guarda la nuova cima e può rimandarla in fondo se non convince (come Sguardo Fugace, ma con reshuffle prima). |
 | 2026-09-24 | Richiamo dal Fondo (Spell divinazione, `sp_richiamofondo`) | Testo | Stesso nerf di Eco dal Fondo, stessa ragione (era la versione gratuita dello stesso problema). |
+| 2026-09-24 | Tutte le 13 Classi | Layout | Mancava del tutto l'affinità di partenza (quali scuole di spell e quanti all'inizio) — aggiunta una riga di sigilli di scuola + conteggio (assente sulle classi senza spell: Guerriero/Barbaro/Ladro/Saltimbanco). Statistiche ingrandite, si leggevano poco. Rigenerate tutte da `assets/cards_raw/` con `render-classes.js`, PDF Classi (`classi_fronte.pdf`/`classi_retro.pdf`) rigenerato per intero. |
 
 ## Già ristampate / in attesa di conferma stampa
 

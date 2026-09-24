@@ -124,17 +124,19 @@ function artLayer(item, artDir, accent, emoji) {
   </div>`;
 }
 
-function schoolBadgeLayer(school, artDir) {
+function findSchoolIcon(school, artDir) {
   // il sigillo (icona) di scuola: file condiviso fra tutti gli spell della stessa scuola,
   // non specifico della singola carta — cercato come "icon_<school>.*" invece di "<id>.*".
   const exts = ['.png', '.jpg', '.jpeg', '.webp'];
-  let found = null;
-  if (artDir) {
-    for (const ext of exts) {
-      const p = path.join(artDir, 'icon_' + school + ext);
-      if (fs.existsSync(p)) { found = p; break; }
-    }
+  if (!artDir) return null;
+  for (const ext of exts) {
+    const p = path.join(artDir, 'icon_' + school + ext);
+    if (fs.existsSync(p)) return p;
   }
+  return null;
+}
+function schoolBadgeLayer(school, artDir) {
+  const found = findSchoolIcon(school, artDir);
   if (!found) return '';
   const fileUrl = pathToFileURL(found).href;
   return `<div class="school-badge"><img src="${fileUrl}"></div>`;
@@ -313,6 +315,17 @@ ${cards}
 function classCardHtml(cls, artDir) {
   const stats = cls.stats;
   const resistBadges = cls.resistance.map(f => `<span class="badge"><span class="badge-icon">${FAMILY_EMOJI[f]||'🛡️'}</span>Resist. ${f}</span>`).join('');
+  // Spell iniziali: quante carte pesca all'inizio e da quale/i scuola/e (affinity, es.
+  // {divinazione:2, essenza:1}) — mancava del tutto sulla carta, un'informazione che invece
+  // serve a colpo d'occhio in fase di scelta del personaggio. Un sigillo (stesso usato sulle
+  // carte Spell) + il conteggio per ogni scuola con affinità; le classi senza spell (Guerriero,
+  // Barbaro, Ladro, Saltimbanco) semplicemente non mostrano questa riga.
+  const affinityEntries = Object.entries(cls.affinity || {}).filter(([, n]) => n > 0);
+  const affinityHtml = affinityEntries.length ? `<div class="affinity-row">${affinityEntries.map(([school, n]) => {
+    const iconPath = findSchoolIcon(school, artDir);
+    const iconHtml = iconPath ? `<img src="${pathToFileURL(iconPath).href}">` : `<span class="aff-fallback">${SCHOOL_EMOJI[school] || '📖'}</span>`;
+    return `<div class="affinity-chip" style="--school:${SCHOOL_ACCENT[school] || '#7a6f5e'};">${iconHtml}<span class="aff-n">×${n}</span></div>`;
+  }).join('')}</div>` : '';
   return `
   <div class="card card-portrait" id="card-${cls.id}" data-id="${cls.id}" style="--fam:${CLASS_ACCENT};">
     ${artLayer(cls, artDir, CLASS_ACCENT, cls.icon)}
@@ -326,6 +339,7 @@ function classCardHtml(cls, artDir) {
       <div class="stat-block">
         ${['for','int','des','pv','san','anima'].map(s => `<div class="stat-cell"><div class="stat-ic">${STAT_ICON[s]}</div><div class="stat-v">${stats[s]}</div></div>`).join('')}
       </div>
+      ${affinityHtml}
       <div class="badges class-badges">
         <span class="badge"><span class="badge-icon">⚔️</span>${WEAPONS_LABEL[cls.weapons]||cls.weapons}</span>
         ${cls.reroll ? `<span class="badge"><span class="badge-icon">🔁</span>${cls.reroll} reroll</span>` : ''}
@@ -345,14 +359,23 @@ function classPageHtml(classes, artDir) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
   .class-panel{ height:60%; padding:16px 26px 24px; }
-  .stat-block{ display:flex; gap:6px; margin-bottom:8px; }
+  .stat-block{ display:flex; gap:7px; margin-bottom:10px; }
   .stat-cell{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
-    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:8px;
-    width:56px; padding:5px 0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:9px;
+    width:66px; padding:7px 0;
   }
-  .stat-ic{ font-size:15px; line-height:1; }
-  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:17px; font-weight:600; }
+  .stat-ic{ font-size:19px; line-height:1; }
+  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:24px; font-weight:700; }
+  .affinity-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .affinity-chip{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,.10); border:1px solid var(--school); border-radius:999px;
+    padding:3px 14px 3px 3px;
+  }
+  .affinity-chip img{ width:30px; height:30px; border-radius:50%; object-fit:cover; box-shadow:0 0 8px 1px var(--school); }
+  .affinity-chip .aff-fallback{ font-size:20px; width:30px; text-align:center; }
+  .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:19px; font-weight:700; }
   .class-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
   .class-badges .badge{ font-size:12px; padding:4px 10px; gap:5px; }
   .class-badges .badge-icon{ font-size:15px; }
