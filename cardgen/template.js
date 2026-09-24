@@ -26,6 +26,12 @@ const FAMILY_ACCENT = {
 const FAMILY_EMOJI = {
   elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋', generico: '🌐',
 };
+// nome per le badge di Resistenza sulle carte Classe (senza il prefisso "Resist.", tolto per
+// farle entrare accanto alle statistiche): capitalizzato come in FAMILIES di gioco.html.
+const FAMILY_LABEL = {
+  elementare: 'Elementare', terrestre: 'Terrestre', demoniaco: 'Demoniaco', nonmorti: 'Non-morti',
+  eterei: 'Eterei', armonia: 'Armonia', entropia: 'Entropia', generico: 'Generico',
+};
 
 const INCONTRO_TYPE_LABEL = { nessun: 'Nessun evento', incontro: 'Incontro', check: 'Check', ricompensa: 'Ricompensa' };
 
@@ -37,7 +43,7 @@ const PIANO_TERRENO_EMOJI = '🏔️';
 // Classi: stesso discorso, un accento fisso (bordeaux araldico) invece di una Famiglia.
 const CLASS_ACCENT = '#7a2f3d';
 
-const WEAPONS_LABEL = { heavy: 'Armi pesanti', light: 'Armi leggere', none: "Nessun'arma" };
+const WEAPONS_LABEL = { heavy: 'Pesanti', light: 'Leggere', none: 'Nessuna' };
 
 // Spell: un accento per scuola invece che per Famiglia, coordinato col colore del
 // sigillo luminoso (icona) di quella scuola, cosi' badge/nastro e sigillo si intonano.
@@ -314,7 +320,9 @@ ${cards}
 
 function classCardHtml(cls, artDir) {
   const stats = cls.stats;
-  const resistBadges = cls.resistance.map(f => `<span class="badge"><span class="badge-icon">${FAMILY_EMOJI[f]||'🛡️'}</span>Resist. ${f}</span>`).join('');
+  // Niente più prefisso "Resist." (tolto per stare comodamente accanto alle statistiche):
+  // il sigillo di Famiglia + il nome bastano da soli a farla riconoscere come resistenza.
+  const resistBadges = cls.resistance.map(f => `<span class="badge"><span class="badge-icon">${FAMILY_EMOJI[f]||'🛡️'}</span>${FAMILY_LABEL[f]||f}</span>`).join('');
   // Spell iniziali: quante carte pesca all'inizio e da quale/i scuola/e (affinity, es.
   // {divinazione:2, essenza:1}) — mancava del tutto sulla carta, un'informazione che invece
   // serve a colpo d'occhio in fase di scelta del personaggio. Un sigillo (stesso usato sulle
@@ -335,16 +343,18 @@ function classCardHtml(cls, artDir) {
         <div class="name-block">
           <div class="name">${cls.icon} ${esc(cls.name)}</div>
         </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-block">
+          ${['for','int','des','pv','san','anima'].map(s => `<div class="stat-cell"><div class="stat-ic">${STAT_ICON[s]}</div><div class="stat-v">${stats[s]}</div></div>`).join('')}
+        </div>
         <div class="badges class-badges">
           <span class="badge"><span class="badge-icon">⚔️</span>${WEAPONS_LABEL[cls.weapons]||cls.weapons}</span>
           ${cls.reroll ? `<span class="badge"><span class="badge-icon">🔁</span>${cls.reroll} reroll</span>` : ''}
           ${cls.stealth ? `<span class="badge"><span class="badge-icon">🥷</span>Furtività</span>` : ''}
-          ${cls.waterOk ? `<span class="badge"><span class="badge-icon">💧</span>A suo agio in acqua</span>` : ''}
+          ${cls.waterOk ? `<span class="badge"><span class="badge-icon">💧</span>In acqua</span>` : ''}
           ${resistBadges}
         </div>
-      </div>
-      <div class="stat-block">
-        ${['for','int','des','pv','san','anima'].map(s => `<div class="stat-cell"><div class="stat-ic">${STAT_ICON[s]}</div><div class="stat-v">${stats[s]}</div></div>`).join('')}
       </div>
       ${affinityHtml}
       <div class="rule-text class-desc">${esc(cls.desc)}</div>
@@ -359,14 +369,19 @@ function classPageHtml(classes, artDir) {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>${sharedCardCss()}
   .class-panel{ height:60%; padding:16px 26px 24px; }
-  .stat-block{ display:flex; gap:8px; margin-bottom:12px; }
+  /* badges (armi/reroll/furtività/acqua/resistenze) non più nella riga del nome né in fondo
+     alla carta: stanno a destra delle statistiche, alla stessa altezza, centrate sull'intera
+     riga (eredita la colonna verticale di .badges condivisa con Spell/Incontro). Le label
+     sono accorciate ("Leggere"/"Pesanti", niente prefisso "Resist.") apposta per starci. */
+  .stats-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; }
+  .stat-block{ display:flex; gap:7px; flex:none; }
   .stat-cell{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:10px;
-    width:80px; padding:9px 0;
+    width:70px; padding:8px 0;
   }
-  .stat-ic{ font-size:24px; line-height:1; }
-  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:32px; font-weight:700; }
+  .stat-ic{ font-size:22px; line-height:1; }
+  .stat-v{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:29px; font-weight:700; }
   .affinity-row{ display:flex; gap:10px; margin-bottom:10px; }
   .affinity-chip{
     display:flex; align-items:center; gap:8px;
@@ -376,10 +391,9 @@ function classPageHtml(classes, artDir) {
   .affinity-chip img{ width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 10px 1px var(--school); }
   .affinity-chip .aff-fallback{ font-size:26px; width:40px; text-align:center; }
   .affinity-chip .aff-n{ font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:26px; font-weight:700; }
-  /* riga del nome: badges (armi/reroll/furtività/acqua/resistenze) spostati qui a destra,
-     in colonna come su Spell/Incontro (eredita .badges condivisa), invece che in una riga
-     in fondo alla carta — libera spazio sotto per statistiche/affinità più grandi. */
-  .class-badges .badge{ font-size:14px; padding:5px 12px; gap:6px; }
+  .class-badges{ gap:6px; min-width:0; }
+  .class-badges .badge{ font-size:13px; padding:4px 10px; gap:5px; }
+  .class-badges .badge-icon{ font-size:15px; }
   .class-badges .badge-icon{ font-size:17px; }
 </style></head>
 <body><div class="stage">

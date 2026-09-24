@@ -82,7 +82,6 @@
     },
     "weapons": "none",
     "resistance": [
-      "eterei",
       "entropia"
     ],
     "stealth": false,
@@ -94,7 +93,7 @@
       "essenza": 1
     },
     "exitPlane": null,
-    "desc": "Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza a Eterei + Entropia."
+    "desc": "Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza Entropia."
   },
   {
     "id": "mago",
@@ -110,7 +109,7 @@
     },
     "weapons": "none",
     "resistance": [
-      "elementare"
+      "eterei"
     ],
     "stealth": false,
     "waterOk": false,
@@ -120,7 +119,7 @@
       "essenza": 3
     },
     "exitPlane": null,
-    "desc": "Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."
+    "desc": "Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Eterei."
   },
   {
     "id": "chierico",

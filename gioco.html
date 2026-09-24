@@ -431,10 +431,10 @@ const CLASSES = {
     desc:"Furia brutale: un 6 naturale in qualsiasi Contesa infligge 2 danni invece di 1. A 0 PV non sviene, resta attivo."},
   ladro:{name:"Ladro",icon:"🗡️",for:2,int:2,des:4,pv:3,san:5,anima:5,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],stealth:true,
     desc:"Furtività: può tentare di restare nascosto da un Incontro (check Destrezza). Classe ibrida: 1 reroll fisso."},
-  veggente:{name:"Veggente",icon:"🔮",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{divinazione:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["eterei","entropia"],stealth:false,special:"vista_piani",
-    desc:"Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza a Eterei + Entropia."},
-  mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["elementare"],special:"dardo",
-    desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Elementare."},
+  veggente:{name:"Veggente",icon:"🔮",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{divinazione:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["entropia"],stealth:false,special:"vista_piani",
+    desc:"Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza Entropia."},
+  mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["eterei"],special:"dardo",
+    desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Eterei."},
   chierico:{name:"Chierico",icon:"🙏",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_diretta",
     desc:"Abilità: cura 1 PV a un bersaglio a scelta (ricarica a Recupero). Anima iniziale 6. Resistenza Armonia."},
   druido:{name:"Druido",icon:"🌿",for:2,int:3,des:2,pv:4,san:5,anima:5,affinity:{flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["terrestre"],special:"forma_selvatica",waterOk:true,exitPlane:"flora_aliena",
@@ -508,7 +508,7 @@ const CLASS_WAVE = {
   // farle comparire (tra parentesi la Resistenza di ciascuna, solo per orientarti; 0 =
   // visibile da subito insieme alle prime quattro).
   barbaro: 2,     // nessuna resistenza
-  veggente: 2,    // resistenza Eterei + Entropia
+  veggente: 2,    // resistenza Entropia
   druido: 2,      // resistenza Terrestre
   warlock: 2,     // resistenza Demoniaco
   negromante: 2,  // resistenza Non-morti
