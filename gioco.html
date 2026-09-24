@@ -3396,7 +3396,7 @@ function openPianoTerrenoModal(dest){
   } else if(dest.kind==='check'){
     body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptcheck="${c.id}">${c.name}: check Intelletto</button>`).join('')}</div><div id="ptCheckResult"></div><button class="primary mt1" id="btnPTClose">Continua</button>`;
   } else if(dest.kind==='contesaProposta'){
-    body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptcontesa="${c.id}">${c.name} si siede sul trono</button>`).join('')}</div><button class="primary mt1" id="btnPTClose">Continua</button>`;
+    body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptcontesa="${c.id}">${c.name} si siede sul trono</button>`).join('')}</div><div id="ptCheckResult"></div><button class="primary mt1" id="btnPTClose">Continua</button>`;
   } else if(dest.kind==='terrestre'){
     const exitChar = state.players.find(c=>CLASSES[c.cls].exitPlane===dest.id && (c.status==='active'||c.status==='undead'));
     body += exitChar ? `<div class="row mt1"><button class="primary" data-win="${exitChar.id}">${exitChar.name} esce e vince subito</button><button id="btnPTClose">Resta col gruppo</button></div>` : `<div class="row mt1"><button id="btnPTClose">Continua</button></div>`;
@@ -3499,7 +3499,7 @@ function bindPianoTerrenoModal(dest){
   });
   document.querySelectorAll('[data-ptcontesa]').forEach(b=>b.onclick=()=>{
     if(b.disabled) return;
-    b.disabled = true;
+    document.querySelectorAll('[data-ptcontesa]').forEach(bb=>bb.disabled=true); // un solo trono: un solo personaggio può sedersi (altrimenti un secondo che vince subito dopo sovrascrive la scelta del primo in #ptCheckResult)
     const c=state.players.find(x=>x.id===b.dataset.ptcontesa);
     const r=checkRoll(c,'anima'); const eco=d6(); const ecoHit = eco<=3;
     const win = r.success && !ecoHit;
