@@ -88,12 +88,16 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .landing-social a.ig{background:linear-gradient(135deg,#f9ce34,#ee2a7b 55%,#6228d7);}
 .landing-social a.tt{background:linear-gradient(135deg,#25f4ee,#111 55%,#fe2c55);}
 
-.landing-cta{margin-top:.5rem; padding-top:1.3rem; border-top:1px dashed var(--line);}
+.landing-cta{
+  border:1px solid var(--portal); background:var(--portal-soft); padding:1.8rem 1.5rem;
+  box-shadow:0 10px 28px var(--shadow);
+}
+.landing-cta h2{font-size:1.35rem;}
 .landing-cta p{color:var(--ink-soft); max-width:56ch; margin-left:auto; margin-right:auto;}
 .landing-cta .contact-btn{
-  display:inline-flex; align-items:center; gap:.6rem; margin-top:.4rem; padding:.75rem 1.5rem;
+  display:inline-flex; align-items:center; gap:.6rem; margin-top:.6rem; padding:.9rem 1.9rem;
   border-radius:12px; background:var(--portal); color:#fff; text-decoration:none; font-weight:700;
-  font-size:1.02rem; box-shadow:0 8px 20px var(--shadow); transition:transform .15s ease, box-shadow .15s ease;
+  font-size:1.15rem; box-shadow:0 8px 20px var(--shadow); transition:transform .15s ease, box-shadow .15s ease;
 }
 .landing-cta .contact-btn:hover{transform:translateY(-2px); box-shadow:0 10px 24px var(--shadow); color:#fff;}
 .landing-cta .contact-btn svg{width:20px; height:20px; flex:none;}
@@ -173,7 +177,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
   </div>
   <div class="panel">
     <h2 id="classesTitle">Le classi</h2>
-    <p class="hint" id="classesHint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sopra:</p>
+    <p class="hint" id="classesHint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sotto:</p>
     <div class="class-showcase">
       <div class="class-showcase-card">
         <div class="head"><span class="ic">⚔️</span><h4>Guerriero</h4></div>
@@ -193,6 +197,19 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
       </div>
     </div>
     <div class="class-showcase-teaser" id="classesTeaser">🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
+  </div>
+  <div class="panel center landing-cta">
+    <h2 id="ctaTitle">Vuoi provare il gioco vero?</h2>
+    <p id="ctaBody">Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
+    <a class="contact-btn" href="mailto:planarescape@gmail.com">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      planarescape@gmail.com
+    </a>
+    <div class="secondary-link" id="ctaSecondary"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
+  </div>
+  <div class="panel">
+    <h2 id="videosTitle">Il gioco in azione</h2>
+    <p class="hint" id="videosHint" style="margin-bottom:0;">Qualche assaggio da partite vere, prima di scriverci:</p>
   </div>
   <div class="grid cols-2">
     <div class="panel landing-video">
@@ -218,14 +235,8 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
       <p class="hint" id="vidCaption4">Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.</p>
     </div>
   </div>
-  <div class="panel center landing-cta">
-    <h2 id="ctaTitle">Vuoi provare il gioco vero?</h2>
-    <p id="ctaBody">Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
-    <a class="contact-btn" href="mailto:planarescape@gmail.com">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-      planarescape@gmail.com
-    </a>
-    <div class="secondary-link" id="ctaSecondary"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
+  <div class="panel center">
+    <p class="hint" id="videosCtaFooter">Convinto? <a href="mailto:planarescape@gmail.com">Scrivimi</a> per la password, oppure <a href="/gioco">entra nel simulatore</a> se ce l'hai già.</p>
   </div>
 </div>
 <script>
@@ -268,6 +279,10 @@ const I18N_EN = {
   "Vuoi provare il gioco vero?": "Want to try the real game?",
   "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:": "The full playtest simulator is reserved for people closely following development. Email me to get the access password:",
   "ctaSecondary": "Already have a password? Enter the simulator →",
+  "Le prime quattro, già protagoniste dei video qui sotto:": "The first four, already starring in the videos below:",
+  "Il gioco in azione": "The game in action",
+  "Qualche assaggio da partite vere, prima di scriverci:": "A few glimpses from real games, before you write to us:",
+  "videosCtaFooter": "Convinced? <a href=\"mailto:planarescape@gmail.com\">Email me</a> for the password, or <a href=\"/gioco\">enter the simulator</a> if you already have one.",
 };
 function applyLang(){
   const map = {
@@ -285,7 +300,7 @@ function applyLang(){
     howto4: 'Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.',
     howto5: "L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.",
     classesTitle: 'Le classi',
-    classesHint: 'Le prime quattro, già protagoniste dei video qui sopra:',
+    classesHint: 'Le prime quattro, già protagoniste dei video qui sotto:',
     classDescGuerriero: 'Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.',
     classDescLadro: 'Si muove nell\'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.',
     classDescMago: 'Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.',
@@ -302,6 +317,8 @@ function applyLang(){
     vidCaption4: "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.",
     ctaTitle: 'Vuoi provare il gioco vero?',
     ctaBody: "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:",
+    videosTitle: 'Il gioco in azione',
+    videosHint: 'Qualche assaggio da partite vere, prima di scriverci:',
   };
   Object.entries(map).forEach(([id, itText]) => { const el = document.getElementById(id); if (el) el.textContent = t(itText); });
   const coverImg = document.getElementById('coverImg');
@@ -310,6 +327,8 @@ function applyLang(){
   if (indieText) indieText.innerHTML = LANG === 'en' ? I18N_EN.indieText : "Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href=\"https://www.idea-g.it/\" target=\"_blank\" rel=\"noopener noreferrer\">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.";
   const ctaSecondary = document.getElementById('ctaSecondary');
   if (ctaSecondary) ctaSecondary.innerHTML = LANG === 'en' ? `<a href="/gioco">${I18N_EN.ctaSecondary}</a>` : '<a href="/gioco">Hai già una password? Entra nel simulatore →</a>';
+  const videosCtaFooter = document.getElementById('videosCtaFooter');
+  if (videosCtaFooter) videosCtaFooter.innerHTML = LANG === 'en' ? I18N_EN.videosCtaFooter : 'Convinto? <a href="mailto:planarescape@gmail.com">Scrivimi</a> per la password, oppure <a href="/gioco">entra nel simulatore</a> se ce l\'hai già.';
   document.querySelectorAll('.lang-switch .lang-opt').forEach(b => { b.classList.toggle('active', b.dataset.lang === LANG); });
 }
 function setLang(l){
