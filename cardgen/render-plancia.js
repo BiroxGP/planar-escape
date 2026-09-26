@@ -102,23 +102,15 @@ function backHtml() {
     .frame::before{
       content:''; position:absolute; inset:16px; border:1px solid rgba(79,214,208,.45); border-radius:20px;
     }
-    .emblem{
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-58%);
-      width:300px; height:300px; border-radius:50%;
-      border:3px solid #4fd6d0; box-shadow:0 0 40px rgba(79,214,208,.35), inset 0 0 30px rgba(79,214,208,.15);
-      display:flex; align-items:center; justify-content:center;
-      background:radial-gradient(circle, rgba(79,214,208,.10) 0%, transparent 70%);
-    }
-    .emblem .ic{ font-size:150px; filter:drop-shadow(0 0 18px rgba(79,214,208,.55)); }
     .title{
-      position:absolute; top:50%; left:50%; transform:translate(-50%, 130px);
-      font-family:'Cinzel',serif; font-weight:700; font-size:64px; letter-spacing:.08em;
+      position:absolute; top:50%; left:50%; transform:translate(-50%, -20px);
+      font-family:'Cinzel',serif; font-weight:700; font-size:76px; letter-spacing:.08em;
       color:#f4ede0; text-shadow:0 0 22px rgba(79,214,208,.5), 0 2px 8px rgba(0,0,0,.6);
       white-space:nowrap;
     }
     .sub{
-      position:absolute; top:50%; left:50%; transform:translate(-50%, 200px);
-      font-family:'Source Serif 4',serif; font-style:italic; font-size:26px; letter-spacing:.02em;
+      position:absolute; top:50%; left:50%; transform:translate(-50%, 60px);
+      font-family:'Source Serif 4',serif; font-style:italic; font-size:30px; letter-spacing:.02em;
       color:#b9c9c7; white-space:nowrap;
     }
     .corner{ position:absolute; width:14px; height:14px; border-radius:50%; background:#4fd6d0; box-shadow:0 0 12px rgba(79,214,208,.7); }
@@ -127,7 +119,6 @@ function backHtml() {
   <body>
     <div class="frame"></div>
     <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-    <div class="emblem"><div class="ic">🌀</div></div>
     <div class="title">PLANCIA GIOCATORE</div>
     <div class="sub">Planar Escape</div>
   </body></html>`;
