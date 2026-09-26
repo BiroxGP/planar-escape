@@ -1,10 +1,19 @@
 // Plancia Giocatore: un'unica board generica (non per classe — la carta Classe fisica si
 // posa nello slot a sinistra durante la partita), con le 6 caselle dado già colorate
-// dall'utente sovrapposte di icona+etichetta statistica. Le due posizioni delle caselle
-// (misurate per colore via canvas su plancia_giocatore.jpg, in ordine di lettura come
-// l'array STATS del gioco: for,int,des / pv,san,anima) e la stessa palette dei dadi usata
-// nell'app dove esiste già (pv=rosso/--bad, san=viola/--arcane — coincidenza col disegno
-// dell'utente, per int/des/for/anima non c'era una convenzione preesistente).
+// dall'utente sovrapposte di icona statistica. L'icona sta SOPRA ogni casella (non dentro):
+// dentro ci va il dado fisico vero durante la partita, e ci coprirebbe qualunque cosa
+// stampata lì sotto. Ordine di lettura griglia 2x3 = stesso ordine dell'array STATS del
+// gioco (for,int,des poi pv,san,anima) — non c'era altra convenzione preesistente che
+// coprisse tutte e sei le statistiche.
+//
+// Scala reale: derivata dalla carta Classe (che va nello slot a sinistra), non dal dado —
+// misurato lo slot carta sull'immagine (~650x981px) e forzato a 63,5mm di LARGHEZZA (formato
+// Poker): usare l'altezza invece darebbe uno slot troppo STRETTO per la carta (non entra
+// affatto), mentre scalando sulla larghezza lo slot resta solo un po' più alto del dovuto —
+// difetto minore, la carta comunque ci sta. A questa scala la board viene ~284x141mm: non
+// entra in un A4 verticale, ma un A4 ORIZZONTALE sì (297x210mm) — 1 sola plancia a foglio,
+// a differenza delle 2 del giro precedente (quello non teneva conto delle dimensioni reali
+// di carta/dado, solo di "quanto ci sta comodo in un A4").
 //
 // Uso: node render-plancia.js
 
@@ -14,47 +23,48 @@ const { pathToFileURL } = require('url');
 const { chromium } = require('playwright');
 
 const SRC_IMG = path.join(__dirname, '..', 'assets', 'ui', 'plancia_giocatore.jpg');
+const SRC_TOKENS = path.join(__dirname, '..', 'assets', 'ui', 'segnalini.jpg');
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'plancia');
+const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 const W = 2912, H = 1440;
 
 const STAT_ICON = { for: '💪', int: '🧠', des: '🏃', pv: '❤️', san: '🌀', anima: '🕯️' };
-const STAT_LABEL = { for: 'Forza', int: 'Intelletto', des: 'Destrezza', pv: 'Punti Vita', san: 'Sanità Mentale', anima: 'Anima' };
-// posizione delle 6 caselle, in % dell'immagine — griglia 2x3, stesso ordine di lettura
-// dell'array STATS del gioco (for,int,des poi pv,san,anima)
+// posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.jpg),
+// griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco
 const SLOTS = [
-  { stat: 'for',   left: 33.58, top: 19.79 },
-  { stat: 'int',   left: 54.60, top: 19.79 },
-  { stat: 'des',   left: 75.00, top: 19.79 },
-  { stat: 'pv',    left: 33.58, top: 54.17 },
-  { stat: 'san',   left: 54.60, top: 54.17 },
-  { stat: 'anima', left: 75.00, top: 54.17 },
+  { stat: 'for',   cx: 1225.5, topEdge: 248 },
+  { stat: 'int',   cx: 1818,   topEdge: 251 },
+  { stat: 'des',   cx: 2397,   topEdge: 251 },
+  { stat: 'pv',    cx: 1228.5, topEdge: 806 },
+  { stat: 'san',   cx: 1822.5, topEdge: 806 },
+  { stat: 'anima', cx: 2401.5, topEdge: 806 },
 ];
-const SLOT_W = 12.36, SLOT_H = 24.79;
+const ICON_H = 62; // altezza icona in px nativi — sta nello stretto spazio sopra la riga 1
+
+// Scala reale: vedi commento in testa al file. Slot carta misurato ~650px di larghezza,
+// forzato a corrispondere a 63,5mm (formato Poker).
+const CARD_SLOT_W_PX = 650;
+const MM_PER_PX = 63.5 / CARD_SLOT_W_PX;
+const BOARD_W_MM = W * MM_PER_PX;
+const BOARD_H_MM = H * MM_PER_PX;
 
 function frontHtml() {
   const imgUrl = pathToFileURL(SRC_IMG).href;
-  const slotsHtml = SLOTS.map(s => `
-    <div class="slot" style="left:${s.left}%; top:${s.top}%; width:${SLOT_W}%; height:${SLOT_H}%;">
-      <div class="ic">${STAT_ICON[s.stat]}</div>
-      <div class="lbl">${STAT_LABEL[s.stat]}</div>
-    </div>`).join('');
+  const iconsHtml = SLOTS.map(s => `
+    <div class="ic" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">${STAT_ICON[s.stat]}</div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&display=swap">
   <style>
     *{box-sizing:border-box; margin:0; padding:0;}
     body{ width:${W}px; height:${H}px; position:relative; background:#000; }
     .board{ position:absolute; inset:0; width:100%; height:100%; }
-    .slot{ position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-    .ic{ font-size:78px; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
-    .lbl{
-      margin-top:10px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:26px;
-      letter-spacing:.03em; text-transform:uppercase; color:#3a3228; text-align:center;
-      text-shadow:0 1px 0 rgba(255,255,255,.25);
+    .ic{
+      position:absolute; transform:translateX(-50%); font-size:${ICON_H}px; line-height:1;
+      filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
     }
   </style></head>
   <body>
     <img class="board" src="${imgUrl}">
-    ${slotsHtml}
+    ${iconsHtml}
   </body></html>`;
 }
 
@@ -102,29 +112,69 @@ function backHtml() {
   </body></html>`;
 }
 
-// Foglio di stampa: 2 plance per A4 verticale (impilate), non 4 — a piena larghezza utile
-// (200mm) la plancia verrebbe 200x98,9mm (stesso rapporto 2912:1440 dell'originale): già
-// così 2 ne entrano comode (197,8mm di altezza usata su 287 disponibili), a 4 per foglio
-// ognuna sarebbe larga solo ~100mm, troppo stretta per ospitare una carta poker (63,5mm)
-// più 6 caselle dado leggibili accanto.
-const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 5, GAP_MM = 5;
-const BOARD_W_MM = PAGE_W_MM - 2 * MARGIN_MM;
-const BOARD_H_MM = BOARD_W_MM * (H / W);
+// Segnalini: due icone (freccia doppia su/giù) ritagliate da segnalini.jpg (2048x2048,
+// sfondo nero) — stesso riquadro di ritaglio (670px) centrato su ciascuna, per una resa
+// visiva coerente fra i due. Il cerchio-slot accanto ai dadi misura ~10,5mm di diametro
+// alla scala della board: i segnalini vanno stampati a quella stessa dimensione.
+const TOKEN_RENDER_PX = 500; // risoluzione del master, non la dimensione di stampa
+const TOKEN_CROP = 670;
+const TOKEN_MM = 10.5;
+const TOKENS = {
+  up:   { center: [664.5, 1026] },
+  down: { center: [1378.5, 1023] },
+};
 
-function printSheetHtml(imgFile) {
-  const url = pathToFileURL(imgFile).href;
-  const totalH = 2 * BOARD_H_MM + GAP_MM;
-  const topOffset = MARGIN_MM + (PAGE_H_MM - 2 * MARGIN_MM - totalH) / 2;
-  const cells = [0, 1].map(i => `
-    <div class="cell" style="top:${topOffset + i * (BOARD_H_MM + GAP_MM)}mm; left:${MARGIN_MM}mm; width:${BOARD_W_MM}mm; height:${BOARD_H_MM}mm;">
-      <img src="${url}">
-      <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i>
+function tokenHtml(key) {
+  const t = TOKENS[key];
+  const bgSize = 2048 * (TOKEN_RENDER_PX / TOKEN_CROP);
+  const bgPosX = -(t.center[0] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
+  const bgPosY = -(t.center[1] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
+  const url = pathToFileURL(SRC_TOKENS).href;
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    *{margin:0;padding:0;}
+    body{ background:transparent; }
+    .token{
+      width:${TOKEN_RENDER_PX}px; height:${TOKEN_RENDER_PX}px; border-radius:50%; overflow:hidden;
+      background-image:url(${url}); background-repeat:no-repeat;
+      background-size:${bgSize}px ${bgSize}px; background-position:${bgPosX}px ${bgPosY}px;
+    }
+  </style></head><body><div class="token" id="token"></div></body></html>`;
+}
+
+function tokenSheetHtml(upFile, downFile, perType) {
+  const url1 = pathToFileURL(upFile).href, url2 = pathToFileURL(downFile).href;
+  const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 12, GAP_MM = 4;
+  const cols = 6;
+  const cells = [];
+  for (let i = 0; i < perType; i++) {
+    cells.push({ url: url1, col: i % cols, row: Math.floor(i / cols) });
+  }
+  const rowsUp = Math.ceil(perType / cols);
+  for (let i = 0; i < perType; i++) {
+    cells.push({ url: url2, col: i % cols, row: rowsUp + 1 + Math.floor(i / cols) });
+  }
+  const cellsHtml = cells.map(c => `
+    <div class="tok" style="left:${MARGIN_MM + c.col * (TOKEN_MM + GAP_MM)}mm; top:${MARGIN_MM + c.row * (TOKEN_MM + GAP_MM)}mm;">
+      <img src="${c.url}">
     </div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{ background:#fff; }
     .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
-    .cell{ position:absolute; }
+    .tok{ position:absolute; width:${TOKEN_MM}mm; height:${TOKEN_MM}mm; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
+    .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
+  </style></head><body><div class="sheet">${cellsHtml}</div></body></html>`;
+}
+
+function printSheetHtml(imgFile) {
+  const url = pathToFileURL(imgFile).href;
+  const PAGE_W_MM = 297, PAGE_H_MM = 210, MARGIN_MM = 5; // A4 ORIZZONTALE: la board (~284x141mm) non entra in verticale
+  const left = (PAGE_W_MM - BOARD_W_MM) / 2, top = (PAGE_H_MM - BOARD_H_MM) / 2;
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{ background:#fff; }
+    .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
+    .cell{ position:absolute; left:${left}mm; top:${top}mm; width:${BOARD_W_MM}mm; height:${BOARD_H_MM}mm; }
     .cell img{ display:block; width:100%; height:100%; }
     .crop{ position:absolute; display:block; }
     .crop.tl{ left:-3.5mm; top:0; width:3mm; height:.25mm; background:#999; }
@@ -135,50 +185,52 @@ function printSheetHtml(imgFile) {
     .crop.bl::after{ content:''; position:absolute; left:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
     .crop.br{ right:-3.5mm; bottom:0; width:3mm; height:.25mm; background:#999; }
     .crop.br::after{ content:''; position:absolute; right:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
-  </style></head><body><div class="sheet">${cells}</div></body></html>`;
+  </style></head><body><div class="sheet">
+    <div class="cell"><img src="${url}"><i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i></div>
+  </div></body></html>`;
+}
+
+async function renderHtmlToFile(browser, html, outPath, viewport) {
+  const page = await browser.newPage({ viewport });
+  const tmp = path.join(__dirname, '_tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.html');
+  fs.writeFileSync(tmp, html);
+  await page.goto('file://' + tmp);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: outPath, omitBackground: outPath.endsWith('.png') && html.includes('background:transparent') });
+  fs.unlinkSync(tmp);
+  await page.close();
 }
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(PRINT_DIR, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
-  const page = await browser.newPage({ viewport: { width: W, height: H } });
 
   const frontPngPath = path.join(OUT_DIR, 'plancia_giocatore_fronte.png');
   const backPngPath = path.join(OUT_DIR, 'plancia_giocatore_retro.png');
+  await renderHtmlToFile(browser, frontHtml(), frontPngPath, { width: W, height: H });
+  await renderHtmlToFile(browser, backHtml(), backPngPath, { width: W, height: H });
 
-  const frontPath = path.join(__dirname, '_render-plancia-fronte-' + Date.now() + '.html');
-  fs.writeFileSync(frontPath, frontHtml());
-  await page.goto('file://' + frontPath);
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: frontPngPath });
-  fs.unlinkSync(frontPath);
-
-  const backPath = path.join(__dirname, '_render-plancia-retro-' + Date.now() + '.html');
-  fs.writeFileSync(backPath, backHtml());
-  await page.goto('file://' + backPath);
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: backPngPath });
-  fs.unlinkSync(backPath);
+  const upPngPath = path.join(OUT_DIR, 'segnalino_su.png');
+  const downPngPath = path.join(OUT_DIR, 'segnalino_giu.png');
+  await renderHtmlToFile(browser, tokenHtml('up'), upPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
+  await renderHtmlToFile(browser, tokenHtml('down'), downPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
 
   const printPage = await browser.newPage();
-  const printDir = path.join(__dirname, '..', 'cards_final', 'print');
-  fs.mkdirSync(printDir, { recursive: true });
-
-  const frontSheetPath = path.join(__dirname, '_plancia-print-fronte-' + Date.now() + '.html');
-  fs.writeFileSync(frontSheetPath, printSheetHtml(frontPngPath));
-  await printPage.goto('file://' + frontSheetPath);
-  await printPage.pdf({ path: path.join(printDir, 'plancia_fronte.pdf'), printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
-  fs.unlinkSync(frontSheetPath);
-
-  const backSheetPath = path.join(__dirname, '_plancia-print-retro-' + Date.now() + '.html');
-  fs.writeFileSync(backSheetPath, printSheetHtml(backPngPath));
-  await printPage.goto('file://' + backSheetPath);
-  await printPage.pdf({ path: path.join(printDir, 'plancia_retro.pdf'), printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
-  fs.unlinkSync(backSheetPath);
+  async function pdf(html, outFile, wMm, hMm) {
+    const tmp = path.join(__dirname, '_tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.html');
+    fs.writeFileSync(tmp, html);
+    await printPage.goto('file://' + tmp);
+    await printPage.pdf({ path: outFile, printBackground: true, width: `${wMm}mm`, height: `${hMm}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
+    fs.unlinkSync(tmp);
+  }
+  await pdf(printSheetHtml(frontPngPath), path.join(PRINT_DIR, 'plancia_fronte.pdf'), 297, 210);
+  await pdf(printSheetHtml(backPngPath), path.join(PRINT_DIR, 'plancia_retro.pdf'), 297, 210);
+  await pdf(tokenSheetHtml(upPngPath, downPngPath, 12), path.join(PRINT_DIR, 'segnalini.pdf'), 210, 297);
 
   await browser.close();
-  console.log('Fatto: plancia_giocatore_fronte.png / plancia_giocatore_retro.png in ' + OUT_DIR);
-  console.log(`Fatto: plancia_fronte.pdf / plancia_retro.pdf (2 per foglio, ${BOARD_W_MM.toFixed(1)}x${BOARD_H_MM.toFixed(1)}mm ciascuna) in ${printDir}`);
+  console.log('Fatto: plancia_giocatore_fronte.png / _retro.png / segnalino_su.png / segnalino_giu.png in ' + OUT_DIR);
+  console.log(`Fatto: plancia_fronte.pdf / plancia_retro.pdf (1 per foglio A4 orizzontale, ${BOARD_W_MM.toFixed(1)}x${BOARD_H_MM.toFixed(1)}mm) + segnalini.pdf (12 su + 12 giu, ${TOKEN_MM}mm ciascuno) in ${PRINT_DIR}`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
