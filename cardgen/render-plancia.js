@@ -86,30 +86,30 @@ function frontHtml() {
 }
 
 function backHtml() {
+  // Sfondo chiaro invece che scuro: molto meno inchiostro in stampa (era un pieno quasi nero
+  // su tutta la board). Stessa cornice/accento color portale, solo su base chiara.
   return `<!doctype html><html><head><meta charset="utf-8">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Serif+4:ital@0;1&display=swap">
   <style>
     *{box-sizing:border-box; margin:0; padding:0;}
-    body{ width:${W}px; height:${H}px; position:relative; background:radial-gradient(ellipse at center, #241f2c 0%, #14111a 70%, #0c0a10 100%); overflow:hidden; }
+    body{ width:${W}px; height:${H}px; position:relative; background:#f6f2e9; overflow:hidden; }
     .frame{
-      position:absolute; inset:36px; border:3px solid #2f7d76; border-radius:28px;
-      box-shadow:0 0 0 10px rgba(20,107,103,.12), inset 0 0 60px rgba(20,107,103,.18);
+      position:absolute; inset:36px; border:3px solid #146b67; border-radius:28px;
     }
     .frame::before{
-      content:''; position:absolute; inset:16px; border:1px solid rgba(79,214,208,.45); border-radius:20px;
+      content:''; position:absolute; inset:16px; border:1px solid rgba(20,107,103,.4); border-radius:20px;
     }
     .title{
       position:absolute; top:50%; left:50%; transform:translate(-50%, -20px);
       font-family:'Cinzel',serif; font-weight:700; font-size:76px; letter-spacing:.08em;
-      color:#f4ede0; text-shadow:0 0 22px rgba(79,214,208,.5), 0 2px 8px rgba(0,0,0,.6);
-      white-space:nowrap;
+      color:#2b2420; white-space:nowrap;
     }
     .sub{
       position:absolute; top:50%; left:50%; transform:translate(-50%, 60px);
       font-family:'Source Serif 4',serif; font-style:italic; font-size:30px; letter-spacing:.02em;
-      color:#b9c9c7; white-space:nowrap;
+      color:#146b67; white-space:nowrap;
     }
-    .corner{ position:absolute; width:14px; height:14px; border-radius:50%; background:#4fd6d0; box-shadow:0 0 12px rgba(79,214,208,.7); }
+    .corner{ position:absolute; width:12px; height:12px; border-radius:50%; background:#146b67; }
     .tl{ top:26px; left:26px; } .tr{ top:26px; right:26px; } .bl{ bottom:26px; left:26px; } .br{ bottom:26px; right:26px; }
   </style></head>
   <body>
