@@ -6,21 +6,19 @@
 // gioco (for,int,des poi pv,san,anima) — non c'era altra convenzione preesistente che
 // coprisse tutte e sei le statistiche.
 //
-// Seconda versione dell'immagine (25/09→26/09): la prima aveva i dadi disegnati troppo
-// grandi rispetto alla carta (rapporto carta/dado 1,9:1 invece del reale 4,2:1 = 63,5mm/15mm)
-// — a scala-carta corretta il dado veniva 33,7mm, più del doppio del vero 1,5cm. Con la
-// board ridisegnata il rapporto è ~4,04:1, molto più vicino al reale: qui sotto le
-// misure sono state ri-campionate da zero sulla nuova immagine (dimensioni e proporzioni
-// diverse dalla precedente).
+// Terza versione dell'immagine (26/09, "sempre stesso percorso"): stesso layout generale
+// della v2 ma ri-generata da capo (dimensioni identiche 2506x1664, posizioni delle caselle
+// spostate di ~1-2% — normale variazione fra rigenerazioni, ri-misurato tutto da zero invece
+// di riusare i numeri della v2). Richiesta esplicita stavolta: icona SOPRA il dado, testo
+// SOTTO il dado (non più impilati insieme sopra) — vedi SLOTS.topEdge/bottomEdge sotto.
 //
 // Scala reale: derivata dalla carta Classe (che va nello slot a sinistra), non dal dado —
-// misurato lo slot carta sull'immagine (732x1107px) e forzato a 63,5mm di LARGHEZZA (formato
+// misurato lo slot carta sull'immagine (~750x1140px) e forzato a 63,5mm di LARGHEZZA (formato
 // Poker): usare l'altezza invece darebbe uno slot troppo STRETTO per la carta (non entra
-// affatto), mentre scalando sulla larghezza il dado viene ~15,7mm (praticamente esatto) e lo
+// affatto), mentre scalando sulla larghezza il dado viene ~15,6mm (praticamente esatto) e lo
 // slot carta resta solo un po' più alto del dovuto — difetto minore, la carta comunque ci
-// sta. A questa scala la board viene ~217x144mm: non entra in un A4 verticale, ma un A4
-// ORIZZONTALE sì (297x210mm) — 1 sola plancia a foglio (né 2 né 4: la board da sola supera
-// già metà foglio in entrambe le versioni provate finora).
+// sta. A questa scala la board viene ~212x141mm: non entra in un A4 verticale, ma un A4
+// ORIZZONTALE sì (297x210mm) — 1 sola plancia a foglio.
 //
 // Uso: node render-plancia.js
 
@@ -29,7 +27,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright');
 
-const SRC_IMG = path.join(__dirname, '..', 'assets', 'ui', 'plancia_giocatore.png');
+const SRC_IMG = path.join(__dirname, '..', 'assets', 'ui', 'plancia_giocatore.jpg');
 const SRC_TOKENS = path.join(__dirname, '..', 'assets', 'ui', 'segnalini.jpg');
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'plancia');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
@@ -37,24 +35,24 @@ const W = 2506, H = 1664;
 
 const STAT_ICON = { for: '💪', int: '🧠', des: '🏃', pv: '❤️', san: '🌀', anima: '🕯️' };
 const STAT_LABEL = { for: 'Forza', int: 'Intelletto', des: 'Destrezza', pv: 'Punti Vita', san: 'Sanità', anima: 'Anima' };
-// posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.png),
-// griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco. topEdge = dove
-// inizia l'ombra/bevel della casella (poco prima del colore pieno) — l'icona vi si appoggia
-// da sopra.
+// posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.jpg),
+// griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco. topEdge/bottomEdge
+// = dove inizia/finisce l'ombra/bevel della casella — l'icona si appoggia sopra a topEdge,
+// l'etichetta sotto a bottomEdge (lati opposti del dado, non più impilate insieme).
 const SLOTS = [
-  { stat: 'for',   cx: 1387,   topEdge: 427 },
-  { stat: 'int',   cx: 1709.5, topEdge: 427 },
-  { stat: 'des',   cx: 2039,   topEdge: 427 },
-  { stat: 'pv',    cx: 1387,   topEdge: 936 },
-  { stat: 'san',   cx: 1709.5, topEdge: 936 },
-  { stat: 'anima', cx: 2039,   topEdge: 936 },
+  { stat: 'for',   cx: 1411, topEdge: 428, bottomEdge: 634 },
+  { stat: 'int',   cx: 1734, topEdge: 428, bottomEdge: 634 },
+  { stat: 'des',   cx: 2061, topEdge: 428, bottomEdge: 632 },
+  { stat: 'pv',    cx: 1411, topEdge: 948, bottomEdge: 1158 },
+  { stat: 'san',   cx: 1734, topEdge: 948, bottomEdge: 1154 },
+  { stat: 'anima', cx: 2061, topEdge: 948, bottomEdge: 1158 },
 ];
-const ICON_H = 45; // altezza icona in px nativi — la riga 1 ha ~176px liberi sopra, molto più della v1
-const LABEL_PX = 24; // font-size dell'etichetta sotto l'icona
+const ICON_H = 45; // altezza icona in px nativi
+const LABEL_PX = 26; // font-size dell'etichetta sotto il dado — qui c'è più spazio libero che sopra
 
-// Scala reale: vedi commento in testa al file. Slot carta misurato 732px di larghezza,
+// Scala reale: vedi commento in testa al file. Slot carta misurato ~750px di larghezza,
 // forzato a corrispondere a 63,5mm (formato Poker).
-const CARD_SLOT_W_PX = 732;
+const CARD_SLOT_W_PX = 750;
 const MM_PER_PX = 63.5 / CARD_SLOT_W_PX;
 const BOARD_W_MM = W * MM_PER_PX;
 const BOARD_H_MM = H * MM_PER_PX;
@@ -62,22 +60,21 @@ const BOARD_H_MM = H * MM_PER_PX;
 function frontHtml() {
   const imgUrl = pathToFileURL(SRC_IMG).href;
   const iconsHtml = SLOTS.map(s => `
-    <div class="stat-tag" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">
-      <div class="ic">${STAT_ICON[s.stat]}</div>
-      <div class="lbl">${STAT_LABEL[s.stat]}</div>
-    </div>`).join('');
+    <div class="ic" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">${STAT_ICON[s.stat]}</div>`).join('');
+  const labelsHtml = SLOTS.map(s => `
+    <div class="lbl" style="left:${s.cx}px; top:${s.bottomEdge + 6}px;">${STAT_LABEL[s.stat]}</div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&display=swap">
   <style>
     *{box-sizing:border-box; margin:0; padding:0;}
     body{ width:${W}px; height:${H}px; position:relative; background:#000; }
     .board{ position:absolute; inset:0; width:100%; height:100%; }
-    .stat-tag{
-      position:absolute; transform:translateX(-50%);
-      display:flex; flex-direction:column; align-items:center; gap:2px;
+    .ic{
+      position:absolute; transform:translateX(-50%); font-size:${ICON_H}px; line-height:1;
+      filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
     }
-    .stat-tag .ic{ font-size:${ICON_H}px; line-height:1; filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
-    .stat-tag .lbl{
+    .lbl{
+      position:absolute; transform:translateX(-50%);
       font-family:'JetBrains Mono',monospace; font-weight:700; font-size:${LABEL_PX}px;
       letter-spacing:.02em; text-transform:uppercase; color:#4a4136; white-space:nowrap;
       text-shadow:0 1px 0 rgba(255,255,255,.3);
@@ -86,6 +83,7 @@ function frontHtml() {
   <body>
     <img class="board" src="${imgUrl}">
     ${iconsHtml}
+    ${labelsHtml}
   </body></html>`;
 }
 
