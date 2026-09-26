@@ -6,14 +6,21 @@
 // gioco (for,int,des poi pv,san,anima) — non c'era altra convenzione preesistente che
 // coprisse tutte e sei le statistiche.
 //
+// Seconda versione dell'immagine (25/09→26/09): la prima aveva i dadi disegnati troppo
+// grandi rispetto alla carta (rapporto carta/dado 1,9:1 invece del reale 4,2:1 = 63,5mm/15mm)
+// — a scala-carta corretta il dado veniva 33,7mm, più del doppio del vero 1,5cm. Con la
+// board ridisegnata il rapporto è ~4,04:1, molto più vicino al reale: qui sotto le
+// misure sono state ri-campionate da zero sulla nuova immagine (dimensioni e proporzioni
+// diverse dalla precedente).
+//
 // Scala reale: derivata dalla carta Classe (che va nello slot a sinistra), non dal dado —
-// misurato lo slot carta sull'immagine (~650x981px) e forzato a 63,5mm di LARGHEZZA (formato
+// misurato lo slot carta sull'immagine (732x1107px) e forzato a 63,5mm di LARGHEZZA (formato
 // Poker): usare l'altezza invece darebbe uno slot troppo STRETTO per la carta (non entra
-// affatto), mentre scalando sulla larghezza lo slot resta solo un po' più alto del dovuto —
-// difetto minore, la carta comunque ci sta. A questa scala la board viene ~284x141mm: non
-// entra in un A4 verticale, ma un A4 ORIZZONTALE sì (297x210mm) — 1 sola plancia a foglio,
-// a differenza delle 2 del giro precedente (quello non teneva conto delle dimensioni reali
-// di carta/dado, solo di "quanto ci sta comodo in un A4").
+// affatto), mentre scalando sulla larghezza il dado viene ~15,7mm (praticamente esatto) e lo
+// slot carta resta solo un po' più alto del dovuto — difetto minore, la carta comunque ci
+// sta. A questa scala la board viene ~217x144mm: non entra in un A4 verticale, ma un A4
+// ORIZZONTALE sì (297x210mm) — 1 sola plancia a foglio (né 2 né 4: la board da sola supera
+// già metà foglio in entrambe le versioni provate finora).
 //
 // Uso: node render-plancia.js
 
@@ -22,28 +29,30 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright');
 
-const SRC_IMG = path.join(__dirname, '..', 'assets', 'ui', 'plancia_giocatore.jpg');
+const SRC_IMG = path.join(__dirname, '..', 'assets', 'ui', 'plancia_giocatore.png');
 const SRC_TOKENS = path.join(__dirname, '..', 'assets', 'ui', 'segnalini.jpg');
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'plancia');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
-const W = 2912, H = 1440;
+const W = 2506, H = 1664;
 
 const STAT_ICON = { for: '💪', int: '🧠', des: '🏃', pv: '❤️', san: '🌀', anima: '🕯️' };
-// posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.jpg),
-// griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco
+// posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.png),
+// griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco. topEdge = dove
+// inizia l'ombra/bevel della casella (poco prima del colore pieno) — l'icona vi si appoggia
+// da sopra.
 const SLOTS = [
-  { stat: 'for',   cx: 1225.5, topEdge: 248 },
-  { stat: 'int',   cx: 1818,   topEdge: 251 },
-  { stat: 'des',   cx: 2397,   topEdge: 251 },
-  { stat: 'pv',    cx: 1228.5, topEdge: 806 },
-  { stat: 'san',   cx: 1822.5, topEdge: 806 },
-  { stat: 'anima', cx: 2401.5, topEdge: 806 },
+  { stat: 'for',   cx: 1387,   topEdge: 427 },
+  { stat: 'int',   cx: 1709.5, topEdge: 427 },
+  { stat: 'des',   cx: 2039,   topEdge: 427 },
+  { stat: 'pv',    cx: 1387,   topEdge: 936 },
+  { stat: 'san',   cx: 1709.5, topEdge: 936 },
+  { stat: 'anima', cx: 2039,   topEdge: 936 },
 ];
-const ICON_H = 62; // altezza icona in px nativi — sta nello stretto spazio sopra la riga 1
+const ICON_H = 45; // altezza icona in px nativi — la riga 1 ha ~176px liberi sopra, molto più della v1
 
-// Scala reale: vedi commento in testa al file. Slot carta misurato ~650px di larghezza,
+// Scala reale: vedi commento in testa al file. Slot carta misurato 732px di larghezza,
 // forzato a corrispondere a 63,5mm (formato Poker).
-const CARD_SLOT_W_PX = 650;
+const CARD_SLOT_W_PX = 732;
 const MM_PER_PX = 63.5 / CARD_SLOT_W_PX;
 const BOARD_W_MM = W * MM_PER_PX;
 const BOARD_H_MM = H * MM_PER_PX;
@@ -114,11 +123,12 @@ function backHtml() {
 
 // Segnalini: due icone (freccia doppia su/giù) ritagliate da segnalini.jpg (2048x2048,
 // sfondo nero) — stesso riquadro di ritaglio (670px) centrato su ciascuna, per una resa
-// visiva coerente fra i due. Il cerchio-slot accanto ai dadi misura ~10,5mm di diametro
-// alla scala della board: i segnalini vanno stampati a quella stessa dimensione.
+// visiva coerente fra i due. Il cerchio-slot accanto ai dadi misura ~6mm di diametro alla
+// scala della nuova board (era ~10,5mm nella v1, la board si è rimpicciolita insieme al
+// dado): i segnalini vanno stampati a quella stessa dimensione.
 const TOKEN_RENDER_PX = 500; // risoluzione del master, non la dimensione di stampa
 const TOKEN_CROP = 670;
-const TOKEN_MM = 10.5;
+const TOKEN_MM = 6;
 const TOKENS = {
   up:   { center: [664.5, 1026] },
   down: { center: [1378.5, 1023] },
@@ -168,7 +178,7 @@ function tokenSheetHtml(upFile, downFile, perType) {
 
 function printSheetHtml(imgFile) {
   const url = pathToFileURL(imgFile).href;
-  const PAGE_W_MM = 297, PAGE_H_MM = 210, MARGIN_MM = 5; // A4 ORIZZONTALE: la board (~284x141mm) non entra in verticale
+  const PAGE_W_MM = 297, PAGE_H_MM = 210, MARGIN_MM = 5; // A4 ORIZZONTALE: la board (~217x144mm) non entra in verticale
   const left = (PAGE_W_MM - BOARD_W_MM) / 2, top = (PAGE_H_MM - BOARD_H_MM) / 2;
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box;margin:0;padding:0;}
