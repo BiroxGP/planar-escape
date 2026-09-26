@@ -36,6 +36,7 @@ const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 const W = 2506, H = 1664;
 
 const STAT_ICON = { for: '💪', int: '🧠', des: '🏃', pv: '❤️', san: '🌀', anima: '🕯️' };
+const STAT_LABEL = { for: 'Forza', int: 'Intelletto', des: 'Destrezza', pv: 'Punti Vita', san: 'Sanità', anima: 'Anima' };
 // posizione delle 6 caselle (misurate via campionamento colore su plancia_giocatore.png),
 // griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco. topEdge = dove
 // inizia l'ombra/bevel della casella (poco prima del colore pieno) — l'icona vi si appoggia
@@ -49,6 +50,7 @@ const SLOTS = [
   { stat: 'anima', cx: 2039,   topEdge: 936 },
 ];
 const ICON_H = 45; // altezza icona in px nativi — la riga 1 ha ~176px liberi sopra, molto più della v1
+const LABEL_PX = 24; // font-size dell'etichetta sotto l'icona
 
 // Scala reale: vedi commento in testa al file. Slot carta misurato 732px di larghezza,
 // forzato a corrispondere a 63,5mm (formato Poker).
@@ -60,15 +62,25 @@ const BOARD_H_MM = H * MM_PER_PX;
 function frontHtml() {
   const imgUrl = pathToFileURL(SRC_IMG).href;
   const iconsHtml = SLOTS.map(s => `
-    <div class="ic" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">${STAT_ICON[s.stat]}</div>`).join('');
+    <div class="stat-tag" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">
+      <div class="ic">${STAT_ICON[s.stat]}</div>
+      <div class="lbl">${STAT_LABEL[s.stat]}</div>
+    </div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&display=swap">
   <style>
     *{box-sizing:border-box; margin:0; padding:0;}
     body{ width:${W}px; height:${H}px; position:relative; background:#000; }
     .board{ position:absolute; inset:0; width:100%; height:100%; }
-    .ic{
-      position:absolute; transform:translateX(-50%); font-size:${ICON_H}px; line-height:1;
-      filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
+    .stat-tag{
+      position:absolute; transform:translateX(-50%);
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+    }
+    .stat-tag .ic{ font-size:${ICON_H}px; line-height:1; filter:drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
+    .stat-tag .lbl{
+      font-family:'JetBrains Mono',monospace; font-weight:700; font-size:${LABEL_PX}px;
+      letter-spacing:.02em; text-transform:uppercase; color:#4a4136; white-space:nowrap;
+      text-shadow:0 1px 0 rgba(255,255,255,.3);
     }
   </style></head>
   <body>
@@ -176,10 +188,15 @@ function tokenSheetHtml(upFile, downFile, perType) {
   </style></head><body><div class="sheet">${cellsHtml}</div></body></html>`;
 }
 
+const RULER_MM = 40; // se non misura esattamente questo in stampa, la scala è sbagliata (stampa a dimensione reale, non "adatta alla pagina")
+
 function printSheetHtml(imgFile) {
   const url = pathToFileURL(imgFile).href;
   const PAGE_W_MM = 297, PAGE_H_MM = 210, MARGIN_MM = 5; // A4 ORIZZONTALE: la board (~217x144mm) non entra in verticale
   const left = (PAGE_W_MM - BOARD_W_MM) / 2, top = (PAGE_H_MM - BOARD_H_MM) / 2;
+  const rulerX = (PAGE_W_MM - RULER_MM) / 2;
+  const rulerY = top + BOARD_H_MM + 6;
+  const ticks = []; for (let m = 0; m <= RULER_MM; m += 10) ticks.push(m);
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{ background:#fff; }
@@ -195,8 +212,17 @@ function printSheetHtml(imgFile) {
     .crop.bl::after{ content:''; position:absolute; left:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
     .crop.br{ right:-3.5mm; bottom:0; width:3mm; height:.25mm; background:#999; }
     .crop.br::after{ content:''; position:absolute; right:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
+    .ruler{ position:absolute; left:${rulerX}mm; top:${rulerY}mm; width:${RULER_MM}mm; }
+    .ruler-bar{ width:${RULER_MM}mm; height:.3mm; background:#000; }
+    .ruler .tick{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
+    .ruler-label{ margin-top:1.5mm; width:100mm; margin-left:${(RULER_MM - 100) / 2}mm; text-align:center; font-family:sans-serif; font-size:2.6mm; line-height:1.35; color:#333; }
   </style></head><body><div class="sheet">
     <div class="cell"><img src="${url}"><i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i></div>
+    <div class="ruler">
+      <div class="ruler-bar"></div>
+      ${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}
+      <div class="ruler-label">Righello di calibrazione: deve misurare esattamente ${RULER_MM}mm. Se non combacia, stampa a dimensione reale (100%), non "adatta alla pagina".</div>
+    </div>
   </div></body></html>`;
 }
 
