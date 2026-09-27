@@ -1638,7 +1638,13 @@ function renderGroupPicker(){
       // aspettare invece di saltare subito con un compagno in condizioni precarie.
       const recovering = roster.filter(c=>c.skipNextIncontro || c.status==='unconscious');
       const capable = roster.filter(c=>isConscious(c) && !recovering.includes(c));
-      const everyoneRecovering = recovering.length>0 && capable.length===0;
+      // Il blocco forzato "non resta che aspettare" ha senso SOLO se esiste un'alternativa
+      // reale da offrire — cioè "Resta ancora un turno", disponibile solo a gruppo unito
+      // (canStay richiede !isSplit più sotto). Con gruppi separati "Resta" non è mai stato
+      // offerto: nascondere anche Salta in quel caso toglierebbe QUALSIASI azione possibile a
+      // quel gruppo, bloccando l'intera partita (bug reale osservato: Anomalia Temporale su
+      // un gruppo separato lasciava il picker senza alcun pulsante).
+      const everyoneRecovering = !isSplit && recovering.length>0 && capable.length===0;
       const recNames = recovering.map(c=>escapeHtml(c.name)).join(', ');
       const canStay = !isSplit && !waiting && recovering.length>0 && state.stayTurn;
       const stayPlane = canStay ? PIANI_BY_ID[state.stayTurn.planeId] : null;
