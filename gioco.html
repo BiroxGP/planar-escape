@@ -816,7 +816,7 @@ const SPELLS = {
     S("sp_sfera","Sfera Antiplanare","Annulla del tutto l'effetto intrinseco del piano corrente per il gruppo, fino al prossimo salto.",{sferaSpell:true}),
     S("sp_teletrasporto","Teletrasporto Planare","Teletrasporta il gruppo nel piano di un altro giocatore.",{teleportReunionSpell:true}),
     S("sp_drenaggio","Drenaggio d'Essenza","Ogni entità sconfitta in questo piano frutta 1 risorsa planare extra, fino al prossimo salto.",{drenaggioSpell:true}),
-    S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{manualUse:true}),
+    S("sp_estrazione","Estrazione Arcana","Ruba temporaneamente 1 punto di una caratteristica a un'entità in Contesa.",{entityStatDrain:1}),
     S("sp_sagoma","Sagoma Illusoria","Assorbe la prossima perdita subita — danno, perdita di Anima/Sanità Mentale, o depotenziamento temporaneo/permanente a una caratteristica — da qualsiasi fonte, una sola volta, poi svanisce.",{sagomaSpell:true}),
     S("sp_charme","Charme","Incanta un'entità ostile convincendola a desistere (non su non-morti/demoni).",{charmSpell:true}),
     S("sp_trasmutazione","Trasmutazione Minore","Trasforma oggetti in altrettante risorse planari equivalenti.",{trasmutazioneSpell:true}),
@@ -4277,6 +4277,18 @@ function useSpell(c, idx){
     const dmg = sp.combatDamageAll * (boosted?2:1) + amp;
     validTargets.forEach(e=>{ e.hp -= dmg; });
     logMsg(`🔥 ${c.name} lancia ${sp.name}: ${dmg} danni diretti alle entità bersaglio${amp?' (+1 da Amplificazione)':''}.`);
+  } else if(sp.entityStatDrain){
+    // "un'entità in Contesa": le entità hanno una sola caratteristica (statKey+value, usata
+    // sia per il tiro per colpire sia per il danno inflitto) — ruberla vuol dire abbassare
+    // value, indebolendo il nemico su entrambi i fronti per il resto della Contesa. Nessun
+    // "ripristino" da gestire: l'entità è comunque scartata a fine Incontro.
+    const cb = state.currentDraw && state.currentDraw.combat;
+    const liveEntities = cb && cb.entities ? cb.entities.filter(e=>e.hp>0) : [];
+    if(liveEntities.length===0){ logMsg(`⚠️ ${sp.name}: nessuna entità in Contesa da colpire in questo momento.`,'warn'); return; }
+    const amount = sp.entityStatDrain * (boosted?2:1);
+    const target = liveEntities.reduce((best,e)=>e.value>best.value?e:best, liveEntities[0]);
+    target.value = Math.max(0, target.value-amount);
+    logMsg(`🪄 ${c.name} lancia ${sp.name}: ruba ${amount} punt${amount>1?'i':'o'} di ${STAT_LABEL[target.statKey]||'caratteristica'} a ${target.name} (ora ${target.value}), per tutta la Contesa.`,'good');
   } else {
     logMsg(`📖 ${c.name} lancia ${sp.name}: ${sp.text} (applica manualmente se serve).`);
   }
