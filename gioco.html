@@ -3065,7 +3065,7 @@ function renderRewardPanel(card, acts){
     case 'item': return `<button class="primary" id="btnApplyReward">Pesca un oggetto</button><div class="row mt1">${acts.map(c=>`<button class="small" data-giveitem="${c.id}">a ${c.name}</button>`).join('')}</div>`;
     case 'peek': return `<button class="primary" id="btnApplyReward">Guarda ${r.n} carta/e in cima al mazzo Piani</button>`;
     case 'peekBottom': return `<button class="primary" id="btnApplyReward">Guarda la carta in fondo al mazzo Piani</button>`;
-    case 'spellBoost': return `<button class="primary" id="btnApplyReward">Il prossimo spell di un personaggio è potenziato (+100%, segna manualmente)</button>`;
+    case 'spellBoost': return `<div>${acts.map(c=>`<button class="small" data-spellboost="${c.id}">Potenzia il prossimo spell di ${escapeHtml(c.name)} (+100%)</button>`).join(' ')}</div>`;
     case 'restChoice': return `<button class="primary" id="btnApplyReward">Recupero + 1 San o Anima extra a scelta</button>`;
     case 'groupHealCure': {
       const debuffed = acts.filter(c=>activeTempDebuffs(c).length>0);
@@ -3103,13 +3103,18 @@ function bindRewardPanel(card, acts){
     if(r.type==='resource'){ acts.forEach(c=>{}); if(acts[0]) acts[0].resources+=r.n; logMsg(`💠 Il gruppo ottiene ${r.n} risorsa planare (assegnata a ${acts[0]?.name}).`); }
     if(r.type==='item'){ const it=drawOggetto(); if(it && acts[0]){ acts[0].inventory.push(it); logMsg(`🎁 ${acts[0].name} trova ${OGGETTI_BY_ID[it].name}.`);} }
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); return; }
-    if(r.type==='spellBoost'){ if(acts[0]){ acts[0].nextSpellBoost=true; logMsg(`✨ Il prossimo spell di ${acts[0].name} è potenziato.`);} }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
   };
+  document.querySelectorAll('[data-spellboost]').forEach(b=>b.onclick=()=>{
+    const c=acts.find(x=>x.id===b.dataset.spellboost);
+    c.nextSpellBoost=true;
+    logMsg(`✨ Il prossimo spell di ${c.name} è potenziato: l'effetto verrà raddoppiato in automatico al lancio.`,'good');
+    done();
+  });
   document.querySelectorAll('[data-heal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.heal); healStat(c,'pv',r.n); done(); });
   document.querySelectorAll('[data-curedebuff]').forEach(b=>b.onclick=()=>{
     acts.forEach(c=>healStat(c,'pv',1));
