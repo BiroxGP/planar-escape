@@ -39,7 +39,7 @@ In una sessione precedente (Cowork) è stata verificata l'intera app con Playwri
 ## Semplificazioni note (non bug, ma limiti consapevoli del v0.1)
 
 - Distribuzione del danno del team sulle entità multiple: sempre focus-fire sulla entità con meno PV residui (non è negoziabile dai giocatori nell'interfaccia).
-- Danno passante delle entità (quando il loro danno supera quello del team in un giro): va per intero su un unico bersaglio scelto a caso fra i presenti, non scelto dal gruppo — un personaggio ancora nascosto per Furtività non può essere quel bersaglio, a meno che lo siano tutti.
+- Danno passante delle entità (solo la differenza quando il loro danno supera quello del team in un giro, a pareggio le entità prendono invece il danno pieno): va su un unico bersaglio scelto a caso fra i presenti, non scelto dal gruppo — un personaggio ancora nascosto per Furtività non può essere quel bersaglio, a meno che lo siano tutti.
 - Carte con check "a scelta" (Specchi, Frammento di sé, Doppio specchiato) semplificate a un default (For) nel loop di combattimento automatico invece di lasciare scegliere per ogni round.
 - Equipaggiamento armi/armature: uno slot per tipo, nessun controllo incrociato scudo+arma a due mani.
 - Molti effetti "ongoing fino al prossimo salto" (es. Sfera Antiplanare, Cerchio di Protezione, Sigillo) sono loggati ma non tracciati come stato persistente da un turno all'altro: vanno tenuti a mente dal tavolo.

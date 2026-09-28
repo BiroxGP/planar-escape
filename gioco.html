@@ -1631,11 +1631,14 @@ function renderGroupPicker(){
     <p class="hint">${isSplit?t('Ogni gruppo separato salta una volta a testa, poi si aspettano a vicenda: i salti sono in contemporanea, non si può saltare più volte prima che gli altri gruppi abbiano fatto il proprio turno. Non ci si riunisce a piacimento: serve Teletrasporto Planare, un Anello del Legame, o una ricompensa come Segnale di richiamo/Legame a distanza.'):t('Nessuno sa dove porti. Premi per saltare.')}</p>
     ${groups.map(({g,roster})=>{
       const waiting = isSplit && !!state.jumpedThisRound[g.id];
-      // "Resta ancora un turno" non è più un'opzione generica: decima il mazzo Incontri, quindi
-      // ha senso solo come vera eccezione per lasciar recuperare chi ha perso il turno o è
-      // svenuto — mai offerta a un party integro e attivo. Trascinarlo con sé saltando è sempre
-      // gratuito/consenziente (nessun check), "Resta" è solo l'alternativa per chi preferisce
-      // aspettare invece di saltare subito con un compagno in condizioni precarie.
+      // "Resta ancora un turno" era diventato un modo per pescare Incontri all'infinito senza
+      // mai saltare: bastava che una carta continuasse a far perdere il turno a qualcuno (es.
+      // Vento Ingannatore) per riofferire "Resta" a ogni giro, gratis. Ora "Resta" esiste SOLO
+      // nel vero vicolo cieco — nessuno cosciente in grado di trascinare via chi non lo è.
+      // Se anche un solo personaggio è ancora capace, il gruppo è costretto a saltare: chi ha
+      // solo perso il turno (skipNextIncontro) è cosciente e cammina da sé, gratis; chi è
+      // svenuto va trascinato (un portatore a testa) con un check di Forza, perché non può
+      // acconsentire — vedi il check nel click handler di data-groupjump.
       const recovering = roster.filter(c=>c.skipNextIncontro || c.status==='unconscious');
       const capable = roster.filter(c=>isConscious(c) && !recovering.includes(c));
       // Il blocco forzato "non resta che aspettare" ha senso SOLO se esiste un'alternativa
@@ -1646,7 +1649,7 @@ function renderGroupPicker(){
       // un gruppo separato lasciava il picker senza alcun pulsante).
       const everyoneRecovering = !isSplit && recovering.length>0 && capable.length===0;
       const recNames = recovering.map(c=>escapeHtml(c.name)).join(', ');
-      const canStay = !isSplit && !waiting && recovering.length>0 && state.stayTurn;
+      const canStay = !isSplit && !waiting && everyoneRecovering && state.stayTurn;
       const stayPlane = canStay ? PIANI_BY_ID[state.stayTurn.planeId] : null;
       // frasi con accordo singolare/plurale: l'italiano ha bisogno di più forme (devono/deve,
       // li/lo/la) di quante ne servano in inglese, quindi qui le due lingue si scrivono per
@@ -1964,6 +1967,32 @@ function splitIntoNewGroup(memberIds){
   state.groups.push(newG);
   if(wasJumped) state.jumpedThisRound[newG.id]=true;
   return newG;
+}
+// Chiamata appena prima di far saltare un gruppo (data-groupjump): chi ha solo perso il
+// turno (skipNextIncontro) è cosciente e salta con gli altri gratis, come sempre. Chi è
+// svenuto invece non può acconsentire — serve un portatore cosciente a testa (un solo
+// svenuto per portatore) con un check di Forza; chi non trova posto o il cui portatore
+// fallisce il check resta indietro, staccato in un nuovo gruppo separato sullo stesso piano.
+function attemptCarryUnconscious(gid){
+  const g = state.groups.find(x=>x.id===gid);
+  if(!g) return;
+  const roster = g.memberIds.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && c.status!=='dead' && c.status!=='won');
+  const carriers = roster.filter(c=>isConscious(c) && !c.skipNextIncontro);
+  const unconsciousNow = roster.filter(c=>c.status==='unconscious');
+  if(unconsciousNow.length===0) return;
+  const carriable = unconsciousNow.slice(0, carriers.length);
+  const leftBehind = unconsciousNow.slice(carriers.length).map(c=>c.id);
+  carriable.forEach((person, i)=>{
+    const carrier = carriers[i];
+    const r = checkRoll(carrier, 'for');
+    logMsg(`🏋️ ${carrier.name} tenta di trascinare con sé ${person.name}, privo di sensi: check Forza ${r.roll} vs ${r.val} → ${r.success?'riesce':'non riesce'}.`);
+    if(!r.success) leftBehind.push(person.id);
+  });
+  if(leftBehind.length){
+    const names = leftBehind.map(id=>state.players.find(p=>p.id===id).name).join(', ');
+    splitIntoNewGroup(leftBehind);
+    logMsg(`🌀 ${names} ${leftBehind.length>1?'restano':'resta'} indietro, privi di sensi e senza nessuno che riesca a portarli: formano un nuovo gruppo separato.`,'warn');
+  }
 }
 function maybeResetJumpRound(){
   ensureGroups();
@@ -2293,24 +2322,32 @@ function passthroughTargets(acts, hiddenIds){
   if(visible.length) return visible;
   return eligible.length ? eligible : acts;
 }
-// Confronta danno del team e delle entità in un giro di Contesa: a parità (con almeno 1
-// danno reale dal team) o se il team è superiore, le entità subiscono il danno del team
-// (focus fire sulla meno in salute); se le entità sono superiori, TUTTO il loro danno passa
-// al gruppo (non più ridotto/assorbito dal danno del team), su un unico bersaglio a caso fra
-// quelli eleggibili. Nessun danno in nessuna delle due direzioni se il team non ha fatto
-// almeno 1 danno reale (evita che uno 0-0 conti come un pareggio a favore dei giocatori).
+// Confronta danno del team e delle entità in un giro di Contesa:
+//  - pareggio (entrambi >0, uguali): le entità subiscono il danno PIENO del team (bonus del
+//    pareggio, non va diviso) — focus fire sulla meno in salute, come sempre.
+//  - team superiore: le entità subiscono solo il danno NETTO (team - entità), il loro stesso
+//    colpo attutisce parzialmente quello che incassano.
+//  - entità superiori: il gruppo subisce solo il danno NETTO (entità - team) passante, non
+//    più il totale intero, su un unico bersaglio a caso fra quelli eleggibili.
+//  - 0 a 0 (nessuno ha fatto danno reale): nessun effetto in nessuna delle due direzioni.
 function resolveContesaDamage({teamDmg, entityDmg, entities, targets, dmgStat, ctx}){
   let passThrough = 0;
-  if(teamDmg>0 && teamDmg>=entityDmg){
-    let remaining=teamDmg;
+  let toEntities = 0;
+  if(teamDmg>0 && teamDmg===entityDmg){
+    toEntities = teamDmg;
+  } else if(teamDmg>entityDmg){
+    toEntities = teamDmg - entityDmg;
+  } else if(entityDmg>teamDmg){
+    passThrough = entityDmg - teamDmg;
+  }
+  if(toEntities>0){
+    let remaining=toEntities;
     entities.sort((a,b)=>(a.hp||a.value)-(b.hp||b.value));
     entities.forEach(e=>{
       if(remaining<=0||e.hp<=0) return;
       const take=Math.min(remaining,e.hp);
       e.hp-=take; remaining-=take;
     });
-  } else if(entityDmg>teamDmg){
-    passThrough = entityDmg;
   }
   if(passThrough>0 && targets.length){
     const target = targets[Math.floor(Math.random()*targets.length)];
@@ -2650,27 +2687,34 @@ function renderIncontroAction(){
       document.getElementById('btnResolveDone').onclick=finishIncontro;
       return;
     }
-    // Furtività (Ladro/Saltimbanco): non evita più lo scontro. Chi ce l'ha parte in seconda
-    // fila, nascosto per definizione (nessun check d'ingresso) finché non decide lui stesso di
-    // uscire allo scoperto — la scelta si fa giro per giro, dentro lo scontro stesso.
-    if(state.currentDraw.stealthCloak===undefined){
+    // Furtività (Ladro/Saltimbanco): non evita più lo scontro in blocco, ma resta un check di
+    // Destrezza come sempre, prima dello scontro. Chi lo supera parte in seconda fila, nascosto,
+    // e ogni giro sceglie: restare nascosto (né dà né subisce danno) o attaccare di sorpresa
+    // (il colpo conta e non può essere colpito quel giro, ma da lì in poi è scoperto come tutti
+    // per il resto dello scontro). Chi fallisce il check affronta l'Incontro normalmente subito.
+    if(state.currentDraw.stealthCheckDone===undefined){
       const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
       // la Furtività ha senso solo se, restando nascosto, l'entità ha qualcun altro su cui
       // concentrarsi al posto tuo: un altro PG presente, oppure un compagno che si metta
-      // davanti. Da soli senza compagno non c'è nessun bersaglio alternativo, si parte scoperti.
+      // davanti. Da soli senza compagno non c'è nessun bersaglio alternativo, niente da tentare.
       const stealthCapable = stealthAllowed ? fighters.filter(c=>CLASSES[c.cls].stealth) : [];
       const stealthEligible = stealthCapable.filter(c=>fighters.length>1 || c.companion);
       const stealthBlocked = stealthCapable.filter(c=>!(fighters.length>1 || c.companion));
-      state.currentDraw.stealthCloak = stealthEligible.map(c=>c.id);
-      state.currentDraw.stealthExited = [];
+      state.currentDraw.stealthCheckDone = {};
+      state.currentDraw.stealthPending = stealthEligible.map(c=>c.id);
+      state.currentDraw.stealthCloak = [];
       state.currentDraw.stealthRoundChoice = {};
-      stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, parte scoperto.`));
-      stealthEligible.forEach(c=>logMsg(`🥷 ${c.name} resta in seconda fila, nascosto, finché non deciderà di uscire allo scoperto.`));
+      stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, niente da tentare.`));
+    }
+    const pendingCheck = fighters.filter(c=>(state.currentDraw.stealthPending||[]).includes(c.id) && !state.currentDraw.stealthCheckDone[c.id]);
+    if(pendingCheck.length){
+      el.innerHTML = fineTurnoWarning + renderStealthCheckPanel(pendingCheck);
+      bindStealthCheckPanel(pendingCheck);
+      return;
     }
     const cloak = state.currentDraw.stealthCloak||[];
-    const exited = state.currentDraw.stealthExited||[];
     const roundChoice = state.currentDraw.stealthRoundChoice||{};
-    const stillCloaked = fighters.filter(c=>cloak.includes(c.id) && !exited.includes(c.id));
+    const stillCloaked = fighters.filter(c=>cloak.includes(c.id));
     const undecided = stillCloaked.filter(c=>!roundChoice[c.id]);
     if(undecided.length){
       el.innerHTML = fineTurnoWarning + renderStealthChoicePanel(undecided);
@@ -2872,13 +2916,33 @@ function dismissEncounterForGroup(sourceName){
   logMsg(`💬 ${sourceName}: l'entità desiste dallo scontro, per tutto il gruppo presente — nessun rischio né ricompensa.`,'good');
   return true;
 }
+function renderStealthCheckPanel(chars){
+  return `<div class="manual-box"><h4>🥷 Furtività</h4>
+    <p style="font-size:.85rem;">Chi ha Furtività tenta un check di Destrezza per restare nascosto prima dello scontro. Chi riesce parte in seconda fila e sceglie cosa fare a ogni giro; chi fallisce affronta l'Incontro normalmente fin da subito.</p>
+    ${chars.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${escapeHtml(c.name)} (Des ${effectiveStat(c,'des')})</span>
+      <button class="small" data-stealth-check="${c.id}">Tenta di restare nascosto</button>
+    </div>`).join('')}
+  </div>`;
+}
+function bindStealthCheckPanel(chars){
+  document.querySelectorAll('[data-stealth-check]').forEach(b=>b.onclick=()=>{
+    const c = chars.find(x=>x.id===b.dataset.stealthCheck);
+    const r = checkRoll(c,'des');
+    state.currentDraw.stealthCheckDone[c.id] = true;
+    if(r.success){
+      state.currentDraw.stealthCloak = state.currentDraw.stealthCloak||[];
+      state.currentDraw.stealthCloak.push(c.id);
+    }
+    logMsg(`🥷 ${c.name} tenta la Furtività: ${r.roll} vs ${r.val} → ${r.success?'riesce, resta nascosto in seconda fila':'scoperto, affronterà l\'Incontro normalmente'}.`);
+    render(); setTimeout(renderIncontroAction,0);
+  });
+}
 function renderStealthChoicePanel(chars){
   return `<div class="manual-box"><h4>🥷 Furtività</h4>
-    <p style="font-size:.85rem;">Chi è ancora nascosto sceglie cosa fare in questo giro, prima di tirare il combattimento: <strong>attaccare di sorpresa</strong> (il danno conta per il team, ma questo giro non può essere colpito), <strong>restare nascosto</strong> (non dà né subisce danno questo giro, resta nascosto per il prossimo), oppure <strong>uscire allo scoperto</strong> (da questo giro in poi combatte come tutti gli altri, e non potrà più nascondersi in questo scontro).</p>
+    <p style="font-size:.85rem;">Chi è ancora nascosto sceglie cosa fare in questo giro, prima di tirare il combattimento: <strong>restare nascosto</strong> (non dà né subisce danno questo giro, resta nascosto per il prossimo), oppure <strong>attaccare di sorpresa</strong> (il colpo conta per il team e questo giro non può essere colpito, ma da questo giro in poi combatte scoperto come tutti gli altri, senza più potersi nascondere in questo scontro).</p>
     ${chars.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${escapeHtml(c.name)}</span>
-      <button class="small" data-stealth-attack="${c.id}">Attacca di sorpresa</button>
       <button class="small" data-stealth-hide="${c.id}">Resta nascosto</button>
-      <button class="small" data-stealth-exit="${c.id}">Esci allo scoperto</button>
+      <button class="small" data-stealth-attack="${c.id}">Attacca di sorpresa</button>
     </div>`).join('')}
   </div>`;
 }
@@ -2886,14 +2950,12 @@ function bindStealthChoicePanel(chars){
   const choose=(c, choice)=>{
     state.currentDraw.stealthRoundChoice = state.currentDraw.stealthRoundChoice||{};
     state.currentDraw.stealthRoundChoice[c.id] = choice;
-    if(choice==='exit') logMsg(`🥷 ${c.name} esce allo scoperto: da questo giro in poi combatte normalmente, non potrà più nascondersi in questo scontro.`);
-    else if(choice==='attack') logMsg(`🥷 ${c.name} attacca di sorpresa restando nascosto: il suo colpo conta questo giro, ma non può essere colpito.`);
+    if(choice==='attack') logMsg(`🥷 ${c.name} attacca di sorpresa: il colpo conta questo giro e non può essere colpito, ma da qui in poi combatte scoperto come tutti, senza più potersi nascondere in questo scontro.`);
     else logMsg(`🥷 ${c.name} resta nascosto, senza intervenire in questo giro.`);
     render(); setTimeout(renderIncontroAction,0);
   };
-  document.querySelectorAll('[data-stealth-attack]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthAttack),'attack'));
   document.querySelectorAll('[data-stealth-hide]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthHide),'hide'));
-  document.querySelectorAll('[data-stealth-exit]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthExit),'exit'));
+  document.querySelectorAll('[data-stealth-attack]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthAttack),'attack'));
 }
 
 /* ---------- combat / contesa ---------- */
@@ -2930,11 +2992,11 @@ function renderCombatPanel(plane, card, acts){
   const aliveEntities = cb.entities.filter(e=>e.hp===undefined || e.hp>0);
   const totalHp = cb.entities.reduce((s,e)=>s+(e.hp===undefined?e.value:e.hp),0);
   const loseExtra = onLoseExtraLabel(card.onLoseExtra);
-  const cloakedNow = acts.filter(c=>(state.currentDraw.stealthCloak||[]).includes(c.id) && !(state.currentDraw.stealthExited||[]).includes(c.id));
+  const cloakedNow = acts.filter(c=>(state.currentDraw.stealthCloak||[]).includes(c.id));
   return `
     <div class="mb1"><strong>Entità:</strong> ${cb.entities.map(e=>`${e.name} (${STAT_LABEL[e.statKey]||''} ${e.value}, PV ${e.hp===undefined?e.value:e.hp})`).join(' · ')}</div>
     ${cloakedNow.length?`<p class="hint">🥷 Ancora nascosti: ${cloakedNow.map(c=>escapeHtml(c.name)).join(', ')} — scelgono cosa fare a ogni giro prima che si tiri.</p>`:''}
-    <p class="hint">Ogni giro: se il danno del gruppo pareggia (con almeno 1 danno reale) o supera quello delle entità, le entità lo subiscono (PV in meno, si punta sempre a quella più ferita); se le entità infliggono più danno del gruppo, tutto quel danno passa a un bersaglio a caso del gruppo — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
+    <p class="hint">Ogni giro: a pareggio (con almeno 1 danno reale) le entità subiscono il danno pieno del gruppo; se il gruppo è superiore lo subiscono solo per la differenza; se le entità sono superiori, la differenza passa a un bersaglio a caso del gruppo (PV in meno, si punta sempre alla più ferita fra le entità) — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
     ${cb.choiceEach ? `<p class="hint">Ogni personaggio sceglie su quale caratteristica (For/Int/Des) giocare questa Contesa.</p>`:''}
     ${loseExtra ? `<p class="hint">⚠️ Se il danno passa oltre le difese: anche ${loseExtra}.</p>` : ''}
     <div id="combatLog"></div>
@@ -2978,9 +3040,8 @@ function fightRound(plane, card, acts, cb){
   let log=[];
   let teamDmg=0;
   const cloak = state.currentDraw.stealthCloak||[];
-  const exited = state.currentDraw.stealthExited||[];
   const roundChoice = state.currentDraw.stealthRoundChoice||{};
-  const stillHidden = c => cloak.includes(c.id) && !exited.includes(c.id);
+  const stillHidden = c => cloak.includes(c.id);
   acts.forEach(c=>{
     if(stillHidden(c) && roundChoice[c.id]!=='attack') return; // nascosto e non attacca: nessun tiro questo giro
     let stat = cb.checkStat;
@@ -3020,13 +3081,11 @@ function fightRound(plane, card, acts, cb){
       if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
     });
   }
-  // chi ha scelto di uscire allo scoperto questo giro lo è da ora in poi (niente più scelta
-  // per lui); tutti gli altri ancora nascosti ridecidono al prossimo giro.
+  // chi ha attaccato di sorpresa questo giro è scoperto da ora in poi (niente più scelta per
+  // lui, combatte come tutti); tutti gli altri ancora nascosti ridecidono al prossimo giro.
   Object.entries(roundChoice).forEach(([id, choice])=>{
-    if(choice==='exit'){
+    if(choice==='attack'){
       state.currentDraw.stealthCloak = (state.currentDraw.stealthCloak||[]).filter(x=>x!==id);
-      state.currentDraw.stealthExited = state.currentDraw.stealthExited||[];
-      if(!state.currentDraw.stealthExited.includes(id)) state.currentDraw.stealthExited.push(id);
     }
   });
   state.currentDraw.stealthRoundChoice = {};
@@ -4579,6 +4638,7 @@ function bindGame(){
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{
     const gid = b.dataset.groupjump;
     if(state.groups.length>1 && state.jumpedThisRound[gid]) return; // ha già saltato in questo turno sincronizzato
+    attemptCarryUnconscious(gid);
     state.currentGroupId=gid; startJump();
   });
   document.querySelectorAll('[data-groupsplit]').forEach(b=>b.onclick=()=>openSplitGroupModal(b.dataset.groupsplit));
