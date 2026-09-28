@@ -94,14 +94,8 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .class-card-preview{width:300px; max-width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px var(--shadow); border:1px solid var(--line);}
 .class-card-preview img{width:100%; display:block;}
 .class-card-preview .class-card-fallback{padding:.8rem; background:var(--surface-2);}
-.incontro-card-hero{position:relative; width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
+.incontro-card-hero{width:min(92%, 560px); margin:0 auto 1rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 24px var(--shadow); border:1px solid var(--line);}
 .incontro-card-hero img{width:100%; display:block;}
-.incontro-type-badge{
-  position:absolute; top:.6rem; left:.6rem; z-index:2;
-  background:rgba(20,16,12,.78); color:#f4ede0;
-  padding:.3rem .7rem; border-radius:999px; font-family:'JetBrains Mono',monospace;
-  font-size:.78rem; font-weight:600; letter-spacing:.03em; border:1px solid rgba(255,255,255,.25);
-}
 .class-gallery{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.1rem;}
 .class-chip{position:relative; display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .7rem .4rem .6rem; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); font-size:.82rem;}
 .class-chip.locked{opacity:.45; filter:grayscale(.5);}
@@ -627,10 +621,6 @@ RECUPERO_PLANES.add("flora_aliena");
    manual:true → mostra testo ed espone pulsanti generici invece di auto-risolvere
 ------------------------------------------------------------------------ */
 function C(id,name,type,text,extra){ return Object.assign({id,name,type,text},extra||{}); }
-// Stessa etichetta usata da cardgen per il badge sulle carte stampate — qui serve a mostrare
-// il tipo anche nell'app, dove la maggior parte delle carte Incontro si vede come immagine
-// composta (senza testo HTML a fianco su cui appoggiare un badge già esistente).
-const INCONTRO_TYPE_LABEL = { nessun:'Nessun evento', incontro:'Incontro', check:'Check', ricompensa:'Ricompensa' };
 
 const INCONTRI = {
   elementare:[
@@ -2497,29 +2487,23 @@ function renderDrawFlow(){
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
 const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce','ge_nessuno','ge_viandante','ge_mercante','ge_ecocasa','ge_stranezza','ge_relitto','ge_predatore','ge_bivio','ge_segnale','ge_cacciatore','ge_anomalia','ge_randagio','ge_superstite','ge_legame']);
-function incontroHeroArt(id, name, typeLabel){
-  // il tipo (Incontro/Check/Ricompensa/Nessun evento) non è mai scritto da nessuna parte
-  // sull'immagine composta — solo la striscia colorata in alto per famiglia, che non basta
-  // a capire a colpo d'occhio se ci si trova davanti a uno scontro, una prova o altro senza
-  // leggere tutto il testo. Badge non invasivo, angolo in alto a sinistra.
+function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
-    ${typeLabel?`<span class="incontro-type-badge">${escapeHtml(typeLabel)}</span>`:''}
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">
   </div>`;
 }
 function renderIncontroCard(plane, card){
   const famClass = 'fam-'+ (state.currentDraw.incontroDeck==='demoni'?'demoniaco':(state.currentDraw.incontroDeck==='nonmorti'?'nonmorti':state.currentDraw.incontroDeck));
   const icon = FAMILIES[state.currentDraw.incontroDeck]?.icon || FAMILIES[plane.family]?.icon || '🃏';
-  const typeLabel = INCONTRO_TYPE_LABEL[card.type] || card.type;
   let inner;
   if(INCONTRO_COMPOSED_IDS.has(card.id)){
-    inner = `${incontroHeroArt(card.id, card.name, typeLabel)}<div id="incontroAction"></div>`;
+    inner = `${incontroHeroArt(card.id, card.name)}<div id="incontroAction"></div>`;
   } else {
     inner = `<div class="card-display">
     ${cardArt(card.id, icon, card.name, famClass)}
     <div class="card-body">
       <h3>${escapeHtml(card.name)}</h3>
-      <div class="tags"><span class="badge">${escapeHtml(typeLabel)}</span> ${card.manual?'<span class="badge" style="background:var(--ember-soft);color:var(--ember);border-color:var(--ember);">manuale</span>':''} ${card.forte?'<span class="badge" style="background:var(--bad-soft);color:var(--bad);border-color:var(--bad);">forte</span>':''} ${card.persistent?'<span class="badge">persistente</span>':''}</div>
+      <div class="tags"><span class="badge">${card.type}</span> ${card.manual?'<span class="badge" style="background:var(--ember-soft);color:var(--ember);border-color:var(--ember);">manuale</span>':''} ${card.forte?'<span class="badge" style="background:var(--bad-soft);color:var(--bad);border-color:var(--bad);">forte</span>':''} ${card.persistent?'<span class="badge">persistente</span>':''}</div>
       <p>${escapeHtml(card.text)}</p>
       <div id="incontroAction"></div>
     </div>
