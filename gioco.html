@@ -1759,16 +1759,26 @@ function doJump(){
     maybeResetJumpRound();
   }
   state.jumps++;
-  // se il mazzo è già vuoto (tutti i Piani veri scartati, solo segnaposto __PT__ già
-  // pescati) si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti
-  // si vanificherebbe l'assottigliamento che rende le uscite via via più probabili.
-  if(state.mazzoPiani.length===0){
-    state.mazzoPiani = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
+  // se non restano più Piani veri in mazzo (solo segnaposto __PT__ residui, o mazzo proprio
+  // vuoto) si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti si
+  // vanificherebbe l'assottigliamento che rende le uscite via via più probabili. Il
+  // rimescolamento va DENTRO al mazzo esistente (mischiato agli eventuali __PT__ ancora
+  // presenti), non lo sostituisce: aspettare che anche i __PT__ residui si esauriscano prima
+  // di rimescolare incatenerebbe molte uscite di fila garantite (bug segnalato dall'utente).
+  if(!state.mazzoPiani.some(x=>x!=='__PT__')){
+    const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
     state.mazzoPianiScarti = [];
+    state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
   }
-  // insert a Piano Terreno marker at the bottom for this jump
-  state.mazzoPiani.push('__PT__');
   const drawnId = state.mazzoPiani.shift();
+  // un nuovo segnaposto __PT__ si aggiunge in fondo solo quando si pesca un Piano VERO — se se
+  // ne aggiungesse uno anche quando si pesca già un __PT__ (bug segnalato dall'utente), i
+  // segnaposto si accumulerebbero senza mai diminuire: la probabilità di uscita non farebbe
+  // che salire per tutta la partita, fino a incatenare più uscite di fila senza un vero Piano
+  // in mezzo. Così invece pescare un __PT__ lo consuma e basta (il mazzo si accorcia, finché
+  // non resta più nessun Piano vero e si rimescolano dentro gli scarti — vedi sopra), tenendo
+  // il rapporto __PT__/Piani veri sotto controllo invece di farlo crescere per sempre.
+  if(drawnId!=='__PT__') state.mazzoPiani.push('__PT__');
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
@@ -2446,9 +2456,12 @@ function soloForcedJump(group, reason){
   const newG = splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   state.jumpedThisRound[newG.id] = true; // questo salto forzato conta come il salto di questo turno per il nuovo gruppo
   maybeResetJumpRound();
-  if(state.mazzoPiani.length===0){
-    state.mazzoPiani = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
+  // stesso criterio di doJump(): rimescola gli scarti dentro al mazzo appena non restano più
+  // Piani veri (anche se ci sono ancora __PT__ residui), non solo a mazzo del tutto vuoto.
+  if(!state.mazzoPiani.some(x=>x!=='__PT__')){
+    const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
     state.mazzoPianiScarti = [];
+    state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
   }
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
@@ -3703,7 +3716,12 @@ function openPianoTerrenoModal(dest){
   } else if(dest.kind==='bonus'){
     body += `<div class="row mt1"><button class="primary" id="btnCuoreBonus">Ogni presente +1 oggetto e +1 risorsa</button></div>`;
   } else if(dest.kind==='check'){
-    body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptcheck="${c.id}">${c.name}: check Intelletto</button>`).join('')}</div><div id="ptCheckResult"></div><button class="primary mt1" id="btnPTClose">Continua</button>`;
+    // Ogni personaggio ha il proprio slot di risultato (ptResult_<id>): con un solo div
+    // condiviso, la scelta del mazzetto di uno cancellava anche il tiro/scelta pendente degli
+    // altri (bug segnalato dall'utente sulla Biblioteca Infinita — "chi sceglie toglie la
+    // scelta agli altri"), e i pulsanti di scelta venivano ri-bindati a livello globale a ogni
+    // nuovo successo, rischiando di assegnare lo spell al personaggio sbagliato.
+    body += `<div class="mt1">${activeChars().map(c=>`<div style="margin-bottom:.4rem;"><button class="small" data-ptcheck="${c.id}">${c.name}: check Intelletto</button> <span id="ptResult_${c.id}"></span></div>`).join('')}</div><button class="primary mt1" id="btnPTClose">Continua</button>`;
   } else if(dest.kind==='contesaProposta'){
     body += `<div class="row mt1">${activeChars().map(c=>`<button class="small" data-ptcontesa="${c.id}">${c.name} si siede sul trono</button>`).join('')}</div><div id="ptCheckResult"></div><button class="primary mt1" id="btnPTClose">Continua</button>`;
   } else if(dest.kind==='terrestre'){
@@ -3789,7 +3807,8 @@ function bindPianoTerrenoModal(dest){
     b.disabled = true;
     const c=state.players.find(x=>x.id===b.dataset.ptcheck);
     const r=checkRoll(c,'int');
-    document.getElementById('ptCheckResult').innerHTML += `<div class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${c.name}: ${r.success?'Successo':'Fallito'}</div>`;
+    const resultEl = document.getElementById('ptResult_'+c.id) || document.getElementById('ptCheckResult');
+    resultEl.innerHTML += `<span class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${r.success?'Successo':'Fallito'}</span>`;
     if(dest.id==='labirinto_specchi' && r.success){
       c.mirrorBoost=c.mirrorBoost||{};
       ['for','des','int'].forEach(s=>{ const before=c.stats[s]; c.stats[s]=Math.min(6,c.stats[s]+1); c.mirrorBoost[s]=(c.mirrorBoost[s]||0)+(c.stats[s]-before); });
@@ -3797,11 +3816,13 @@ function bindPianoTerrenoModal(dest){
     }
     if(dest.id==='biblioteca_infinita'){
       if(r.success){
-        document.getElementById('ptCheckResult').innerHTML += `<div class="row mt1">Scegli il mazzetto: ${['flusso','essenza','divinazione'].map(sc=>`<button class="small" data-ptschool="${sc}">${sc}</button>`).join('')}</div>`;
-        document.querySelectorAll('[data-ptschool]').forEach(sb=>sb.onclick=()=>{
+        resultEl.innerHTML += ` Scegli il mazzetto: ${['flusso','essenza','divinazione'].map(sc=>`<button class="small" data-ptschool="${sc}">${sc}</button>`).join('')}`;
+        // bindati solo dentro allo slot di QUESTO personaggio: non tocca né cancella lo slot
+        // (e l'eventuale scelta pendente) degli altri che hanno tirato il check in parallelo.
+        resultEl.querySelectorAll('[data-ptschool]').forEach(sb=>sb.onclick=()=>{
           const school=sb.dataset.ptschool; const s=drawSpell(school);
           if(s){ c.spells.push(s); logMsg(`📖 ${c.name} sceglie liberamente e trova uno spell di ${school}.`); }
-          document.getElementById('ptCheckResult').innerHTML='';
+          resultEl.innerHTML = `<span class="hint">📖 spell scelto.</span>`;
         });
       } else logMsg(`📚 ${c.name} si perde fra gli scaffali: salta 2 turni.`);
     }
