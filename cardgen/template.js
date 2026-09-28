@@ -280,6 +280,7 @@ function cardHtml(plane, flavor, artDir) {
         </div>
         <div class="badges">
           <span class="badge check-badge"><span class="badge-icon">${badge.icon}</span>${esc(badge.label)}</span>
+          <span class="badge"><span class="badge-icon">${FAMILY_EMOJI[plane.family]||'🃏'}</span>Incontri: ${esc(FAMILY_LABEL[plane.family]||plane.family)}</span>
           ${plane.recupero ? `<span class="badge recupero-badge">✦ Recupero</span>` : ''}
         </div>
       </div>
