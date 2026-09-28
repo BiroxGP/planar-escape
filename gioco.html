@@ -2275,7 +2275,8 @@ function applyCombatPassthrough(c, statKey, ctx){
   }
   applyDamage(c, statKey, 1, ctx);
 }
-function passthroughTargets(acts){
+function passthroughTargets(acts, hiddenIds){
+  hiddenIds = hiddenIds || [];
   // Arco Lungo Planare: chi lo impugna e supera un check di Destrezza combatte a distanza
   // restando nascosto, quindi non subisce il danno passante del team in quel giro.
   const eligible = acts.filter(c=>{
@@ -2285,7 +2286,37 @@ function passthroughTargets(acts){
     if(r.success){ logMsg(`🏹 ${c.name} (${w.name}) combatte a distanza restando nascosto: non subisce danno passante in questo giro.`); return false; }
     return true;
   });
+  // Furtività (Ladro/Saltimbanco ancora nascosti in questo scontro): non possono essere
+  // bersaglio del danno passante, a meno che siano gli unici presenti — un'entità colpisce
+  // comunque qualcuno, non si ferma solo perché tutti si nascondono.
+  const visible = eligible.filter(c=>!hiddenIds.includes(c.id));
+  if(visible.length) return visible;
   return eligible.length ? eligible : acts;
+}
+// Confronta danno del team e delle entità in un giro di Contesa: a parità (con almeno 1
+// danno reale dal team) o se il team è superiore, le entità subiscono il danno del team
+// (focus fire sulla meno in salute); se le entità sono superiori, TUTTO il loro danno passa
+// al gruppo (non più ridotto/assorbito dal danno del team), su un unico bersaglio a caso fra
+// quelli eleggibili. Nessun danno in nessuna delle due direzioni se il team non ha fatto
+// almeno 1 danno reale (evita che uno 0-0 conti come un pareggio a favore dei giocatori).
+function resolveContesaDamage({teamDmg, entityDmg, entities, targets, dmgStat, ctx}){
+  let passThrough = 0;
+  if(teamDmg>0 && teamDmg>=entityDmg){
+    let remaining=teamDmg;
+    entities.sort((a,b)=>(a.hp||a.value)-(b.hp||b.value));
+    entities.forEach(e=>{
+      if(remaining<=0||e.hp<=0) return;
+      const take=Math.min(remaining,e.hp);
+      e.hp-=take; remaining-=take;
+    });
+  } else if(entityDmg>teamDmg){
+    passThrough = entityDmg;
+  }
+  if(passThrough>0 && targets.length){
+    const target = targets[Math.floor(Math.random()*targets.length)];
+    for(let i=0;i<passThrough;i++) applyCombatPassthrough(target, dmgStat, ctx);
+  }
+  return passThrough;
 }
 function reshuffleMazzoPiani(){
   if(inStasi()){ logMsg('⏳ Qui nulla può cambiare: il mazzo Piani non è manipolabile (Stasi).', 'warn'); return; }
@@ -2609,31 +2640,41 @@ function renderIncontroAction(){
     return;
   }
   if(card.type==='incontro'){
-    const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
-    const decided = state.currentDraw.stealthDecided||{};
-    // la Furtività ha senso solo se, restando nascosto, l'entità ha qualcun altro su cui
-    // concentrarsi al posto tuo: un altro PG presente, oppure un compagno che si metta
-    // davanti. Da soli senza compagno non c'è nessun bersaglio alternativo, niente da tentare.
-    const stealthCapable = stealthAllowed ? acts.filter(c=>CLASSES[c.cls].stealth && !decided[c.id]) : [];
-    const stealthEligible = stealthCapable.filter(c=>acts.length>1 || c.companion);
-    const stealthBlocked = stealthCapable.filter(c=>!(acts.length>1 || c.companion));
-    if(stealthBlocked.length && !state.currentDraw.stealthBlockedLogged){
-      state.currentDraw.stealthBlockedLogged = true;
-      stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, niente da tentare.`));
-    }
-    if(stealthEligible.length){
-      el.innerHTML = fineTurnoWarning + renderStealthPanel(stealthEligible);
-      bindStealthPanel(stealthEligible);
+    // "hidden" qui è solo quello garantito da oggetti/spell (grantHidden/dismissEncounterForGroup):
+    // evita l'Incontro per intero, né rischi né ricompense, invariato rispetto a prima.
+    const itemHidden = state.currentDraw.hidden||[];
+    const fighters = acts.filter(c=>!itemHidden.includes(c.id));
+    if(fighters.length===0){
+      const stillFineTurno = hasFineTurnoRisk(plane) ? ` Il rischio di fine turno di ${escapeHtml(plane.name)} resta comunque.` : '';
+      el.innerHTML = `<p class="hint">🥷 Tutti i presenti evitano l'Incontro: nessuno scontro, né rischi né ricompense.${stillFineTurno}</p><button class="primary" id="btnResolveDone">Continua</button>`;
+      document.getElementById('btnResolveDone').onclick=finishIncontro;
       return;
     }
-    const hidden = state.currentDraw.hidden||[];
-    const fighters = acts.filter(c=>!hidden.includes(c.id));
-    if(fighters.length===0){
-      // restare nascosti evita lo scontro in sé, ma non è una "situazione tranquilla": c'è
-      // comunque un nemico nei paraggi, quindi l'effetto di fine turno del piano resta.
-      const stillFineTurno = hasFineTurnoRisk(plane) ? ` Il rischio di fine turno di ${escapeHtml(plane.name)} resta comunque.` : '';
-      el.innerHTML = `<p class="hint">🥷 Tutti i presenti sono riusciti a restare nascosti: nessuno scontro, né rischi né ricompense.${stillFineTurno}</p><button class="primary" id="btnResolveDone">Continua</button>`;
-      document.getElementById('btnResolveDone').onclick=finishIncontro;
+    // Furtività (Ladro/Saltimbanco): non evita più lo scontro. Chi ce l'ha parte in seconda
+    // fila, nascosto per definizione (nessun check d'ingresso) finché non decide lui stesso di
+    // uscire allo scoperto — la scelta si fa giro per giro, dentro lo scontro stesso.
+    if(state.currentDraw.stealthCloak===undefined){
+      const stealthAllowed = plane.family!=='demoniaco' && plane.family!=='nonmorti';
+      // la Furtività ha senso solo se, restando nascosto, l'entità ha qualcun altro su cui
+      // concentrarsi al posto tuo: un altro PG presente, oppure un compagno che si metta
+      // davanti. Da soli senza compagno non c'è nessun bersaglio alternativo, si parte scoperti.
+      const stealthCapable = stealthAllowed ? fighters.filter(c=>CLASSES[c.cls].stealth) : [];
+      const stealthEligible = stealthCapable.filter(c=>fighters.length>1 || c.companion);
+      const stealthBlocked = stealthCapable.filter(c=>!(fighters.length>1 || c.companion));
+      state.currentDraw.stealthCloak = stealthEligible.map(c=>c.id);
+      state.currentDraw.stealthExited = [];
+      state.currentDraw.stealthRoundChoice = {};
+      stealthBlocked.forEach(c=>logMsg(`🥷 ${c.name} è da solo, senza compagni né un compagno che si metta davanti: la Furtività non ha nessun altro bersaglio su cui far ricadere l'attenzione, parte scoperto.`));
+      stealthEligible.forEach(c=>logMsg(`🥷 ${c.name} resta in seconda fila, nascosto, finché non deciderà di uscire allo scoperto.`));
+    }
+    const cloak = state.currentDraw.stealthCloak||[];
+    const exited = state.currentDraw.stealthExited||[];
+    const roundChoice = state.currentDraw.stealthRoundChoice||{};
+    const stillCloaked = fighters.filter(c=>cloak.includes(c.id) && !exited.includes(c.id));
+    const undecided = stillCloaked.filter(c=>!roundChoice[c.id]);
+    if(undecided.length){
+      el.innerHTML = fineTurnoWarning + renderStealthChoicePanel(undecided);
+      bindStealthChoicePanel(undecided);
       return;
     }
     el.innerHTML = fineTurnoWarning + renderCombatPanel(plane, card, fighters);
@@ -2831,32 +2872,28 @@ function dismissEncounterForGroup(sourceName){
   logMsg(`💬 ${sourceName}: l'entità desiste dallo scontro, per tutto il gruppo presente — nessun rischio né ricompensa.`,'good');
   return true;
 }
-function renderStealthPanel(chars){
+function renderStealthChoicePanel(chars){
   return `<div class="manual-box"><h4>🥷 Furtività</h4>
-    <p style="font-size:.85rem;">Chi ha Furtività vede l'Incontro e decide se tentare di restare nascosto (check di Destrezza) prima che si affronti lo scontro: chi la usa vede solo se stesso, non tutto il gruppo.</p>
-    ${chars.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${escapeHtml(c.name)} (Des ${effectiveStat(c,'des')})</span>
-      <button class="small" data-stealth-try="${c.id}">Tenta di restare nascosto</button>
-      <button class="small" data-stealth-skip="${c.id}">Affronta apertamente</button>
+    <p style="font-size:.85rem;">Chi è ancora nascosto sceglie cosa fare in questo giro, prima di tirare il combattimento: <strong>attaccare di sorpresa</strong> (il danno conta per il team, ma questo giro non può essere colpito), <strong>restare nascosto</strong> (non dà né subisce danno questo giro, resta nascosto per il prossimo), oppure <strong>uscire allo scoperto</strong> (da questo giro in poi combatte come tutti gli altri, e non potrà più nascondersi in questo scontro).</p>
+    ${chars.map(c=>`<div class="row" style="margin-bottom:.3rem;"><span style="min-width:120px;">${escapeHtml(c.name)}</span>
+      <button class="small" data-stealth-attack="${c.id}">Attacca di sorpresa</button>
+      <button class="small" data-stealth-hide="${c.id}">Resta nascosto</button>
+      <button class="small" data-stealth-exit="${c.id}">Esci allo scoperto</button>
     </div>`).join('')}
   </div>`;
 }
-function bindStealthPanel(chars){
-  const decide=(c, hid)=>{
-    state.currentDraw.stealthDecided = state.currentDraw.stealthDecided||{};
-    state.currentDraw.stealthDecided[c.id]=true;
-    if(hid){ state.currentDraw.hidden = state.currentDraw.hidden||[]; state.currentDraw.hidden.push(c.id); }
+function bindStealthChoicePanel(chars){
+  const choose=(c, choice)=>{
+    state.currentDraw.stealthRoundChoice = state.currentDraw.stealthRoundChoice||{};
+    state.currentDraw.stealthRoundChoice[c.id] = choice;
+    if(choice==='exit') logMsg(`🥷 ${c.name} esce allo scoperto: da questo giro in poi combatte normalmente, non potrà più nascondersi in questo scontro.`);
+    else if(choice==='attack') logMsg(`🥷 ${c.name} attacca di sorpresa restando nascosto: il suo colpo conta questo giro, ma non può essere colpito.`);
+    else logMsg(`🥷 ${c.name} resta nascosto, senza intervenire in questo giro.`);
     render(); setTimeout(renderIncontroAction,0);
   };
-  document.querySelectorAll('[data-stealth-try]').forEach(b=>b.onclick=()=>{
-    const c=chars.find(x=>x.id===b.dataset.stealthTry);
-    const r=checkRoll(c,'des');
-    logMsg(`🥷 ${c.name} tenta la Furtività: ${r.roll} vs ${r.val} → ${r.success?'resta nascosto, evita lo scontro (né rischi né ricompense)':'scoperto, affronterà l\'Incontro normalmente'}.`);
-    decide(c, r.success);
-  });
-  document.querySelectorAll('[data-stealth-skip]').forEach(b=>b.onclick=()=>{
-    const c=chars.find(x=>x.id===b.dataset.stealthSkip);
-    decide(c, false);
-  });
+  document.querySelectorAll('[data-stealth-attack]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthAttack),'attack'));
+  document.querySelectorAll('[data-stealth-hide]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthHide),'hide'));
+  document.querySelectorAll('[data-stealth-exit]').forEach(b=>b.onclick=()=>choose(chars.find(x=>x.id===b.dataset.stealthExit),'exit'));
 }
 
 /* ---------- combat / contesa ---------- */
@@ -2893,9 +2930,11 @@ function renderCombatPanel(plane, card, acts){
   const aliveEntities = cb.entities.filter(e=>e.hp===undefined || e.hp>0);
   const totalHp = cb.entities.reduce((s,e)=>s+(e.hp===undefined?e.value:e.hp),0);
   const loseExtra = onLoseExtraLabel(card.onLoseExtra);
+  const cloakedNow = acts.filter(c=>(state.currentDraw.stealthCloak||[]).includes(c.id) && !(state.currentDraw.stealthExited||[]).includes(c.id));
   return `
     <div class="mb1"><strong>Entità:</strong> ${cb.entities.map(e=>`${e.name} (${STAT_LABEL[e.statKey]||''} ${e.value}, PV ${e.hp===undefined?e.value:e.hp})`).join(' · ')}</div>
-    <p class="hint">Ogni giro: i colpi a segno del gruppo tolgono PV alle entità; il danno delle entità che supera quello inflitto passa al gruppo, -1 ${STAT_LABEL[cb.damageStat]} a testa a rotazione.</p>
+    ${cloakedNow.length?`<p class="hint">🥷 Ancora nascosti: ${cloakedNow.map(c=>escapeHtml(c.name)).join(', ')} — scelgono cosa fare a ogni giro prima che si tiri.</p>`:''}
+    <p class="hint">Ogni giro: se il danno del gruppo pareggia (con almeno 1 danno reale) o supera quello delle entità, le entità lo subiscono (PV in meno, si punta sempre a quella più ferita); se le entità infliggono più danno del gruppo, tutto quel danno passa a un bersaglio a caso del gruppo — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
     ${cb.choiceEach ? `<p class="hint">Ogni personaggio sceglie su quale caratteristica (For/Int/Des) giocare questa Contesa.</p>`:''}
     ${loseExtra ? `<p class="hint">⚠️ Se il danno passa oltre le difese: anche ${loseExtra}.</p>` : ''}
     <div id="combatLog"></div>
@@ -2938,7 +2977,12 @@ function fightRound(plane, card, acts, cb){
   cb.rounds++;
   let log=[];
   let teamDmg=0;
+  const cloak = state.currentDraw.stealthCloak||[];
+  const exited = state.currentDraw.stealthExited||[];
+  const roundChoice = state.currentDraw.stealthRoundChoice||{};
+  const stillHidden = c => cloak.includes(c.id) && !exited.includes(c.id);
   acts.forEach(c=>{
+    if(stillHidden(c) && roundChoice[c.id]!=='attack') return; // nascosto e non attacca: nessun tiro questo giro
     let stat = cb.checkStat;
     if(cb.randomEach) stat = STATS[Math.floor(Math.random()*6)];
     if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
@@ -2959,38 +3003,33 @@ function fightRound(plane, card, acts, cb){
       log.push({who:e.name, roll:r, stat:e.statKey, hit, dmg:hit?e.value:0, isEntity:true});
     });
   }
-  // apply team damage to entities (focus fire lowest hp first)
-  let remaining=teamDmg;
-  cb.entities.sort((a,b)=>(a.hp||a.value)-(b.hp||b.value));
-  cb.entities.forEach(e=>{
-    if(remaining<=0||e.hp<=0) return;
-    const take=Math.min(remaining,e.hp);
-    e.hp-=take; remaining-=take;
-  });
-  const passThrough = Math.max(0, entityDmg - teamDmg);
-  logMsg(`⚔️ Giro ${cb.rounds}: team infligge ${teamDmg} danni; entità infliggono ${entityDmg} (passano ${passThrough}).`);
+  const dmgStat = card.damageStat||'pv';
+  const hiddenIds = acts.filter(stillHidden).map(c=>c.id);
+  const targets = passthroughTargets(acts, hiddenIds);
+  const passThrough = resolveContesaDamage({teamDmg, entityDmg, entities:cb.entities, targets, dmgStat, ctx:{family:plane.family, planeId:plane.id, combat:true}});
+  logMsg(`⚔️ Giro ${cb.rounds}: team infligge ${teamDmg} danni; entità infliggono ${entityDmg}${passThrough>0?` (passano ${passThrough})`:teamDmg>0&&teamDmg>=entityDmg?' — colpo alle entità':''}.`);
   log.forEach(l=>{
     if(l.frozen){ logMsg(`　 ❄️ Le entità non mettono a segno colpi questo giro (Scettro di Congelamento).`); return; }
     const rollLabel = l.dardo?'Dardo Incantato':'tiro '+l.roll;
     logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
   });
-  if(passThrough>0){
-    let dmgStat = card.damageStat||'pv';
-    const targets = passthroughTargets(acts);
-    let idx=0;
-    for(let i=0;i<passThrough;i++){
-      const target = targets[idx%targets.length];
-      applyCombatPassthrough(target, dmgStat, {family:plane.family, planeId:plane.id, combat:true});
-      idx++;
-    }
-  }
   if(card.onLoseExtra && passThrough>0){
-    acts.forEach(c=>{
+    acts.filter(c=>!stillHidden(c)).forEach(c=>{
       if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso anche dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); }
       if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
       if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
     });
   }
+  // chi ha scelto di uscire allo scoperto questo giro lo è da ora in poi (niente più scelta
+  // per lui); tutti gli altri ancora nascosti ridecidono al prossimo giro.
+  Object.entries(roundChoice).forEach(([id, choice])=>{
+    if(choice==='exit'){
+      state.currentDraw.stealthCloak = (state.currentDraw.stealthCloak||[]).filter(x=>x!==id);
+      state.currentDraw.stealthExited = state.currentDraw.stealthExited||[];
+      if(!state.currentDraw.stealthExited.includes(id)) state.currentDraw.stealthExited.push(id);
+    }
+  });
+  state.currentDraw.stealthRoundChoice = {};
   const allDead = cb.entities.every(e=>e.hp<=0);
   if(allDead){
     logMsg('🏆 Tutte le entità sono state sconfitte.');
@@ -3796,12 +3835,10 @@ function fightRoundGeneric(cb, acts, plane, opts){
     rows.push(label);
     logMsg('　 '+label);
   });
-  let remaining=teamDmg;
-  cb.entities.forEach(e=>{ if(remaining<=0||e.hp<=0) return; const take=Math.min(remaining,e.hp); e.hp-=take; remaining-=take; });
-  const passThrough=Math.max(0,entityDmg-teamDmg);
-  const summary = `⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg (passano ${passThrough}).`;
+  const targets = passthroughTargets(acts);
+  const passThrough = resolveContesaDamage({teamDmg, entityDmg, entities:cb.entities, targets, dmgStat: opts.damageStat||'pv', ctx:{family:plane.family, planeId:plane.id, combat:true}});
+  const summary = `⚔️ Giro ${cb.rounds}: team ${teamDmg} dmg, entità ${entityDmg} dmg${passThrough>0?` (passano ${passThrough})`:teamDmg>0&&teamDmg>=entityDmg?' — colpo al boss':''}.`;
   logMsg(summary);
-  if(passThrough>0){ const targets=passthroughTargets(acts); let idx=0; for(let i=0;i<passThrough;i++){ const t=targets[idx%targets.length]; applyCombatPassthrough(t, opts.damageStat||'pv', {family:plane.family, planeId:plane.id, combat:true}); idx++; } }
   return { summary, rows };
 }
 
