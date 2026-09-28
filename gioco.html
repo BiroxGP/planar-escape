@@ -1049,10 +1049,18 @@ function applyDamage(c, stat, n, ctx){
     logMsg(`🍀 ${c.name} para il colpo: Resistenza garantita per questo piano.`);
     return;
   }
+  // Cerchio para il primo danno per OGNI presente in questo turno, non solo per il primo
+  // della lista: era un flag unico condiviso, consumato dal primo personaggio processato,
+  // lasciando tutti gli altri scoperti nello stesso turno (bug segnalato dall'utente, es.
+  // Fuoco che colpisce tutti all'ingresso). Tracciato per id su currentDraw (si azzera da
+  // solo a ogni nuovo turno/piano, "stay" incluso, perché currentDraw viene sempre ricreato).
   if(n>0 && state.currentDraw && state.currentDraw.cerchioActive){
-    state.currentDraw.cerchioActive=false;
-    logMsg(`🛡️ Il gruppo para il colpo grazie al Cerchio di Protezione.`);
-    return;
+    const used = state.currentDraw.cerchioUsedBy || (state.currentDraw.cerchioUsedBy=[]);
+    if(!used.includes(c.id)){
+      used.push(c.id);
+      logMsg(`🛡️ ${c.name} para il colpo grazie al Cerchio di Protezione.`);
+      return;
+    }
   }
   if(n>0 && c.equipped.shield){
     const sh = OGGETTI_BY_ID[c.equipped.shield];
