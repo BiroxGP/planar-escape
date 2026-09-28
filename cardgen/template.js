@@ -262,9 +262,10 @@ function cardHtml(plane, flavor, artDir) {
   const accent = FAMILY_ACCENT[plane.family] || '#5f564a';
   const { title, sub: fullSub } = splitTitle(plane.name);
   const tier = tierLabel(plane);
-  // se c'è già il nastrino del girone/livello in alto, nel sottotitolo basta la famiglia
-  // (evita di ripetere "1° girone" due volte sulla stessa carta)
-  const sub = tier && fullSub ? fullSub.split(',')[0].trim() : fullSub;
+  // col nastrino del girone/livello in alto e il kicker "Incontri: <Famiglia>" sopra al
+  // nome, il sottotitolo (che diceva solo la famiglia) è ridondante: lo si mostra solo
+  // per le carte senza tier (nessuna, in pratica, ma resta come fallback difensivo).
+  const sub = tier ? null : fullSub;
   const badge = checkBadge(plane.check);
 
   return `
@@ -275,12 +276,12 @@ function cardHtml(plane, flavor, artDir) {
     <div class="panel">
       <div class="name-row">
         <div class="name-block">
+          <div class="family-kicker">${esc(FAMILY_LABEL[plane.family]||plane.family)}</div>
           <div class="name">${esc(title)}</div>
           ${sub ? `<div class="name-sub">${esc(sub)}</div>` : ''}
         </div>
         <div class="badges">
           <span class="badge check-badge"><span class="badge-icon">${badge.icon}</span>${esc(badge.label)}</span>
-          <span class="badge"><span class="badge-icon">${FAMILY_EMOJI[plane.family]||'🃏'}</span>Incontri: ${esc(FAMILY_LABEL[plane.family]||plane.family)}</span>
           ${plane.recupero ? `<span class="badge recupero-badge">✦ Recupero</span>` : ''}
         </div>
       </div>
@@ -487,6 +488,11 @@ function sharedCardCss() {
   }
   .name-row{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:10px; }
   .name-block{ min-width:0; }
+  .family-kicker{
+    font-family:'JetBrains Mono','DejaVu Sans Mono',monospace; font-size:18px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--fam); font-weight:600; margin-bottom:8px;
+    text-shadow:0 2px 6px rgba(0,0,0,.5);
+  }
   .name{
     font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
     font-size:58px; letter-spacing:.015em; line-height:1.05; text-transform:uppercase;

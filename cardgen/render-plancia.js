@@ -120,58 +120,97 @@ function backHtml() {
   </body></html>`;
 }
 
-// Segnalini: due icone (freccia doppia su/giù) ritagliate da segnalini.jpg (2048x2048,
-// sfondo nero) — stesso riquadro di ritaglio (670px) centrato su ciascuna, per una resa
-// visiva coerente fra i due. Il cerchio-slot accanto ai dadi misura ~4,9mm di diametro alla
-// scala della board v4 (era 10,5mm in v1, 6mm in v3): i segnalini vanno stampati a quella
-// stessa dimensione.
+// Segnalino di modificatore temporaneo: prima erano due icone (freccia doppia su/giù,
+// cerchio 5mm) da posare nel cerchio-slot accanto a ogni dado — l'utente ha tolto quei
+// cerchi-slot dalla board (v5 di plancia_giocatore.png, stesse dimensioni 1520x1034,
+// stesso resto dell'immagine) e ha chiesto un solo segnalino invece di due: la freccia
+// (sempre "su", ritagliata da segnalini.jpg) posata FISICAMENTE sopra al dado = bonus,
+// sotto al dado = malus — la posizione porta il significato, non serve un secondo disegno
+// con la freccia in giù. Forma quadrata (non più cerchio) per richiamare il dado/la
+// casella che lo contiene sulla board, invece di un gettone rotondo scollegato dal resto.
 const TOKEN_RENDER_PX = 500; // risoluzione del master, non la dimensione di stampa
 const TOKEN_CROP = 670;
-const TOKEN_MM = 5;
-const TOKENS = {
-  up:   { center: [664.5, 1026] },
-  down: { center: [1378.5, 1023] },
-};
+const TOKEN_MM = 10; // chip ben visibile appoggiato sopra/sotto al dado (~16mm), non un puntino
+const TOKEN_ICON_CENTER = [637, 1006]; // stessa freccia "su" di segnalini.jpg — ricentrata: il vecchio [664.5,1026] andava bene per il ritaglio circolare di prima (il bordo tondo nascondeva lo sbilanciamento), ma nel chip quadrato pieno si vedeva la freccia spostata
+// stile del chip: fondo scuro (necessario perché la freccia si compone con mix-blend-mode
+// "screen", che funziona solo su base scura — su un fondo chiaro il nero non sparirebbe
+// e i colori della freccia sbiadirebbero) più un bordo bronzo che richiama la cornice
+// metallica della board, invece del beige della casella (che avrebbe rotto la sovrapposizione).
+const TOKEN_BG = '#1f1b16';
+const TOKEN_BORDER = '#a89a80';
 
-function tokenHtml(key) {
-  const t = TOKENS[key];
+function tokenHtml() {
   const bgSize = 2048 * (TOKEN_RENDER_PX / TOKEN_CROP);
-  const bgPosX = -(t.center[0] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
-  const bgPosY = -(t.center[1] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
+  const bgPosX = -(TOKEN_ICON_CENTER[0] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
+  const bgPosY = -(TOKEN_ICON_CENTER[1] - TOKEN_CROP / 2) * (TOKEN_RENDER_PX / TOKEN_CROP);
   const url = pathToFileURL(SRC_TOKENS).href;
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{margin:0;padding:0;}
     body{ background:transparent; }
     .token{
-      width:${TOKEN_RENDER_PX}px; height:${TOKEN_RENDER_PX}px; border-radius:50%; overflow:hidden;
-      background-image:url(${url}); background-repeat:no-repeat;
-      background-size:${bgSize}px ${bgSize}px; background-position:${bgPosX}px ${bgPosY}px;
+      position:relative; width:${TOKEN_RENDER_PX}px; height:${TOKEN_RENDER_PX}px;
+      border-radius:${Math.round(TOKEN_RENDER_PX * .12)}px; overflow:hidden;
+      background:${TOKEN_BG}; box-shadow:inset 0 0 0 ${Math.round(TOKEN_RENDER_PX*.03)}px ${TOKEN_BORDER};
     }
-  </style></head><body><div class="token" id="token"></div></body></html>`;
+    .icon{
+      position:absolute; inset:0; background-repeat:no-repeat;
+      background-image:url(${url});
+      background-size:${bgSize}px ${bgSize}px; background-position:${bgPosX}px ${bgPosY}px;
+      /* segnalini.jpg ha sfondo nero: screen lo fa sparire sul chip chiaro (nero=trasparente
+         con screen), lasciando solo il bagliore della freccia — stesso trucco già usato per
+         i sigilli di scuola/categoria su sfondo colorato in template.js. */
+      mix-blend-mode:screen;
+    }
+  </style></head><body><div class="token" id="token"><div class="icon"></div></div></body></html>`;
 }
 
-function tokenSheetHtml(upFile, downFile, perType) {
-  const url1 = pathToFileURL(upFile).href, url2 = pathToFileURL(downFile).href;
+// Retro del segnalino: stesso chip scuro con bordo bronzo del fronte (per restare
+// riconoscibile come lo stesso oggetto), ma senza la freccia — un semplice "±" a incidere
+// il bagliore ambra, giusto per dire "sei un modificatore" quando è ancora a faccia in giù,
+// niente di più (è un gettone che sta quasi sempre a faccia in su una volta piazzato).
+function tokenBackHtml() {
+  return `<!doctype html><html><head><meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{ background:transparent; }
+    .token{
+      position:relative; width:${TOKEN_RENDER_PX}px; height:${TOKEN_RENDER_PX}px;
+      border-radius:${Math.round(TOKEN_RENDER_PX * .12)}px; overflow:hidden;
+      background:${TOKEN_BG}; box-shadow:inset 0 0 0 ${Math.round(TOKEN_RENDER_PX*.03)}px ${TOKEN_BORDER};
+      display:flex; align-items:center; justify-content:center;
+    }
+    .sym{
+      font-family:'Cinzel','GFS Baskerville','Liberation Serif',serif; font-weight:700;
+      font-size:${Math.round(TOKEN_RENDER_PX * .5)}px; line-height:1; color:#f4e2b8;
+      text-shadow:0 0 ${Math.round(TOKEN_RENDER_PX*.06)}px #d9a94a, 0 0 ${Math.round(TOKEN_RENDER_PX*.14)}px #d9a94a;
+    }
+  </style></head><body><div class="token"><div class="sym">±</div></div></body></html>`;
+}
+
+function tokenSheetHtml(tokenFile, count, mirror) {
+  const url = pathToFileURL(tokenFile).href;
   const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 12, GAP_MM = 4;
-  const cols = 6;
+  const cols = Math.floor((PAGE_W_MM - 2 * MARGIN_MM + GAP_MM) / (TOKEN_MM + GAP_MM));
   const cells = [];
-  for (let i = 0; i < perType; i++) {
-    cells.push({ url: url1, col: i % cols, row: Math.floor(i / cols) });
-  }
-  const rowsUp = Math.ceil(perType / cols);
-  for (let i = 0; i < perType; i++) {
-    cells.push({ url: url2, col: i % cols, row: rowsUp + 1 + Math.floor(i / cols) });
+  for (let i = 0; i < count; i++) {
+    const col = i % cols, row = Math.floor(i / cols);
+    // il foglio dei retri va stampato sul retro dello STESSO foglio dei fronti, girando il
+    // foglio A4 da sinistra a destra (come si volta una pagina) — stessa colonna specchiata
+    // usata da print-pnp.js per le carte, altrimenti fronte e retro di ogni pedina non
+    // cadono nello stesso punto fisico e il taglio non torna.
+    cells.push({ col: mirror ? cols - 1 - col : col, row });
   }
   const cellsHtml = cells.map(c => `
     <div class="tok" style="left:${MARGIN_MM + c.col * (TOKEN_MM + GAP_MM)}mm; top:${MARGIN_MM + c.row * (TOKEN_MM + GAP_MM)}mm;">
-      <img src="${c.url}">
+      <img src="${url}">
     </div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{ background:#fff; }
     .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
-    .tok{ position:absolute; width:${TOKEN_MM}mm; height:${TOKEN_MM}mm; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
-    .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
+    .tok{ position:absolute; width:${TOKEN_MM}mm; height:${TOKEN_MM}mm; box-shadow:0 0 0 .15mm #999; }
+    .tok img{ display:block; width:100%; height:100%; }
   </style></head><body><div class="sheet">${cellsHtml}</div></body></html>`;
 }
 
@@ -234,10 +273,10 @@ async function main() {
   await renderHtmlToFile(browser, frontHtml(), frontPngPath, { width: W, height: H });
   await renderHtmlToFile(browser, backHtml(), backPngPath, { width: W, height: H });
 
-  const upPngPath = path.join(OUT_DIR, 'segnalino_su.png');
-  const downPngPath = path.join(OUT_DIR, 'segnalino_giu.png');
-  await renderHtmlToFile(browser, tokenHtml('up'), upPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
-  await renderHtmlToFile(browser, tokenHtml('down'), downPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
+  const tokenPngPath = path.join(OUT_DIR, 'segnalino_modificatore.png');
+  await renderHtmlToFile(browser, tokenHtml(), tokenPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
+  const tokenBackPngPath = path.join(OUT_DIR, 'segnalino_modificatore_retro.png');
+  await renderHtmlToFile(browser, tokenBackHtml(), tokenBackPngPath, { width: TOKEN_RENDER_PX, height: TOKEN_RENDER_PX });
 
   const printPage = await browser.newPage();
   async function pdf(html, outFile, wMm, hMm) {
@@ -249,11 +288,16 @@ async function main() {
   }
   await pdf(printSheetHtml(frontPngPath), path.join(PRINT_DIR, 'plancia_fronte.pdf'), 297, 210);
   await pdf(printSheetHtml(backPngPath), path.join(PRINT_DIR, 'plancia_retro.pdf'), 297, 210);
-  await pdf(tokenSheetHtml(upPngPath, downPngPath, 12), path.join(PRINT_DIR, 'segnalini.pdf'), 210, 297);
+  // fronte e retro dei segnalini sono tutti identici fra loro (non ci sono coppie uniche
+  // come nelle carte), ma la griglia va comunque specchiata sul retro: si stampa sullo
+  // stesso foglio già stampato coi fronti, girandolo — senza specchiare, la colonna N del
+  // fronte non cade più sopra alla colonna N del retro una volta girato il foglio.
+  await pdf(tokenSheetHtml(tokenPngPath, 30, false), path.join(PRINT_DIR, 'segnalini_fronte.pdf'), 210, 297);
+  await pdf(tokenSheetHtml(tokenBackPngPath, 30, true), path.join(PRINT_DIR, 'segnalini_retro.pdf'), 210, 297);
 
   await browser.close();
-  console.log('Fatto: plancia_giocatore_fronte.png / _retro.png / segnalino_su.png / segnalino_giu.png in ' + OUT_DIR);
-  console.log(`Fatto: plancia_fronte.pdf / plancia_retro.pdf (1 per foglio A4 orizzontale, ${BOARD_W_MM.toFixed(1)}x${BOARD_H_MM.toFixed(1)}mm) + segnalini.pdf (12 su + 12 giu, ${TOKEN_MM}mm ciascuno) in ${PRINT_DIR}`);
+  console.log('Fatto: plancia_giocatore_fronte.png / _retro.png / segnalino_modificatore.png / _retro.png in ' + OUT_DIR);
+  console.log(`Fatto: plancia_fronte.pdf / plancia_retro.pdf (1 per foglio A4 orizzontale, ${BOARD_W_MM.toFixed(1)}x${BOARD_H_MM.toFixed(1)}mm) + segnalini_fronte.pdf / _retro.pdf (30 pedine quadrate, ${TOKEN_MM}mm ciascuna — sopra al dado = bonus, sotto = malus) in ${PRINT_DIR}`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

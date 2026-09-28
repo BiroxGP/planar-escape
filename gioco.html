@@ -581,10 +581,10 @@ const PIANI = [
   P("tempesta","Tempesta","elementare","des",false,"Fulmini improvvisi: a fine turno, 1 danno diretto a un membro a caso del gruppo presente."),
   P("cristallo","Cristallo","elementare","san",false,"Amplifica tutto: incantesimi e danni fisici subiti qui valgono il doppio (+100% entrambi)."),
   P("luce","Luce","eterei","int",false,"Accecante: chi fallisce un check di Intelletto subisce -1 a Forza, Destrezza e Intelletto per tutta la permanenza (nessuna perdita del turno)."),
-  P("tenebre","Tenebre","eterei",null,false,"Buio totale: appena si entra, -1 automatico a Forza, Destrezza e Intelletto per tutta la permanenza. Nessun check da tirare."),
+  P("tenebre","Tenebre","eterei","des",false,"Buio totale: appena si entra, -1 automatico a Forza, Destrezza e Intelletto per tutta la permanenza."),
   P("sogno","Sogno","eterei","int",false,"Illusioni: chi fallisce un check di Intelletto resta intrappolato e non partecipa all'Incontro di questo turno, sia esso uno scontro o altro. Chi lo supera affronta l'Incontro normalmente."),
   P("specchi","Specchi","eterei","choice",false,"Il proprio riflesso sfida ognuno in una Contesa: si sceglie su quale caratteristica giocarla (Forza, Intelletto o Destrezza) — chi perde subisce un depotenziamento temporaneo su quella stessa caratteristica."),
-  P("astrale","Astrale","eterei",null,true,"Nessun pericolo attivo: solo quiete, e un tempo che scorre in modo incerto."),
+  P("astrale","Astrale","eterei","san",true,"Nessun pericolo attivo: solo quiete, e un tempo che scorre in modo incerto."),
   P("ordine","Ordine","armonia","pv",true,"Si può riportare una qualsiasi propria caratteristica al valore di partenza di 1° livello, cancellando ogni effetto accumulato su di essa, nel bene e nel male."),
   P("legge","Legge","armonia","anima",false,"Ogni oggetto preso qui richiede un pegno in cambio: un baratto forzato, deciso al tavolo, mai gratuito."),
   P("sacro","Sacro","armonia","san",true,"Piano protetto: non-morti e demoni che entrano subiscono danno passivo; i vivi recuperano anche 1 Sanità Mentale in più del normale."),
@@ -593,12 +593,12 @@ const PIANI = [
   P("metallo","Metallo","armonia","des",false,"Chi fallisce un check di Destrezza resta incastrato negli ingranaggi: perde il turno e subisce 1 danno."),
   P("logica","Logica","armonia","int",false,"Nessun reroll è utilizzabile qui, da nessuna fonte. Un 6 naturale resta comunque un successo automatico."),
   P("verita","Verità","armonia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo a Sanità Mentale, travolto dalla perdita di ogni illusione."),
-  P("eternita","Eternità","armonia",null,true,"Nessun danno attivo all'ingresso. I Punti Vita non scendono mai sotto 1 finché si resta: ci si può ferire, ma non si sviene né si muore."),
+  P("eternita","Eternità","armonia","pv",true,"Nessun danno attivo all'ingresso. I Punti Vita non scendono mai sotto 1 finché si resta: ci si può ferire, ma non si sviene né si muore."),
   P("caos","Caos","entropia","random",false,"Ogni check usa una statistica casuale, estratta di nuovo a ogni tiro. Appena si entra, l'intero mazzo Piani viene rimescolato."),
-  P("vuoto","Vuoto","entropia",null,false,"Nessun check: a ogni turno si sceglie cosa perdere fra 1 Punto Vita, un oggetto, uno spell o un'abilità."),
+  P("vuoto","Vuoto","entropia","san",false,"A ogni turno si sceglie cosa perdere fra 1 Punto Vita, un oggetto, uno spell o un'abilità."),
   P("sangue","Sangue","entropia","anima",false,"Ogni check o combattimento fallito costa anche 1 Punto Vita. Qualsiasi altra perdita di Punti Vita qui raddoppia."),
-  P("decadimento","Decadimento","entropia",null,false,"Automatico, nessun check: si perde un oggetto a ogni turno di permanenza, salvo protezioni.",null,{type:"fisico"}),
-  P("putrefazione","Putrefazione","entropia",null,false,"Automatico, nessun check: a ogni turno un d6 decide se Forza (1-2-3) o Destrezza (4-5-6) subisce -1 temporaneo.",null,{type:"fisico"}),
+  P("decadimento","Decadimento","entropia","for",false,"Automatico: si perde un oggetto a ogni turno di permanenza, salvo protezioni.",null,{type:"fisico"}),
+  P("putrefazione","Putrefazione","entropia","des",false,"Automatico: a ogni turno un d6 decide se Forza (1-2-3) o Destrezza (4-5-6) subisce -1 temporaneo.",null,{type:"fisico"}),
   P("tempo","Tempo","entropia","int",false,"Chi fallisce un check di Intelletto subisce un depotenziamento temporaneo casuale: un d6 decide su quale delle sei caratteristiche."),
   P("cenere","Cenere","entropia","for",false,"Chi fallisce un check di Forza perde un oggetto, sbriciolato dal vento."),
   P("oblio","Oblio","entropia","int",false,"Chi fallisce un check di Intelletto dimentica di colpo uno spell o un'abilità — un depotenziamento temporaneo come gli altri, guarisce solo in un piano di Recupero."),
@@ -1506,7 +1506,7 @@ function renderCharCard(c){
     </div>
     <div class="char-meta">
       <span>🔁 ${c.rerolls} reroll</span>
-      <span>💠 ${c.resources} ${t('risorse')}</span>
+      <span><img src="assets/ui/pedina_risorsa_planare_icon.png" alt="" style="width:16px;height:16px;vertical-align:middle;" onerror="this.remove()"> ${c.resources} ${t('risorse')}</span>
       <span>🎒 ${c.inventory.length} ${t('oggetti')}</span>
       <span>📖 ${c.spells.length} spell</span>
       ${c.companion?`<span>🗿 ${escapeHtml(c.companion.name)} (${c.companion.value})</span>`:''}
