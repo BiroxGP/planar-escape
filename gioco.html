@@ -485,7 +485,7 @@ const CLASSES = {
     desc:"Evoca un demone minore come compagno personale (valore 1, ricarica a Recupero). Resistenza Demoniaco."},
   negromante:{name:"Negromante",icon:"☠️",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{flusso:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["nonmorti"],special:"resurrezione",
     desc:"Se muore, una sola volta a partita torna in vita come non-morto con 1 PV. Resistenza Non-morti."},
-  sciamano:{name:"Sciamano",icon:"🏔️",for:1,int:3,des:3,pv:4,san:5,anima:5,affinity:{essenza:1,divinazione:1,flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["elementare"],waterOk:true,exitPlane:"eta_terra_antica",
+  sciamano:{name:"Sciamano",icon:"🏔️",for:1,int:3,des:2,pv:4,san:5,anima:5,affinity:{essenza:1,divinazione:1,flusso:1},reroll:0,rerollLvl:0,weapons:"light",resistance:["elementare"],waterOk:true,exitPlane:"eta_terra_antica",
     desc:"Generalista, un piede in ogni scuola. A proprio agio in acqua. Uscita personale: Età della Terra Antica. Resistenza Elementare."},
   saltimbanco:{name:"Saltimbanco",icon:"🎭",for:2,int:2,des:3,pv:4,san:5,anima:5,affinity:{},reroll:3,rerollLvl:2,weapons:"light",resistance:[],stealth:true,
     desc:"Nessuno spell: 3 reroll fissi (+2 per livello). Furtività come il Ladro."},
@@ -873,6 +873,16 @@ function freshDeckPiani(){
   const ids = PIANI.filter(p=>waveOfCard(p.id, p.family) <= effectiveWave()).map(p=>p.id);
   return shuffle(ids);
 }
+// Le 2 uscite personali (kind:'terrestre': Età della Terra Antica/Sciamano, Flora Aliena/
+// Druido) vanno sempre verso il fondo del mazzetto Piano Terreno, mai mescolate a caso con
+// le altre 10 — pescarle presto (prima che il gruppo abbia la classe giusta, o sia pronto a
+// usarle) le spreca per sempre, dato che ogni destinazione (tranne finale_c) si consuma
+// appena pescata. Così sono sempre le ultime 2 delle 12, garantito.
+function freshPianoTerrenoDeck(){
+  const terrestri = PIANO_TERRENO.filter(p=>p.kind==='terrestre').map(p=>p.id);
+  const resto = PIANO_TERRENO.filter(p=>p.kind!=='terrestre').map(p=>p.id);
+  return [...shuffle(resto), ...shuffle(terrestri)];
+}
 function shuffle(arr){
   const a=arr.slice();
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
@@ -892,7 +902,7 @@ function newGame(){
     subdecksDiscard: Object.fromEntries(Object.keys(INCONTRI).map(k=>[k,[]])),
     oggettiDeck: shuffle(OGGETTI.map(o=>o.id)),
     spellDecks: Object.fromEntries(Object.entries(SPELLS).map(([k,v])=>[k, shuffle(v.map(s=>s.id))])),
-    pianoTerrenoDeck: shuffle(PIANO_TERRENO.map(p=>p.id)),
+    pianoTerrenoDeck: freshPianoTerrenoDeck(),
     pianoTerrenoUsed: [],
     jumps:0,
     log:[],
