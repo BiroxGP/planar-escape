@@ -5,11 +5,12 @@
 // sono stati misurati con uno script di supporto (pixel scan sulla colonna centrale) invece
 // di essere stimati a occhio, stesso approccio già usato per i gettoni fisici.
 //
-// L'icona oggetto riusa 🎁, già lo stesso simbolo usato in gioco per ogni ricompensa-oggetto
-// (log "🎁 {nome} trova {oggetto}"). Le icone di caratteristica temporanea/permanente non
-// esistevano: qui sono disegnate come SVG inline — anello tratteggiato (temporanea, "si
-// consuma") vs anello pieno con perno (permanente, "resta"), stessa freccia ↑ dentro a
-// entrambe per restare leggibili anche in stampa piccola.
+// L'icona oggetto è una miniatura del retro della carta Oggetto (cards_final/retro/retro_oggetto.png,
+// lo stesso dorso usato per l'intero mazzo Oggetti), non un'emoji — su richiesta esplicita, per
+// restare coerente con l'iconografia delle altre carte fisiche invece di un simbolo generico.
+// Le icone di caratteristica temporanea/permanente non esistevano: qui sono disegnate come SVG
+// inline — anello tratteggiato (temporanea, "si consuma") vs anello pieno con perno (permanente,
+// "resta"), stessa freccia ↑ dentro a entrambe per restare leggibili anche in stampa piccola.
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -19,6 +20,7 @@ const CARD_W = 750, CARD_H = 1039; // stesse dimensioni di PORTRAIT_CARD_W/H in 
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'altro');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 const BG = path.join(__dirname, '..', 'assets', 'ui', 'scala_ricompense.jpg');
+const ITEM_BACK = path.join(__dirname, '..', 'cards_final', 'retro', 'retro_oggetto.png');
 
 // pannelli misurati sull'immagine sorgente 2048x2048 (scan pixel, vedi cardgen/_measure-scala.js),
 // convertiti in coordinate della carta (scala 1039/2048): dal più luminoso (valore 5) al più
@@ -55,8 +57,9 @@ function statIcon(kind, size) {
 function rowHtml(r) {
   const h = r.y1 - r.y0;
   const iconSize = 56;
+  const itemUrl = pathToFileURL(ITEM_BACK).href;
   const chips = [];
-  for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item">🎁</span>`);
+  for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item"><img src="${itemUrl}" style="height:${iconSize}px;"></span>`);
   for (let i = 0; i < r.statN; i++) chips.push(`<span class="chip">${statIcon(r.stat, iconSize)}</span>`);
   return `<div class="valuecol" style="top:${r.y0}px; height:${h}px;"><span>${r.value}</span></div>
   <div class="row" style="top:${r.y0}px; height:${h}px;">
@@ -98,8 +101,9 @@ function pageHtml() {
       display:flex; align-items:center; justify-content:center;
     }
     .chips{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
-    .chip{ font-size:56px; line-height:1; display:flex; align-items:center; justify-content:center; }
+    .chip{ line-height:1; display:flex; align-items:center; justify-content:center; }
     .chip svg{ display:block; }
+    .chip-item img{ display:block; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.5); }
     .footer{
       position:absolute; bottom:16px; left:20px; right:20px; text-align:center;
       color:#d8c093; text-shadow:0 2px 5px rgba(0,0,0,.6);
