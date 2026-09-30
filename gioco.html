@@ -671,9 +671,9 @@ const INCONTRI = {
   eterei:[
     C("et_nessuno","Nessun evento","nessun","Un momento di quiete irreale. Nessun effetto."),
     C("et_frammento","Frammento di sé","incontro","Il proprio riflesso sfida in una Contesa. Scontro su una caratteristica a scelta (Forza, Intelletto o Destrezza), valore nemico 2.",{check:"choice",gravity:0}),
-    C("et_visione","Visione ingannevole","check","Un'illusione si adatta al piano corrente e confonde i sensi. Check di Intelletto: se fallito, perdita del turno.",{check:"int",onFail:{type:"loseTurn"}}),
+    C("et_visione","Visione ingannevole","check","Un'illusione si adatta al piano corrente e confonde i sensi. Check di Intelletto: se fallito, battaglia mentale in solitaria su Sanità Mentale contro l'illusione (abilità 1).",{check:"int",onFail:{type:"mentalBattle",value:1}}),
     C("et_guida","Guida onirica","ricompensa","Una presenza eterea indica la via. Ricompensa: guarda la prima carta del mazzo Piani, puoi scartarla e pescarne un'altra.",{reward:{type:"peek",n:1,discard:true}}),
-    C("et_distorsione","Distorsione","check","Lo spazio si piega su se stesso, disorientando ogni passo. Check di Intelletto: se fallito, perdita del turno.",{check:"int",onFail:{type:"loseTurn"}}),
+    C("et_distorsione","Distorsione","check","Lo spazio si piega su se stesso, disorientando ogni passo. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato in questa partita.",{groupCheck:"int",penalty:0,onFail:{type:"revisitedPlane"}}),
     C("et_eco","Eco di un altro piano","ricompensa","Si intravede un frammento di un piano diverso. Ricompensa: guarda la prima carta del mazzo Piani.",{reward:{type:"peek",n:1}}),
     C("et_entita","Entità eterea maggiore","incontro","Una presenza potente e aliena si manifesta. Scontro forte di Intelletto (valore nemico 3).",{check:"int",gravity:1,forte:true}),
     C("et_silenzio","Silenzio assoluto","check","Il vuoto sensoriale logora la mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
@@ -698,7 +698,7 @@ const INCONTRI = {
     C("ar_geometria","Geometria perfetta","incontro","Un'entità di Ordine assoluto punisce ogni imperfezione. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
     C("ar_bagliore","Bagliore del Sole","check","Una luce di giudizio rivela ogni colpa. Check di Anima: se fallito, 1 danno diretto a Punti Vita — non è un check di Corruzione, è la luce del giudizio a colpire.",{check:"anima",onFail:{type:"damage",n:1}}),
     C("ar_pattodonore","Patto d'Onore","ricompensa","Da qui in poi, ogni vittoria del gruppo contro l'Entropia farà trovare un oggetto. Ricompensa: sigilla il patto.",{reward:{type:"pattoOnore"}}),
-    C("ar_paradosso","Paradosso logico","check","Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, perdita del turno.",{check:"int",onFail:{type:"loseTurn"}}),
+    C("ar_paradosso","Paradosso logico","check","Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, depotenziamento temporaneo a Intelletto.",{check:"int",onFail:{type:"tempDebuff",stat:"int"}}),
     C("ar_ingranaggio","Ingranaggio inceppato","check","Un ingranaggio si blocca all'improvviso. Check di Destrezza: se fallito, perdita di un oggetto casuale.",{check:"des",onFail:{type:"loseItem"}}),
     C("ar_illuminazione","Illuminazione improvvisa","ricompensa","Un lampo di lucidità assoluta. Ricompensa (rara): +1 Sanità Mentale o +1 Anima, a scelta, per un personaggio.",{reward:{type:"healChoiceSanAnima"}}),
   ],
@@ -2844,6 +2844,8 @@ function consequenceLabel(cons, plane){
     case 'scatterSelf': return 'allontanamento temporaneo dal gruppo';
     case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
     case 'minor': return 'un piccolo effetto negativo, a discrezione del tavolo';
+    case 'mentalBattle': return `battaglia mentale in solitaria su Sanità Mentale contro un'illusione (abilità ${cons.value||1})`;
+    case 'revisitedPlane': return 'il prossimo salto riporta su un piano già visitato';
     default: return null;
   }
 }
@@ -2854,6 +2856,8 @@ function onLoseExtraLabel(key){
   return null;
 }
 function applyConsequence(cons, targets, plane){
+  let revisitDone = false; // 'revisitedPlane' è un effetto di gruppo (mazzo Piani): va applicato
+  // una sola volta per chiamata anche se targets contiene più personaggi, non una volta a testa.
   targets.forEach(c=>{
     switch(cons.type){
       case 'tempDebuff': {
@@ -2867,6 +2871,32 @@ function applyConsequence(cons, targets, plane){
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'minor': logMsg(`❓ ${c.name}: effetto minore casuale, risolvilo narrativamente.`); break;
+      case 'mentalBattle': {
+        // Un solo giro di Contesa in solitaria (stessa formula/funzioni della Contesa di
+        // gruppo, per coerenza: pareggio favorisce chi tira, danno netto altrimenti), su
+        // Sanità Mentale invece delle statistiche fisiche — è uno scontro mentale, non fisico.
+        const entVal = cons.value||1;
+        const a = resolveAttack(c,'san');
+        const r = d6(); const hit = r<=entVal;
+        const entityDmg = hit?entVal:0;
+        const passThrough = resolveContesaDamage({teamDmg:a.dmg, entityDmg, entities:[{name:'Illusione', hp:entVal, value:entVal}], targets:[c], dmgStat:'san', ctx:{family:plane?.family, planeId:plane?.id, combat:true}});
+        logMsg(`🧠 ${c.name}: battaglia mentale in solitaria contro un'illusione (abilità ${entVal}) — ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''} vs tiro ${r} ${hit?'✔':'✘'}${passThrough>0?`: subisce ${passThrough} danno a Sanità Mentale.`:': nessun danno.'}`, passThrough>0?'warn':undefined);
+        break;
+      }
+      case 'revisitedPlane': {
+        if(revisitDone) break;
+        revisitDone = true;
+        if(state.mazzoPianiScarti.length===0){
+          logMsg('🌀 Distorsione: nessun piano già visitato a cui tornare, nessun effetto.','warn');
+          break;
+        }
+        const idx = Math.floor(Math.random()*state.mazzoPianiScarti.length);
+        const [chosenId] = state.mazzoPianiScarti.splice(idx,1);
+        state.mazzoPiani.unshift(chosenId);
+        const chosenPlane = PIANI_BY_ID[chosenId];
+        logMsg(`🌀 Distorsione: lo spazio si piega su se stesso, il prossimo salto riporta il gruppo su ${chosenPlane.name}, già visitato.`,'warn');
+        break;
+      }
       case 'ampSpells': {
         // Amplificazione: prima amplificava un beneficio/maleficio elementare GIA' attivo,
         // ma quasi sempre non c'era nulla da amplificare — un pescaggio a vuoto la maggior
