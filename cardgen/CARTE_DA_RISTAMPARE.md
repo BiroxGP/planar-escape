@@ -19,6 +19,9 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 | Data | Carta | Tipo | Cosa è cambiato |
 |---|---|---|---|
 | 2026-09-29 | Sciamano (Classe, `sciamano`) | Dati | Troppo potente: Destrezza ridotta da 3 a 2 (per, int, pv, san, anima invariati). Rigenerata solo questa da `assets/cards_raw/` con `render-classes.js`, copiata su `assets/cards/sciamano.png`, PDF Classi (`classi_fronte.pdf`/`classi_retro.pdf`) rigenerato per intero. |
+| 2026-09-30 | Paradosso Logico (Incontro Armonia, `ar_paradosso`) | Testo | La penalità "perdita del turno" non costava nulla su Armonia (nessun piano di quella famiglia ha un rischio che si aggrava restando più a lungo) — cambiata in depotenziamento temporaneo a Intelletto. Rigenerata da `assets/cards_raw/` con `render-incontri.js` (mazzo `armonia`), copiata su `assets/cards/ar_paradosso.png`, PDF Incontri (`incontri_fronte.pdf`/`incontri_retro.pdf`) rigenerato per intero. |
+| 2026-09-30 | Visione Ingannevole (Incontro Eterei, `et_visione`) | Testo | Stesso problema di Paradosso Logico (nessun piano Eterei ha rischio ricorrente) — ora chi fallisce il check affronta anche una battaglia mentale in solitaria su Sanità Mentale contro un'illusione (abilità 1). Rigenerata da `assets/cards_raw/` con `render-incontri.js` (mazzo `eterei`), copiata su `assets/cards/et_visione.png`, PDF Incontri rigenerato per intero (stesso batch della riga sopra). |
+| 2026-09-30 | Distorsione (Incontro Eterei, `et_distorsione`) | Testo | Stesso problema. Da check individuale a check di gruppo di Intelletto; se fallito, il prossimo salto riporta su un piano già visitato (pescato da `mazzoPianiScarti`). Rigenerata da `assets/cards_raw/` con `render-incontri.js` (mazzo `eterei`), copiata su `assets/cards/et_distorsione.png`, PDF Incontri rigenerato per intero (stesso batch delle due righe sopra). |
 
 ## Già ristampate / in attesa di conferma stampa
 

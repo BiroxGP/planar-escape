@@ -456,7 +456,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Un'illusione si adatta al piano corrente e confonde i sensi. Check di Intelletto: se fallito, perdita del turno.",
+    "text": "Un'illusione si adatta al piano corrente e confonde i sensi. Check di Intelletto: se fallito, battaglia mentale in solitaria su Sanità Mentale contro l'illusione (abilità 1).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -478,7 +478,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "check",
-    "text": "Lo spazio si piega su se stesso, disorientando ogni passo. Check di Intelletto: se fallito, perdita del turno.",
+    "text": "Lo spazio si piega su se stesso, disorientando ogni passo. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato in questa partita.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -731,7 +731,7 @@
     "deck": "armonia",
     "family": "armonia",
     "type": "check",
-    "text": "Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, perdita del turno.",
+    "text": "Un enigma a struttura rigida e senza margine d'errore. Check di Intelletto: se fallito, depotenziamento temporaneo a Intelletto.",
     "manual": false,
     "forte": false,
     "persistent": false
