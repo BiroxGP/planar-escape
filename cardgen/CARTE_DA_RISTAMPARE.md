@@ -18,10 +18,9 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 
 | Data | Carta | Tipo | Cosa è cambiato |
 |---|---|---|---|
-
-Nessuna in sospeso al momento — vedi sotto per l'ultimo lotto confermato il 30/09 (foglio
-`patch_fronte.pdf`/`patch_retro.pdf` consegnato all'utente, insieme ai mazzi completi
-Classi e Incontri aggiornati per l'archivio).
+| 2026-09-30 | Paradosso Logico (Incontro Armonia, `ar_paradosso`) | Illustrazione | Sostituita dall'utente con nuova versione (drop-file da root, `paradosso logico.jpg` -> `assets/cards_raw/ar_paradosso.jpg`). Rigenerata con `render-incontri.js` (mazzo `armonia`), copiata su `assets/cards/ar_paradosso.png`, PDF Incontri rigenerato per intero. |
+| 2026-09-30 | Visione Ingannevole (Incontro Eterei, `et_visione`) | Illustrazione | Sostituita dall'utente con nuova versione (`visione ingannevole.jpg` -> `assets/cards_raw/et_visione.jpg`). Rigenerata con `render-incontri.js` (mazzo `eterei`), copiata su `assets/cards/et_visione.png`, PDF Incontri rigenerato per intero (stesso batch della riga sopra). |
+| 2026-09-30 | Distorsione (Incontro Eterei, `et_distorsione`) | Illustrazione | Sostituita dall'utente con nuova versione (`distorsione.jpg` -> `assets/cards_raw/et_distorsione.jpg`). Rigenerata con `render-incontri.js` (mazzo `eterei`), copiata su `assets/cards/et_distorsione.png`, PDF Incontri rigenerato per intero (stesso batch delle due righe sopra). |
 
 ## Già ristampate / in attesa di conferma stampa
 
