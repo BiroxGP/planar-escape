@@ -61,7 +61,7 @@ function rowHtml(r) {
   const itemUrl = pathToFileURL(ITEM_BACK).href;
   const chips = [];
   for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item"><img src="${itemUrl}" style="height:${itemSize}px;"></span>`);
-  for (let i = 0; i < r.statN; i++) chips.push(`<span class="chip">${statIcon(r.stat, iconSize)}</span>`);
+  for (let i = 0; i < r.statN; i++) chips.push(`<span class="chip chip-stat">${statIcon(r.stat, iconSize)}</span>`);
   return `<div class="valuecol" style="top:${r.y0}px; height:${h}px;"><span>${r.value}</span></div>
   <div class="row" style="top:${r.y0}px; height:${h}px;">
     <div class="chips">${chips.join('')}</div>
@@ -105,6 +105,7 @@ function pageHtml() {
     .chip{ line-height:1; display:flex; align-items:center; justify-content:center; }
     .chip svg{ display:block; }
     .chip-item img{ display:block; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+    .chip-stat{ transform:translateY(-10px); }
     .footer{
       position:absolute; bottom:16px; left:20px; right:20px; text-align:center;
       color:#d8c093; text-shadow:0 2px 5px rgba(0,0,0,.6);
