@@ -8,6 +8,7 @@
     "render:piani": "node render.js"
   },
   "dependencies": {
-    "playwright": "^1.63.0"
+    "playwright": "^1.63.0",
+    "qrcode": "^1.5.4"
   }
 }
