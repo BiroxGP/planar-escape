@@ -54,12 +54,12 @@ function statIcon(kind, size) {
 
 function rowHtml(r) {
   const h = r.y1 - r.y0;
-  const iconSize = 30;
+  const iconSize = 56;
   const chips = [];
   for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item">🎁</span>`);
   for (let i = 0; i < r.statN; i++) chips.push(`<span class="chip">${statIcon(r.stat, iconSize)}</span>`);
-  return `<div class="row" style="top:${r.y0}px; height:${h}px;">
-    <div class="value">${r.value}</div>
+  return `<div class="valuecol" style="top:${r.y0}px; height:${h}px;"><span>${r.value}</span></div>
+  <div class="row" style="top:${r.y0}px; height:${h}px;">
     <div class="chips">${chips.join('')}</div>
   </div>`;
 }
@@ -84,16 +84,21 @@ function pageHtml() {
       color:#d8c093; text-shadow:0 2px 5px rgba(0,0,0,.6);
       font-size:15px; font-style:italic;
     }
+    .valuecol{
+      position:absolute; left:0; width:${PANEL_X0}px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .valuecol span{
+      font-size:88px; font-weight:700; line-height:1; color:#f3e2bf;
+      text-shadow:0 3px 8px rgba(0,0,0,.7);
+    }
     .row{
       position:absolute; left:${PANEL_X0}px; width:${PANEL_X1 - PANEL_X0}px;
-      box-sizing:border-box; padding:0 16px;
-      display:flex; align-items:center; justify-content:space-between;
+      box-sizing:border-box; padding:0 14px;
+      display:flex; align-items:center; justify-content:center;
     }
-    .value{
-      font-size:38px; font-weight:700; line-height:1;
-    }
-    .chips{ display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
-    .chip{ font-size:26px; line-height:1; display:flex; align-items:center; justify-content:center; }
+    .chips{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+    .chip{ font-size:56px; line-height:1; display:flex; align-items:center; justify-content:center; }
     .chip svg{ display:block; }
     .footer{
       position:absolute; bottom:16px; left:20px; right:20px; text-align:center;
@@ -102,7 +107,7 @@ function pageHtml() {
     }
   </style></head><body>
     <div class="card">
-      <div class="title">Scala dei Premi</div>
+      <div class="title">Scala delle Ricompense</div>
       <div class="subtitle">Valore massimo dell'entità sconfitta</div>
       ${rows.map(rowHtml).join('\n')}
       <div class="footer">Caratteristica sempre legata alla nativa del piano.<br>Oggetto a chi ne ha meno, bonus a chi ha la caratteristica più bassa.</div>
@@ -164,7 +169,7 @@ async function main() {
 
   const printPage = await browser.newPage();
   const tmp2 = path.join(__dirname, '_tmp-scala-print.html');
-  fs.writeFileSync(tmp2, printSheetHtml(outPng, 'Scala dei Premi (carta di riferimento)'));
+  fs.writeFileSync(tmp2, printSheetHtml(outPng, 'Scala delle Ricompense (carta di riferimento)'));
   await printPage.goto('file://' + tmp2 + '?t=' + Date.now());
   await printPage.pdf({ path: path.join(PRINT_DIR, 'scala_ricompense.pdf'), printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
   fs.unlinkSync(tmp2);
