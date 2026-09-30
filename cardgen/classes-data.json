@@ -183,7 +183,7 @@
       "des": 2,
       "pv": 3,
       "san": 5,
-      "anima": 5
+      "anima": 4
     },
     "weapons": "light",
     "resistance": [
@@ -208,7 +208,7 @@
       "int": 4,
       "des": 2,
       "pv": 3,
-      "san": 5,
+      "san": 4,
       "anima": 5
     },
     "weapons": "none",
@@ -285,7 +285,7 @@
       "int": 2,
       "des": 3,
       "pv": 4,
-      "san": 6,
+      "san": 5,
       "anima": 6
     },
     "weapons": "light",
