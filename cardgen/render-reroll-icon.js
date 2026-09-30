@@ -18,6 +18,12 @@ const SRC = path.join(__dirname, '..', 'assets', 'ui', 'reroll.png');
 const UI_DIR = path.join(__dirname, '..', 'assets', 'ui');
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'pedine');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
+// Le 24 pedine da 20mm non riempiono il foglio A4 (restano ~4 righe su 11 usate): la carta
+// "Scala delle Ricompense" (formato Poker, 63,5x88mm — vedi render-scala-ricompense.js, va
+// rigenerata PRIMA di questo script) entra comodamente nello spazio avanzato sotto la griglia,
+// invece di stampare un foglio A4 a parte per una sola carta.
+const SCALA_PNG = path.join(__dirname, '..', 'cards_final', 'altro', 'scala_ricompense.png');
+const SCALA_W_MM = 63.5, SCALA_H_MM = 88;
 
 const ICON_PX = 200;   // icona app, come pedina_risorsa_planare_icon.png
 const PRINT_PX = 700;  // master di stampa, come pedina_risorsa_planare.png
@@ -59,7 +65,7 @@ function buildGrid(tokenMm) {
   return { cols, rows, offsetXmm, offsetYmm };
 }
 
-function sheetHtml(pngFile, count, tokenMm, label) {
+function sheetHtml(pngFile, count, tokenMm, label, extraCard) {
   const { cols, rows, offsetXmm, offsetYmm } = buildGrid(tokenMm);
   const perPage = cols * rows;
   const url = pathToFileURL(pngFile).href;
@@ -76,8 +82,14 @@ function sheetHtml(pngFile, count, tokenMm, label) {
       const y = offsetYmm + row * (tokenMm + GAP_MM);
       cells.push(`<div class="tok" style="left:${x}mm; top:${y}mm; width:${tokenMm}mm; height:${tokenMm}mm;"><img src="${url}"></div>`);
     }
+    // solo sull'ultima pagina, nello spazio avanzato sotto la griglia dei gettoni.
+    const extraHtml = (extraCard && p === pageCount - 1) ? `<div class="extra-card" style="left:${extraCard.x}mm; top:${extraCard.y}mm; width:${extraCard.w}mm; height:${extraCard.h}mm;">
+        <img src="${pathToFileURL(extraCard.src).href}">
+        <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i>
+      </div>` : '';
     pages.push(`<div class="sheet">
       ${cells.join('\n')}
+      ${extraHtml}
       <div class="ruler" style="left:${rulerX}mm;">
         <div class="ruler-bar"></div>
         ${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}
@@ -91,6 +103,17 @@ function sheetHtml(pngFile, count, tokenMm, label) {
     .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; page-break-after:always; }
     .tok{ position:absolute; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
     .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
+    .extra-card{ position:absolute; }
+    .extra-card img{ display:block; width:100%; height:100%; }
+    .extra-card .crop{ position:absolute; display:block; }
+    .extra-card .crop.tl{ left:-3.5mm; top:0; width:3mm; height:.25mm; background:#999; }
+    .extra-card .crop.tl::after{ content:''; position:absolute; left:0; top:-3.5mm; width:.25mm; height:3mm; background:#999; }
+    .extra-card .crop.tr{ right:-3.5mm; top:0; width:3mm; height:.25mm; background:#999; }
+    .extra-card .crop.tr::after{ content:''; position:absolute; right:0; top:-3.5mm; width:.25mm; height:3mm; background:#999; }
+    .extra-card .crop.bl{ left:-3.5mm; bottom:0; width:3mm; height:.25mm; background:#999; }
+    .extra-card .crop.bl::after{ content:''; position:absolute; left:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
+    .extra-card .crop.br{ right:-3.5mm; bottom:0; width:3mm; height:.25mm; background:#999; }
+    .extra-card .crop.br::after{ content:''; position:absolute; right:0; bottom:-3.5mm; width:.25mm; height:3mm; background:#999; }
     .ruler{ position:absolute; bottom:${MARGIN_MM - 8}mm; width:${RULER_MM}mm; }
     .ruler-bar{ width:${RULER_MM}mm; height:.3mm; background:#000; }
     .ruler .tick{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
@@ -132,11 +155,25 @@ async function main() {
   await renderPng(browser, iconHtml(PRINT_PX), printPng, PRINT_PX);
 
   const label = `Pedina Reroll, ${TOKEN_MM}mm`;
-  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — fronte`), path.join(PRINT_DIR, 'pedine_reroll_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — retro (stessa icona del fronte)`), path.join(PRINT_DIR, 'pedine_reroll_retro.pdf'));
+  // posizione della carta extra nello spazio avanzato sotto la griglia dei gettoni (righe 0-3
+  // di 11 occupate, vedi calcolo in testa al file) — centrata in orizzontale, ben sopra il
+  // righello di calibrazione in fondo alla pagina.
+  const hasScala = fs.existsSync(SCALA_PNG);
+  const extraX = (PAGE_W_MM - SCALA_W_MM) / 2;
+  const extraY = 150;
+  const extraCardFront = hasScala ? { src: SCALA_PNG, x: extraX, y: extraY, w: SCALA_W_MM, h: SCALA_H_MM } : null;
+  // fronte e retro sono la stessa immagine (nessun retro dedicato per questa carta), ma va
+  // comunque specchiata in X sul foglio retro: a differenza delle pedine (24 copie identiche,
+  // dove non importa quale fronte si accoppia a quale retro) qui la carta è unica, quindi senza
+  // specchiare il suo retro finirebbe stampato nella posizione sbagliata della pagina fisica.
+  const extraCardBack = hasScala ? { ...extraCardFront, x: PAGE_W_MM - extraX - SCALA_W_MM } : null;
+  if (!hasScala) console.log('ATTENZIONE: cards_final/altro/scala_ricompense.png non trovato — esegui prima node render-scala-ricompense.js. Procedo senza.');
+
+  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — fronte`, extraCardFront), path.join(PRINT_DIR, 'pedine_reroll_fronte.pdf'));
+  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — retro (stessa icona del fronte)`, extraCardBack), path.join(PRINT_DIR, 'pedine_reroll_retro.pdf'));
 
   await browser.close();
   console.log('Fatto: assets/ui/reroll_icon.png, ' + printPng);
-  console.log('Fatto: pedine_reroll_fronte.pdf / _retro.pdf (24 pedine da ' + TOKEN_MM + 'mm, fronte e retro identici) in ' + PRINT_DIR);
+  console.log('Fatto: pedine_reroll_fronte.pdf / _retro.pdf (24 pedine da ' + TOKEN_MM + 'mm, fronte e retro identici' + (hasScala ? ' + carta Scala delle Ricompense nello spazio avanzato' : '') + ') in ' + PRINT_DIR);
 }
 main().catch(err => { console.error(err); process.exit(1); });
