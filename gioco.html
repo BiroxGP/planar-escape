@@ -545,19 +545,19 @@ const CARD_WAVE_OVERRIDE = {};
 const CLASS_WAVE = {
   // Onda 1: le quattro classi già mostrate in tutti i video promozionali.
   guerriero: 1, ladro: 1, mago: 1, chierico: 1,
-  // Le altre nove (Veggente incluso, tolto dalle quattro fisse): valore di partenza uguale
-  // per tutte (2), solo un placeholder — MODIFICA QUESTI NUMERI quando decidi in che onda
-  // farle comparire (tra parentesi la Resistenza di ciascuna, solo per orientarti; 0 =
-  // visibile da subito insieme alle prime quattro).
-  barbaro: 2,     // nessuna resistenza
+  // Onda 2: decisa dall'utente (30/09).
   veggente: 2,    // resistenza Entropia
-  druido: 2,      // resistenza Terrestre
-  warlock: 2,     // resistenza Demoniaco
-  negromante: 2,  // resistenza Non-morti
   sciamano: 2,    // resistenza Elementare
-  saltimbanco: 2, // nessuna resistenza
   monaco: 2,      // nessuna resistenza
-  paladino: 2,    // resistenza Armonia
+  // Le restanti sei: valore placeholder (3), non ancora deciso — MODIFICA QUESTI NUMERI
+  // quando decidi in che onda farle comparire (tra parentesi la Resistenza di ciascuna, solo
+  // per orientarti; 0 = visibile da subito insieme alle prime quattro).
+  barbaro: 3,     // nessuna resistenza
+  druido: 3,      // resistenza Terrestre
+  warlock: 3,     // resistenza Demoniaco
+  negromante: 3,  // resistenza Non-morti
+  saltimbanco: 3, // nessuna resistenza
+  paladino: 3,    // resistenza Armonia
 };
 let unlockedTier = 'public'; // 'public' | 'master', impostato al login (vedi BOOT)
 let unlockedWave = 0;
