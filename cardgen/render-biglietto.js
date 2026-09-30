@@ -66,19 +66,19 @@ async function frontHtml() {
     }
     .tagline{
       position:absolute; left:58px; top:150px;
-      font-style:italic; font-size:19px; color:#cbb896;
+      font-style:italic; font-size:21px; color:#e6d7b2; text-shadow:0 1px 3px rgba(0,0,0,.4);
     }
-    .tagline-rule{ position:absolute; left:58px; top:186px; width:290px; height:1px; background:#c9a15a; opacity:.55; }
-    .contact{ position:absolute; left:58px; top:214px; }
-    .contact .name{ font-size:22px; font-weight:600; color:#f4ecdc; }
-    .contact .role{ font-style:italic; font-size:14px; color:#b3a493; margin-top:4px; }
-    .contact .mono{ font-family:'JetBrains Mono',monospace; font-size:13px; color:#d8b978; margin-top:10px; }
+    .tagline-rule{ position:absolute; left:58px; top:188px; width:290px; height:1px; background:#c9a15a; opacity:.6; }
+    .contact{ position:absolute; left:58px; top:216px; }
+    .contact .name{ font-size:24px; font-weight:600; color:#f9f3e6; }
+    .contact .role{ font-style:italic; font-size:16px; font-weight:500; color:#d6c9b8; margin-top:6px; }
+    .contact .mono{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:16px; letter-spacing:.015em; color:#f2d18f; margin-top:12px; text-shadow:0 1px 2px rgba(0,0,0,.35); }
     .dial{ position:absolute; left:64px; top:410px; }
     .qrblock{ position:absolute; right:40px; top:70px; text-align:center; display:flex; gap:22px; }
     .qrcol{ width:114px; }
-    .qrcol .lbl{ font-family:'Cinzel',serif; font-size:12px; letter-spacing:.1em; color:#f4ecdc; margin-bottom:8px; }
+    .qrcol .lbl{ font-family:'Cinzel',serif; font-weight:500; font-size:13px; letter-spacing:.1em; color:#f9f3e6; margin-bottom:8px; }
     .qrcol img{ width:114px; height:114px; border-radius:6px; box-shadow:0 3px 10px rgba(0,0,0,.45); display:block; }
-    .qrcap{ position:absolute; right:40px; top:264px; width:250px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#b3a493; }
+    .qrcap{ position:absolute; right:40px; top:264px; width:250px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:13px; color:#d6c9b8; }
   </style></head><body>
     <div class="card">
       <div class="frame"></div>
