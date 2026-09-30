@@ -57,9 +57,10 @@ function statIcon(kind, size) {
 function rowHtml(r) {
   const h = r.y1 - r.y0;
   const iconSize = 56;
+  const itemSize = 100;
   const itemUrl = pathToFileURL(ITEM_BACK).href;
   const chips = [];
-  for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item"><img src="${itemUrl}" style="height:${iconSize}px;"></span>`);
+  for (let i = 0; i < r.items; i++) chips.push(`<span class="chip chip-item"><img src="${itemUrl}" style="height:${itemSize}px;"></span>`);
   for (let i = 0; i < r.statN; i++) chips.push(`<span class="chip">${statIcon(r.stat, iconSize)}</span>`);
   return `<div class="valuecol" style="top:${r.y0}px; height:${h}px;"><span>${r.value}</span></div>
   <div class="row" style="top:${r.y0}px; height:${h}px;">
