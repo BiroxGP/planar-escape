@@ -469,7 +469,7 @@ const STAT_ICON = {for:"💪",int:"🧠",des:"🏃",pv:"❤️",san:"🌀",anima
 const CLASSES = {
   guerriero:{name:"Guerriero",icon:"⚔️",for:4,int:1,des:3,pv:5,san:5,anima:5,affinity:{},reroll:0,rerollLvl:0,weapons:"heavy",resistance:["elementare","terrestre"],stealth:false,
     desc:"Nessuno spell, ma armi e armature pesanti. Resistenza a tutto il Tipo Fisico (Elementare + Terrestre)."},
-  barbaro:{name:"Barbaro",icon:"🪓",for:5,int:1,des:3,pv:4,san:5,anima:5,affinity:{},reroll:0,rerollLvl:0,weapons:"light",resistance:[],stealth:false,special:"furia",
+  barbaro:{name:"Barbaro",icon:"🪓",for:4,int:1,des:3,pv:4,san:5,anima:5,affinity:{},reroll:0,rerollLvl:0,weapons:"light",resistance:[],stealth:false,special:"furia",
     desc:"Furia brutale: un 6 naturale in qualsiasi Contesa infligge 2 danni invece di 1. A 0 PV non sviene, resta attivo."},
   ladro:{name:"Ladro",icon:"🗡️",for:2,int:2,des:4,pv:3,san:5,anima:5,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],stealth:true,
     desc:"Furtività: può tentare di restare nascosto da un Incontro (check Destrezza). Classe ibrida: 1 reroll fisso."},
@@ -2266,7 +2266,8 @@ const PLANE_EFFECTS = {
   },
   none:()=>{},
 };
-function resolveAttack(c, stat){
+function resolveAttack(c, stat, opts){
+  opts = opts||{};
   if(c.dardoReady && ['for','int','des'].includes(stat)){
     c.dardoReady=false;
     return {roll:null, hit:true, dmg:2, dardo:true};
@@ -2277,7 +2278,9 @@ function resolveAttack(c, stat){
   let dmg=0;
   if(hit){
     const cls=CLASSES[c.cls];
-    dmg = (cls.special==='furia' && isCrit) ? 2 : (1+damageBonusFor(c,stat));
+    // opts.critBonus: attacco di sorpresa da Furtività, un 6 naturale vale doppio come la
+    // Furia del Barbaro — stessa regola, non legata alla classe in questo caso.
+    dmg = (isCrit && (cls.special==='furia' || opts.critBonus)) ? 2 : (1+damageBonusFor(c,stat));
     if(c.dmgBonusPlane) dmg += c.dmgBonusPlane; // Benedizione: +2 danno per tutta la permanenza nel piano
   }
   return {roll:r.roll, hit, dmg};
@@ -3104,13 +3107,15 @@ function fightRound(plane, card, acts, cb){
   const roundChoice = state.currentDraw.stealthRoundChoice||{};
   const stillHidden = c => cloak.includes(c.id);
   acts.forEach(c=>{
-    if(stillHidden(c) && roundChoice[c.id]!=='attack') return; // nascosto e non attacca: nessun tiro questo giro
+    const isSurpriseAttack = stillHidden(c) && roundChoice[c.id]==='attack';
+    if(stillHidden(c) && !isSurpriseAttack) return; // nascosto e non attacca: nessun tiro questo giro
     let stat = cb.checkStat;
     if(cb.randomEach) stat = STATS[Math.floor(Math.random()*6)];
     if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
-    const a=resolveAttack(c,stat);
+    // attacco di sorpresa da Furtività: un 6 naturale vale 2 danni, come la Furia del Barbaro.
+    const a=resolveAttack(c,stat,{critBonus:isSurpriseAttack});
     teamDmg+=a.dmg;
-    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo});
+    log.push({who:c.name, roll:a.roll, stat, hit:a.hit, dmg:a.dmg, dardo:a.dardo, surprise:isSurpriseAttack});
   });
   cb.entities.forEach(e=>{ if(e.hp===undefined) e.hp=e.value; });
   let entityDmg=0;
@@ -3133,7 +3138,8 @@ function fightRound(plane, card, acts, cb){
   log.forEach(l=>{
     if(l.frozen){ logMsg(`　 ❄️ Le entità non mettono a segno colpi questo giro (Scettro di Congelamento).`); return; }
     const rollLabel = l.dardo?'Dardo Incantato':'tiro '+l.roll;
-    logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg)`:''}`);
+    const surpriseTag = l.surprise?' 🥷':'';
+    logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}${surpriseTag}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg${l.surprise && l.dmg===2?', sorpresa critica!':''})`:''}`);
   });
   if(card.onLoseExtra && passThrough>0){
     acts.filter(c=>!stillHidden(c)).forEach(c=>{
