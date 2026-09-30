@@ -6,7 +6,7 @@
     "stats": {
       "for": 4,
       "int": 1,
-      "des": 3,
+      "des": 2,
       "pv": 5,
       "san": 5,
       "anima": 5
@@ -281,7 +281,7 @@
     "name": "Monaco",
     "icon": "👊",
     "stats": {
-      "for": 3,
+      "for": 2,
       "int": 2,
       "des": 3,
       "pv": 4,
@@ -305,7 +305,7 @@
     "stats": {
       "for": 3,
       "int": 2,
-      "des": 2,
+      "des": 1,
       "pv": 4,
       "san": 5,
       "anima": 5
