@@ -1523,7 +1523,7 @@ function renderCharCard(c){
       ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?t('Depotenziato per tutta la permanenza nel piano'):(c.tempBonus?.[s]?t('Bonus temporaneo, dura fino al prossimo Recupero'):'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
     </div>
     <div class="char-meta">
-      <span>🔁 ${c.rerolls} reroll</span>
+      <span><img src="assets/ui/reroll_icon.png" alt="" style="width:16px;height:16px;vertical-align:middle;" onerror="this.remove()"> ${c.rerolls} reroll</span>
       <span><img src="assets/ui/pedina_risorsa_planare_icon.png" alt="" style="width:16px;height:16px;vertical-align:middle;" onerror="this.remove()"> ${c.resources} ${t('risorse')}</span>
       <span>🎒 ${c.inventory.length} ${t('oggetti')}</span>
       <span>📖 ${c.spells.length} spell</span>
