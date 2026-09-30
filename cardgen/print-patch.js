@@ -22,6 +22,13 @@ const CARD_W_MM = 63.5, CARD_H_MM = 88;
 
 // items: {id, back} — formato Poker reale per tutte, griglia automatica.
 const ITEMS = [
+  { id: 'sciamano', back: 'retro_classi' },
+  { id: 'barbaro', back: 'retro_classi' },
+  { id: 'warlock', back: 'retro_classi' },
+  { id: 'negromante', back: 'retro_classi' },
+  { id: 'monaco', back: 'retro_classi' },
+  { id: 'guerriero', back: 'retro_classi' },
+  { id: 'paladino', back: 'retro_classi' },
   { id: 'ar_paradosso', back: 'retro_incontro_armonia' },
   { id: 'et_visione', back: 'retro_incontro_eterei' },
   { id: 'et_distorsione', back: 'retro_incontro_eterei' },
