@@ -122,21 +122,21 @@ function backHtml() {
     }
     .overlay{
       position:absolute; left:0; right:0; bottom:0; top:0;
-      background:linear-gradient(to top, rgba(12,9,16,.92), rgba(12,9,16,.35) 55%, rgba(12,9,16,.15) 75%, transparent 100%);
+      background:linear-gradient(to top, rgba(10,7,13,.97) 0%, rgba(10,7,13,.82) 42%, rgba(10,7,13,.4) 68%, transparent 100%);
     }
-    .text{ position:absolute; left:48px; right:48px; bottom:40px; }
+    .text{ position:absolute; left:48px; right:48px; bottom:34px; }
     .tagline{
-      font-family:'Cinzel',serif; font-size:30px; letter-spacing:.03em; color:#f4ecdc;
-      text-shadow:0 2px 12px rgba(0,0,0,.65);
+      font-family:'Cinzel',serif; font-size:42px; line-height:1.22; letter-spacing:.02em; color:#f9f3e6;
+      text-shadow:0 2px 4px rgba(0,0,0,.9), 0 4px 16px rgba(0,0,0,.75);
     }
-    .subtagline{ margin-top:8px; font-family:'Source Serif 4',Georgia,serif; font-style:italic; font-size:15px; color:#d8cfc0; text-shadow:0 2px 10px rgba(0,0,0,.6); }
-    .brand{ position:absolute; left:48px; top:34px; font-family:'Cinzel',serif; font-weight:700; font-size:18px; letter-spacing:.12em; color:#f4ecdc; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+    .subtagline{ margin-top:10px; font-family:'Source Serif 4',Georgia,serif; font-style:italic; font-size:19px; color:#e7ddce; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 12px rgba(0,0,0,.7); }
+    .brand{ position:absolute; left:48px; top:32px; font-family:'Cinzel',serif; font-weight:700; font-size:22px; letter-spacing:.12em; color:#f9f3e6; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 10px rgba(0,0,0,.7); }
   </style></head><body>
     <div class="card">
       <div class="overlay"></div>
       <div class="brand">PLANAR ESCAPE</div>
       <div class="text">
-        <div class="tagline">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
+        <div class="tagline">Un ultimo respiro.<br>Un portale. Un salto nell'ignoto.</div>
         <div class="subtagline">Planar Escape — la fuga non è mai la fine della storia.</div>
       </div>
     </div>
