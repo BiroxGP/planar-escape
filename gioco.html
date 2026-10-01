@@ -268,15 +268,16 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
 </style>
 </head>
 <body>
-<div id="passwordGate" class="gate-wrap">
+<div id="passwordGate" class="gate-wrap" style="display:none;">
   <div class="panel center">
-    <h2 id="gateTitle">🔒 Accesso al simulatore</h2>
-    <p class="hint" id="gateHint">Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su <a href="/">planar-escape.vercel.app</a>.</p>
+    <h2 id="gateTitle">🔑 Password admin</h2>
+    <p class="hint" id="gateHint">La demo pubblica non richiede password: questa serve solo per sbloccare tutto il gioco (tutte le onde), per i test.</p>
     <form id="gateForm">
-      <input type="password" id="gatePassword" placeholder="Password" autocomplete="off" required>
+      <input type="password" id="gatePassword" placeholder="Password admin" autocomplete="off" required>
       <button type="submit" id="gateSubmit" class="primary">Entra</button>
     </form>
     <p id="gateError" class="gate-error"></p>
+    <p class="hint"><a href="#" id="gateSkip">Niente password: entra nella demo pubblica →</a></p>
   </div>
 </div>
 <div class="wrap" style="display:none;">
@@ -294,7 +295,7 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
         <button class="lang-opt" data-lang="it">IT</button>
         <button class="lang-opt" data-lang="en">EN</button>
       </div>
-      <button id="btnRelogin" class="small" title="Torna al gate per inserire un'altra password (es. la master)">🔑 Cambia password</button>
+      <button id="btnRelogin" class="small" title="Inserisci la password admin per sbloccare tutto il gioco">🔑 Password admin</button>
       <button id="btnSave" class="small">💾 Salva</button>
       <button id="btnLoad" class="small">📂 Carica</button>
       <button id="btnReset" class="small danger">↺ Nuova partita</button>
@@ -349,19 +350,20 @@ function applyI18nStatic(){
   // a ogni passaggio, così resta sincronizzata sia sul selettore in topbar sia su quello,
   // identico, nella landing (bindLanding() lo inserisce dinamicamente).
   const map = {
-    gateTitle: '🔒 Accesso al simulatore',
+    gateTitle: '🔑 Password admin',
     headerSub: 'Simulatore di playtest · v0.1',
-    btnRelogin: '🔑 Cambia password',
+    btnRelogin: '🔑 Password admin',
     btnSave: '💾 Salva',
     btnLoad: '📂 Carica',
     btnReset: '↺ Nuova partita',
     gateSubmit: 'Entra',
+    gateSkip: 'Niente password: entra nella demo pubblica →',
   };
   Object.entries(map).forEach(([id,it])=>{ const el=document.getElementById(id); if(el && !el.disabled) el.textContent = t(it); });
   const gateHint = document.getElementById('gateHint');
-  if(gateHint) gateHint.innerHTML = `${t('Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su')} <a href="/">planar-escape.vercel.app</a>.`;
+  if(gateHint) gateHint.textContent = t('La demo pubblica non richiede password: questa serve solo per sbloccare tutto il gioco (tutte le onde), per i test.');
   const pwField = document.getElementById('gatePassword');
-  if(pwField) pwField.placeholder = t('Password');
+  if(pwField) pwField.placeholder = t('Password admin');
   // ogni selettore lingua presente nel DOM (topbar + eventualmente landing) mostra sempre la
   // lingua ATTIVA evidenziata — non "quella a cui passeresti" come il vecchio pulsante
   // singolo, che aveva confuso chi lo leggeva come "sono già in EN".
@@ -373,14 +375,15 @@ function applyI18nStatic(){
   });
 }
 const I18N_EN = {
-  "🔒 Accesso al simulatore": "🔒 Simulator access",
-  "Questa è la build di playtest, riservata a chi ha ricevuto una password. La vetrina pubblica del gioco è su": "This is the playtest build, for people who received a password. The public showcase is at",
+  "🔑 Password admin": "🔑 Admin password",
+  "La demo pubblica non richiede password: questa serve solo per sbloccare tutto il gioco (tutte le onde), per i test.": "The public demo needs no password: this is only to unlock the full game (all waves), for testing.",
+  "Niente password: entra nella demo pubblica →": "No password: enter the public demo →",
   "Password": "Password",
+  "Password admin": "Admin password",
   "Entra": "Log in",
   "Verifica…": "Checking…",
   "Password sbagliata, riprova.": "Wrong password, try again.",
   "Errore di rete, riprova.": "Network error, try again.",
-  "🔑 Cambia password": "🔑 Change password",
   "💾 Salva": "💾 Save",
   "📂 Carica": "📂 Load",
   "↺ Nuova partita": "↺ New game",
@@ -4774,13 +4777,22 @@ function openSplitGroupModal(gid){
   document.getElementById('btnCancelSplit').onclick=closeModal;
 }
 
-/* ---------------- BOOT (dietro password gate) ---------------- */
+/* ---------------- BOOT ----------------
+   La demo pubblica non richiede più alcuna password: si entra subito, filtrati solo
+   dall'onda di reveal corrente del server (enterPublic). Il gate (nascosto di default,
+   vedi style="display:none" sull'HTML) serve ormai solo per inserire la password admin
+   e sbloccare tutto — si apre esplicitamente dal pulsante "🔑 Password admin" nell'header,
+   mai in automatico all'arrivo. */
 // _v2: chi aveva sbloccato con la versione precedente (senza onde) aveva in sessionStorage
 // solo il flag di sblocco, senza tier/wave — saltava il gate ma partiva a onda 0 (tutto
 // bloccato). Cambiando chiave si forza un nuovo login una tantum, che ripopola tutto insieme.
 const PLAYTEST_UNLOCK_KEY = 'planarEscapePlaytestUnlocked_v2';
 const PLAYTEST_TIER_KEY = 'planarEscapePlaytestTier_v2';
 const PLAYTEST_WAVE_KEY = 'planarEscapePlaytestWave_v2';
+// flag one-shot: il pulsante "Password admin" ricarica la pagina (stesso meccanismo di
+// sempre, nessuna sicurezza vera in gioco) ma deve far ricomparire il gate invece di
+// rientrare in automatico nella demo pubblica come farebbe un reload qualunque.
+const PLAYTEST_FORCEGATE_KEY = 'planarEscapePlaytestForceGate';
 function unlockAndBoot(){
   document.getElementById('passwordGate').style.display = 'none';
   document.querySelector('.wrap').style.display = '';
@@ -4794,59 +4806,83 @@ function unlockAndBoot(){
   render();
 }
 applyI18nStatic();
-// Una volta sbloccato, il gate non ricompare più da solo — se si è entrati con la password
-// pubblica non c'è altrimenti modo di passare alla master (o viceversa) nella stessa sessione
-// senza toccare gli strumenti sviluppatore. Questo pulsante svuota la cache e ricarica, così
-// il gate torna a chiedere la password.
+async function enterPublic(){
+  // ingresso di default: nessuna password, filtrato solo dall'onda corrente. Se la
+  // richiesta di rete fallisce si entra comunque, a onda 0 (minimo), piuttosto che
+  // bloccare la demo pubblica per un problema di connessione.
+  let wave = 0;
+  try{
+    const res = await fetch('/api/verify-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:''}) });
+    const data = await res.json();
+    if(Number.isFinite(data.currentWave)) wave = data.currentWave;
+  } catch(e){}
+  unlockedTier = 'public';
+  unlockedWave = wave;
+  sessionStorage.setItem(PLAYTEST_UNLOCK_KEY, '1');
+  sessionStorage.setItem(PLAYTEST_TIER_KEY, unlockedTier);
+  sessionStorage.setItem(PLAYTEST_WAVE_KEY, String(unlockedWave));
+  unlockAndBoot();
+}
+// Pulsante nell'header: per passare alla password admin (o viceversa) nella stessa scheda
+// serve comunque un login da capo — si svuota la cache, si segna il flag one-shot e si
+// ricarica, così il gate torna a comparire invece di rientrare subito nel pubblico.
 const reloginBtn = document.getElementById('btnRelogin');
 if(reloginBtn) reloginBtn.onclick = ()=>{
   sessionStorage.removeItem(PLAYTEST_UNLOCK_KEY);
   sessionStorage.removeItem(PLAYTEST_TIER_KEY);
   sessionStorage.removeItem(PLAYTEST_WAVE_KEY);
+  sessionStorage.setItem(PLAYTEST_FORCEGATE_KEY, '1');
   location.reload();
 };
+const gateSkipLink = document.getElementById('gateSkip');
+if(gateSkipLink) gateSkipLink.onclick = (e)=>{ e.preventDefault(); enterPublic(); };
+document.getElementById('gateForm').onsubmit = async (e)=>{
+  e.preventDefault();
+  const pwField = document.getElementById('gatePassword');
+  const btn = document.getElementById('gateSubmit');
+  const errEl = document.getElementById('gateError');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = t('Verifica…');
+  try{
+    const res = await fetch('/api/verify-password', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({password: pwField.value})
+    });
+    const data = await res.json();
+    if(data.ok){
+      unlockedTier = data.tier || 'public';
+      unlockedWave = Number.isFinite(data.currentWave) ? data.currentWave : 0;
+      sessionStorage.setItem(PLAYTEST_UNLOCK_KEY, '1');
+      sessionStorage.setItem(PLAYTEST_TIER_KEY, unlockedTier);
+      sessionStorage.setItem(PLAYTEST_WAVE_KEY, String(unlockedWave));
+      unlockAndBoot();
+    } else {
+      errEl.textContent = data.error ? `Configurazione mancante: ${data.error}` : t('Password sbagliata, riprova.');
+      pwField.value=''; pwField.focus();
+    }
+  } catch(err){
+    errEl.textContent = t('Errore di rete, riprova.');
+  } finally {
+    btn.disabled = false; btn.textContent = t('Entra');
+  }
+};
 // La cache è valida solo se TUTTE e tre le chiavi sono presenti — un flag di sblocco senza
-// wave salvata (versione vecchia, o storage corrotto/parziale) non basta: si torna al gate.
+// wave salvata (versione vecchia, o storage corrotto/parziale) non basta: si rientra da capo.
 const cachedWaveRaw = sessionStorage.getItem(PLAYTEST_WAVE_KEY);
 const cachedWave = parseInt(cachedWaveRaw, 10);
 if(sessionStorage.getItem(PLAYTEST_UNLOCK_KEY)==='1' && cachedWaveRaw!=null && Number.isFinite(cachedWave)){
   // sessione già sbloccata in un turno precedente di questa stessa scheda: rileggi onda/tier
-  // salvati allora, senza rifare la verifica della password (nessuna sicurezza vera in gioco).
+  // salvati allora, senza rifare la verifica della password.
   unlockedTier = sessionStorage.getItem(PLAYTEST_TIER_KEY) || 'public';
   unlockedWave = cachedWave;
   unlockAndBoot();
+} else if(sessionStorage.getItem(PLAYTEST_FORCEGATE_KEY)==='1'){
+  sessionStorage.removeItem(PLAYTEST_FORCEGATE_KEY);
+  document.getElementById('passwordGate').style.display = '';
+  document.getElementById('gatePassword').focus();
 } else {
-  document.getElementById('gateForm').onsubmit = async (e)=>{
-    e.preventDefault();
-    const pwField = document.getElementById('gatePassword');
-    const btn = document.getElementById('gateSubmit');
-    const errEl = document.getElementById('gateError');
-    errEl.textContent = '';
-    btn.disabled = true; btn.textContent = t('Verifica…');
-    try{
-      const res = await fetch('/api/verify-password', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({password: pwField.value})
-      });
-      const data = await res.json();
-      if(data.ok){
-        unlockedTier = data.tier || 'public';
-        unlockedWave = Number.isFinite(data.currentWave) ? data.currentWave : 0;
-        sessionStorage.setItem(PLAYTEST_UNLOCK_KEY, '1');
-        sessionStorage.setItem(PLAYTEST_TIER_KEY, unlockedTier);
-        sessionStorage.setItem(PLAYTEST_WAVE_KEY, String(unlockedWave));
-        unlockAndBoot();
-      } else {
-        errEl.textContent = data.error ? `Configurazione mancante: ${data.error}` : t('Password sbagliata, riprova.');
-        pwField.value=''; pwField.focus();
-      }
-    } catch(err){
-      errEl.textContent = t('Errore di rete, riprova.');
-    } finally {
-      btn.disabled = false; btn.textContent = t('Entra');
-    }
-  };
+  enterPublic();
 }
 </script>
 </body>

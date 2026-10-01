@@ -200,12 +200,12 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
   </div>
   <div class="panel center landing-cta">
     <h2 id="ctaTitle">Vuoi provare il gioco vero?</h2>
-    <p id="ctaBody">Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:</p>
-    <a class="contact-btn" href="mailto:planarescape@gmail.com">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-      planarescape@gmail.com
+    <p id="ctaBody">La demo del simulatore di playtest è aperta a tutti, nessuna password richiesta:</p>
+    <a class="contact-btn" href="/gioco">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none"/></svg>
+      <span id="ctaButtonLabel">Entra nella demo</span>
     </a>
-    <div class="secondary-link" id="ctaSecondary"><a href="/gioco">Hai già una password? Entra nel simulatore →</a></div>
+    <div class="secondary-link" id="ctaSecondary"><a href="mailto:planarescape@gmail.com">Hai la password admin? Scrivimi per sbloccare tutto →</a></div>
   </div>
   <div class="panel">
     <h2 id="videosTitle">Il gioco in azione</h2>
@@ -236,7 +236,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
     </div>
   </div>
   <div class="panel center">
-    <p class="hint" id="videosCtaFooter">Convinto? <a href="mailto:planarescape@gmail.com">Scrivimi</a> per la password, oppure <a href="/gioco">entra nel simulatore</a> se ce l'hai già.</p>
+    <p class="hint" id="videosCtaFooter">Convinto? <a href="/gioco">Entra nella demo</a> — è gratis e aperta a tutti — oppure <a href="mailto:planarescape@gmail.com">scrivimi</a> per la password admin e sbloccare tutto.</p>
   </div>
 </div>
 <script>
@@ -277,12 +277,13 @@ const I18N_EN = {
   "⚡ Fuga dalla Tempesta": "⚡ Escape from the Storm",
   "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.": "Lightning at the end of the turn: the only way to avoid paying the price is to jump away before the turn ends.",
   "Vuoi provare il gioco vero?": "Want to try the real game?",
-  "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:": "The full playtest simulator is reserved for people closely following development. Email me to get the access password:",
-  "ctaSecondary": "Already have a password? Enter the simulator →",
+  "La demo del simulatore di playtest è aperta a tutti, nessuna password richiesta:": "The playtest simulator demo is open to everyone, no password required:",
+  "Entra nella demo": "Enter the demo",
+  "ctaSecondary": "Have the admin password? Email me to unlock everything →",
   "Le prime quattro, già protagoniste dei video qui sotto:": "The first four, already starring in the videos below:",
   "Il gioco in azione": "The game in action",
   "Qualche assaggio da partite vere, prima di scriverci:": "A few glimpses from real games, before you write to us:",
-  "videosCtaFooter": "Convinced? <a href=\"mailto:planarescape@gmail.com\">Email me</a> for the password, or <a href=\"/gioco\">enter the simulator</a> if you already have one.",
+  "videosCtaFooter": "Convinced? <a href=\"/gioco\">Enter the demo</a> — it's free and open to everyone — or <a href=\"mailto:planarescape@gmail.com\">email me</a> for the admin password to unlock everything.",
 };
 function applyLang(){
   const map = {
@@ -316,7 +317,8 @@ function applyLang(){
     vidTitle4: '⚡ Fuga dalla Tempesta',
     vidCaption4: "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.",
     ctaTitle: 'Vuoi provare il gioco vero?',
-    ctaBody: "Il simulatore di playtest completo è riservato a chi sta seguendo da vicino lo sviluppo. Scrivimi per ricevere la password d'accesso:",
+    ctaBody: "La demo del simulatore di playtest è aperta a tutti, nessuna password richiesta:",
+    ctaButtonLabel: 'Entra nella demo',
     videosTitle: 'Il gioco in azione',
     videosHint: 'Qualche assaggio da partite vere, prima di scriverci:',
   };
@@ -326,9 +328,9 @@ function applyLang(){
   const indieText = document.getElementById('indieText');
   if (indieText) indieText.innerHTML = LANG === 'en' ? I18N_EN.indieText : "Planar Escape è sviluppato in autonomia, senza uno studio alle spalle — solo tempo, playtest e tanta pazienza. Il gioco sarà presente all'<a href=\"https://www.idea-g.it/\" target=\"_blank\" rel=\"noopener noreferrer\">IDEAG Nazionale 2027</a>, la fiera italiana dedicata ai giochi indipendenti.";
   const ctaSecondary = document.getElementById('ctaSecondary');
-  if (ctaSecondary) ctaSecondary.innerHTML = LANG === 'en' ? `<a href="/gioco">${I18N_EN.ctaSecondary}</a>` : '<a href="/gioco">Hai già una password? Entra nel simulatore →</a>';
+  if (ctaSecondary) ctaSecondary.innerHTML = LANG === 'en' ? `<a href="mailto:planarescape@gmail.com">${I18N_EN.ctaSecondary}</a>` : '<a href="mailto:planarescape@gmail.com">Hai la password admin? Scrivimi per sbloccare tutto →</a>';
   const videosCtaFooter = document.getElementById('videosCtaFooter');
-  if (videosCtaFooter) videosCtaFooter.innerHTML = LANG === 'en' ? I18N_EN.videosCtaFooter : 'Convinto? <a href="mailto:planarescape@gmail.com">Scrivimi</a> per la password, oppure <a href="/gioco">entra nel simulatore</a> se ce l\'hai già.';
+  if (videosCtaFooter) videosCtaFooter.innerHTML = LANG === 'en' ? I18N_EN.videosCtaFooter : 'Convinto? <a href="/gioco">Entra nella demo</a> — è gratis e aperta a tutti — oppure <a href="mailto:planarescape@gmail.com">scrivimi</a> per la password admin e sbloccare tutto.';
   document.querySelectorAll('.lang-switch .lang-opt').forEach(b => { b.classList.toggle('active', b.dataset.lang === LANG); });
 }
 function setLang(l){
