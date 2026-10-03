@@ -1761,6 +1761,21 @@ function discardPianoCard(id){
   // in un mazzo che non si riduce mai.
   state.mazzoPianiScarti.push(id);
 }
+// Se non restano più Piani veri in mazzo (solo segnaposto __PT__ residui, o mazzo proprio vuoto)
+// si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti si vanificherebbe
+// l'assottigliamento che rende le uscite via via più probabili. Il rimescolamento va DENTRO al
+// mazzo esistente (mischiato agli eventuali __PT__ ancora presenti), non lo sostituisce:
+// aspettare che anche i __PT__ residui si esauriscano prima di rimescolare incatenerebbe molte
+// uscite di fila garantite (bug segnalato dall'utente). Va chiamata PRIMA di guardare la carta
+// in cima (anteprima "tutti per la manina", sbirciate), non solo al salto: altrimenti la carta
+// mostrata (es. un segnaposto Piano Terreno) non è quella che poi esce davvero, perché il
+// rimescolamento al salto la cambia (bug segnalato: "destinazione leggendaria", poi usciva Terra).
+function refillMazzoPianiIfNeeded(){
+  if(state.mazzoPiani.some(x=>x!=='__PT__')) return;
+  const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
+  state.mazzoPianiScarti = [];
+  state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
+}
 function doJump(){
   state.amplifySpellsActive = false; // la finestra di Amplificazione si chiude appena si salta via
   if(state.pendingReunion && state.groups.length>1){
@@ -1789,17 +1804,7 @@ function doJump(){
     maybeResetJumpRound();
   }
   state.jumps++;
-  // se non restano più Piani veri in mazzo (solo segnaposto __PT__ residui, o mazzo proprio
-  // vuoto) si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti si
-  // vanificherebbe l'assottigliamento che rende le uscite via via più probabili. Il
-  // rimescolamento va DENTRO al mazzo esistente (mischiato agli eventuali __PT__ ancora
-  // presenti), non lo sostituisce: aspettare che anche i __PT__ residui si esauriscano prima
-  // di rimescolare incatenerebbe molte uscite di fila garantite (bug segnalato dall'utente).
-  if(!state.mazzoPiani.some(x=>x!=='__PT__')){
-    const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
-    state.mazzoPianiScarti = [];
-    state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
-  }
+  refillMazzoPianiIfNeeded();
   const drawnId = state.mazzoPiani.shift();
   // un nuovo segnaposto __PT__ si aggiunge in fondo solo quando si pesca un Piano VERO — se se
   // ne aggiungesse uno anche quando si pesca già un __PT__ (bug segnalato dall'utente), i
@@ -1897,6 +1902,7 @@ function startJump(){
   // che non abbiano un Veggente, la cui abilità di classe funziona comunque a parte).
   const isFullParty = activeChars().length>0 && activeChars().length===allActiveChars().length;
   if(!isFullParty){ doJump(); return; }
+  refillMazzoPianiIfNeeded(); // altrimenti l'anteprima può mostrare una carta che poi il salto cambia
   const nextId = state.mazzoPiani[0];
   const isPT = nextId==='__PT__';
   const nextPlane = isPT ? null : PIANI_BY_ID[nextId];
@@ -2501,13 +2507,7 @@ function soloForcedJump(group, reason){
   const newG = splitIntoNewGroup(group.map(c=>c.id)); // la separazione forzata è persistente, non solo un turno isolato
   state.jumpedThisRound[newG.id] = true; // questo salto forzato conta come il salto di questo turno per il nuovo gruppo
   maybeResetJumpRound();
-  // stesso criterio di doJump(): rimescola gli scarti dentro al mazzo appena non restano più
-  // Piani veri (anche se ci sono ancora __PT__ residui), non solo a mazzo del tutto vuoto.
-  if(!state.mazzoPiani.some(x=>x!=='__PT__')){
-    const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
-    state.mazzoPianiScarti = [];
-    state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
-  }
+  refillMazzoPianiIfNeeded();
   const drawnId = state.mazzoPiani.shift();
   const names = group.map(x=>x.name).join(' e ');
   if(drawnId==='__PT__'){
@@ -3459,6 +3459,7 @@ function showPeekModal(r, usedRedraw, onDone){
   // esplicitamente onDone=render.
   onDone = onDone || finishIncontro;
   const n = r.n||1;
+  refillMazzoPianiIfNeeded(); // la carta in cima che si mostra deve essere quella che il prossimo salto pescherà davvero
   const top = state.mazzoPiani.slice(-n).reverse(); // deck stored with next-draw at index0 via shift, so top = index0.. wait we shift from front
   render(); // no-op, just ensure state consistent
   const cards = r.type==='peekBottom' ? [state.mazzoPiani[state.mazzoPiani.length-1]] : state.mazzoPiani.slice(0,n);
