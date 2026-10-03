@@ -808,7 +808,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza, il tempo rubato rallenta).",
+    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",
     "manual": false,
     "forte": false,
     "persistent": false
