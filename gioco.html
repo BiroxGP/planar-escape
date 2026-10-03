@@ -1282,6 +1282,24 @@ function checkRoll(c, stat, opts){
   }
   return {roll, val, success};
 }
+// Check di GRUPPO (vale il valore più alto presente): un solo tiro per tutti, ma chiunque nel
+// gruppo abbia un reroll lo può spendere subito se fallisce, senza passare dal menu Gestisci —
+// come già succede per i check individuali (checkRoll).
+function groupCheckRoll(acts, best, label){
+  let roll = d6();
+  let success = roll<=best || roll===6;
+  for(const c of acts){
+    while(!success && isConscious(c) && c.rerolls>0){
+      if(!confirm(`${c.name}: ${label} fallito (${roll} vs ${best}). Usare 1 reroll per il gruppo? (${c.rerolls} disponibile/i)`)) break;
+      c.rerolls--;
+      roll = d6();
+      success = roll<=best || roll===6;
+      logMsg(`🔁 ${c.name} usa un reroll sul ${label}: nuovo tiro ${roll} vs ${best} → ${success?'superato':'ancora fallito'} (${c.rerolls} reroll rimasti).`);
+    }
+    if(success) break;
+  }
+  return {roll, success};
+}
 function effectiveStat(c, stat){
   let v = c.stats[stat];
   // equipped bonuses
@@ -2144,7 +2162,7 @@ function attemptTerraDig(plane){
   const attempt = (state.currentDraw.terraDigAttempt||0)+1;
   state.currentDraw.terraDigAttempt = attempt;
   const best = Math.max(...acts.map(c=>effectiveStat(c,'for')));
-  const r=d6(); const success = r<=best||r===6;
+  const {roll:r, success} = groupCheckRoll(acts, best, 'check di scavo');
   logMsg(`⛏️ Scavo, tentativo ${attempt}/3 (Forza di gruppo, valore più alto ${best}): tiro ${r} → ${success?'LIBERI':'ancora sepolti'}.`, success?'good':'warn');
   if(success){
     logMsg('⛰️ Il gruppo si fa strada e torna libero: si pesca il normale Incontro del turno.','good');
@@ -2214,7 +2232,7 @@ const PLANE_EFFECTS = {
   acqua:(p,acts,ctx)=>{
     if(acts.length===0) return;
     const best = Math.max(...acts.map(c=>effectiveStat(c,'for')));
-    const r=d6(); const success = r<=best||r===6;
+    const {roll:r, success} = groupCheckRoll(acts, best, 'check di Forza di gruppo');
     logMsg(`🌊 Check di gruppo (Forza, valore più alto ${best}): tiro ${r} → ${success?'superato':'FALLITO'}.`);
     if(!success){
       const minFor = Math.min(...acts.map(c=>effectiveStat(c,'for')));
@@ -2779,7 +2797,7 @@ function renderIncontroAction(){
       el.innerHTML = (failHint?`<p class="hint">⚠️ Se il gruppo fallisce: ${failHint}.</p>`:'') + `<button class="primary" id="btnGroupCheck">Esegui check di gruppo (${STAT_LABEL[card.groupCheck]}, penalità ${card.penalty})</button><div id="checkResult"></div>`;
       document.getElementById('btnGroupCheck').onclick=()=>{
         const best = Math.max(...acts.map(c=>effectiveStat(c,card.groupCheck))) + card.penalty;
-        const r=d6(); const success = r<=best || r===6;
+        const {roll:r, success} = groupCheckRoll(acts, best, `check di gruppo (${STAT_LABEL[card.groupCheck]})`);
         document.getElementById('checkResult').innerHTML = `<div class="roll-row"><div class="roll-chip ${success?'hit':'miss'}"><div class="roll-die">${r}</div> vs ${best} → ${success?'Successo':'Fallito'}</div></div><button class="primary mt1" id="btnCheckDone">Continua</button>`;
         if(!success && card.onFail){ applyConsequence(card.onFail, acts, plane); }
         document.getElementById('btnCheckDone').onclick=finishIncontro;
@@ -4012,6 +4030,8 @@ function openCharManageModal(id){
   if(!c) return;
   const cls = CLASSES[c.cls];
   const inRecuperoPlane = (()=>{ const p=currentPlane(); return p && RECUPERO_PLANES.has(p.id); })();
+  // risorse planari: si possono passare solo a un compagno dello stesso gruppo (come gli oggetti)
+  const resMates = groupMembers(groupOf(c)).filter(x=>x.id!==c.id);
   let body = `<h3>${cls.icon} ${escapeHtml(c.name)} — Gestisci</h3>
     <div class="row mb1">
       ${STATS.map(s=>{ const eff=effectiveStat(c,s); const base=c.stats[s]; return `<span class="badge">${STAT_LABEL[s]}: ${base}${eff!==base?` (${eff} effettivo)`:''}${c.tempDebuff[s]?' (temp↓)':''}${c.permDebuffN[s]?' (perm↓x'+c.permDebuffN[s]+')':''}</span>`; }).join('')}
@@ -4027,6 +4047,7 @@ function openCharManageModal(id){
     <div class="row mb1">
       ${ACTIVE_SPECIALS.has(cls.special) ? `<button class="small" id="mgrSpecial" ${!c.charges.special?'disabled':''}>✳️ Usa abilità di classe${!c.charges.special?' (scarica)':''}</button>` : ''}
       ${c.rerolls>0?`<button class="small" id="mgrReroll">🔁 Usa 1 reroll (${c.rerolls} disp.)</button>`:''}
+      ${c.resources>0 && resMates.length?`<button class="small" id="mgrGiveRes">💠 Passa 1 risorsa planare (${c.resources} disp.)</button>`:''}
     </div>
     <h4 class="mt1">Equipaggiamento</h4>
     <div class="row mb1">
@@ -4058,7 +4079,7 @@ function openCharManageModal(id){
         <div class="info">
           <div class="title">${escapeHtml(sp.name)} <span class="badge">${escapeHtml(school||'')}</span>${sp.cost?`<span class="badge">costo ${sp.cost}</span>`:''}</div>
           <p class="desc">${escapeHtml(sp.text||'')}</p>
-          <div class="actions"><button class="small" data-usespell="${i}" ${sp.cost && c.resources<sp.cost?'disabled title="Risorse planari insufficienti"':''}>Usa</button>${sp.cost && c.resources<sp.cost?` <span class="hint">servono ${sp.cost} risorse planari, ${c.name} ne ha ${c.resources}</span>`:''}</div>
+          <div class="actions"><button class="small" data-usespell="${i}" ${sp.cost && c.resources<sp.cost?'disabled title="Risorse planari insufficienti"':''}>Usa</button>${sp.cost && c.resources<sp.cost?` <span class="hint">servono ${sp.cost} risorse planari, ${c.name} ne ha ${c.resources}</span> ${resMates.filter(m=>m.resources>0).map(m=>`<button class="small" data-takeres="${m.id}">💠 Prendi 1 risorsa da ${escapeHtml(m.name)} (${m.resources})</button>`).join(' ')}`:''}</div>
         </div>
       </div>`;
     }).join('')||'<span class="hint">Nessuno</span>'}</div>
@@ -4069,6 +4090,19 @@ function openCharManageModal(id){
   openModal(body);
   const specialBtn=document.getElementById('mgrSpecial');
   if(specialBtn) specialBtn.onclick=()=>{ useClassSpecial(c); render(); openCharManageModal(id); };
+  const giveResBtn=document.getElementById('mgrGiveRes');
+  if(giveResBtn) giveResBtn.onclick=()=>{
+    openModal(`<h3>💠 Passa una risorsa planare</h3><p>A chi dà 1 risorsa planare ${escapeHtml(c.name)}?</p>
+      <div class="row">${resMates.map(t=>`<button class="small" data-giveresto="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
+    document.querySelectorAll('[data-giveresto]').forEach(b=>b.onclick=()=>{
+      transferResource(c, resMates.find(x=>x.id===b.dataset.giveresto));
+      render(); openCharManageModal(id);
+    });
+  };
+  document.querySelectorAll('[data-takeres]').forEach(b=>b.onclick=()=>{
+    transferResource(resMates.find(x=>x.id===b.dataset.takeres), c);
+    render(); openCharManageModal(id);
+  });
   const rerollBtn=document.getElementById('mgrReroll');
   if(rerollBtn) rerollBtn.onclick=()=>{ c.rerolls--; logMsg(`🔁 ${c.name} usa un reroll.`); render(); openCharManageModal(id); };
   document.querySelectorAll('[data-ordinereset]').forEach(b=>b.onclick=()=>{ applyOrdineReset(c, b.dataset.ordinereset); render(); openCharManageModal(id); });
@@ -4089,6 +4123,11 @@ function openCharManageModal(id){
     if(!openedOwnModal) openCharManageModal(id);
   });
   document.getElementById('mgrClose').onclick=closeModal;
+}
+function transferResource(from, to){
+  if(!from || !to || from.resources<=0) return;
+  from.resources--; to.resources++;
+  logMsg(`💠 ${from.name} passa 1 risorsa planare a ${to.name}.`,'good');
 }
 function openGiveItemModal(c, source){
   const itemId = source.type==='inventory' ? c.inventory[source.idx]
