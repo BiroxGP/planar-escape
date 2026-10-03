@@ -158,6 +158,27 @@ function printSheetHtml(pngPath, label) {
   </div></body></html>`;
 }
 
+// Retro: illustrazione fornita dall'utente (assets/ui/retro_scala_ricompense.jpg, 1696x2528) con
+// un medaglione vuoto al centro dove va il titolo. Adattata a tutta la carta (100% 100%, come
+// già succede ai retro degli altri mazzi in stampa) così la cornice dorata resta intera; il
+// testo, centrato sul medaglione (misurato sul 2000px di altezza dell'anteprima: centro a metà
+// larghezza e al 50% dell'altezza), è sopra e non viene deformato.
+const BACK_SRC = path.join(__dirname, '..', 'assets', 'ui', 'retro_scala_ricompense.jpg');
+function backHtml() {
+  const bg = pathToFileURL(BACK_SRC).href;
+  return `<!doctype html><html><head><meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet"><style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{ background:#0c0810; }
+    .card{ position:relative; width:${CARD_W}px; height:${CARD_H}px; overflow:hidden; background:url(${bg}) center/100% 100% no-repeat; }
+    .title{
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:250px; text-align:center;
+      font-family:'Cinzel',serif; font-weight:700; font-size:29px; line-height:1.3; letter-spacing:.05em; color:#f1d9a3;
+      text-shadow:0 0 14px rgba(233,194,121,.55), 0 2px 4px rgba(0,0,0,.8);
+    }
+  </style></head><body><div class="card"><div class="title">SCALA<br>DELLE<br>RICOMPENSE</div></div></body></html>`;
+}
+
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
@@ -180,8 +201,25 @@ async function main() {
   await printPage.pdf({ path: path.join(PRINT_DIR, 'scala_ricompense.pdf'), printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
   fs.unlinkSync(tmp2);
 
+  // retro
+  const backPage = await browser.newPage({ viewport: { width: CARD_W + 40, height: CARD_H + 40 } });
+  const tmp3 = path.join(__dirname, '_tmp-scala-back.html');
+  fs.writeFileSync(tmp3, backHtml());
+  await backPage.goto('file://' + tmp3 + '?t=' + Date.now());
+  await backPage.waitForTimeout(600);
+  const backPng = path.join(OUT_DIR, 'scala_ricompense_retro.png');
+  await (await backPage.$('.card')).screenshot({ path: backPng });
+  fs.unlinkSync(tmp3);
+  const backPdfPage = await browser.newPage();
+  const tmp4 = path.join(__dirname, '_tmp-scala-back-print.html');
+  fs.writeFileSync(tmp4, printSheetHtml(backPng, 'Scala delle Ricompense — retro'));
+  await backPdfPage.goto('file://' + tmp4 + '?t=' + Date.now());
+  await backPdfPage.pdf({ path: path.join(PRINT_DIR, 'scala_ricompense_retro.pdf'), printBackground: true, width: `${PAGE_W_MM}mm`, height: `${PAGE_H_MM}mm`, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
+  fs.unlinkSync(tmp4);
+
   await browser.close();
   console.log('Fatto:', outPng);
-  console.log('Fatto:', path.join(PRINT_DIR, 'scala_ricompense.pdf'));
+  console.log('Fatto:', backPng);
+  console.log('Fatto: scala_ricompense.pdf / scala_ricompense_retro.pdf in', PRINT_DIR);
 }
 main().catch(e => { console.error(e); process.exit(1); });

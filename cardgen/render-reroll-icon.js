@@ -23,6 +23,7 @@ const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 // rigenerata PRIMA di questo script) entra comodamente nello spazio avanzato sotto la griglia,
 // invece di stampare un foglio A4 a parte per una sola carta.
 const SCALA_PNG = path.join(__dirname, '..', 'cards_final', 'altro', 'scala_ricompense.png');
+const SCALA_BACK_PNG = path.join(__dirname, '..', 'cards_final', 'altro', 'scala_ricompense_retro.png');
 const SCALA_W_MM = 63.5, SCALA_H_MM = 88;
 
 const ICON_PX = 200;   // icona app, come pedina_risorsa_planare_icon.png
@@ -162,11 +163,10 @@ async function main() {
   const extraX = (PAGE_W_MM - SCALA_W_MM) / 2;
   const extraY = 150;
   const extraCardFront = hasScala ? { src: SCALA_PNG, x: extraX, y: extraY, w: SCALA_W_MM, h: SCALA_H_MM } : null;
-  // fronte e retro sono la stessa immagine (nessun retro dedicato per questa carta), ma va
-  // comunque specchiata in X sul foglio retro: a differenza delle pedine (24 copie identiche,
-  // dove non importa quale fronte si accoppia a quale retro) qui la carta è unica, quindi senza
-  // specchiare il suo retro finirebbe stampato nella posizione sbagliata della pagina fisica.
-  const extraCardBack = hasScala ? { ...extraCardFront, x: PAGE_W_MM - extraX - SCALA_W_MM } : null;
+  // il retro ha una sua illustrazione (render-scala-ricompense.js) e va specchiato in X sul foglio
+  // retro: la carta è unica (a differenza delle 24 pedine identiche), quindi senza specchiare il
+  // suo retro finirebbe stampato nella posizione sbagliata della pagina fisica.
+  const extraCardBack = hasScala ? { src: SCALA_BACK_PNG, x: PAGE_W_MM - extraX - SCALA_W_MM, y: extraY, w: SCALA_W_MM, h: SCALA_H_MM } : null;
   if (!hasScala) console.log('ATTENZIONE: cards_final/altro/scala_ricompense.png non trovato — esegui prima node render-scala-ricompense.js. Procedo senza.');
 
   await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — fronte`, extraCardFront), path.join(PRINT_DIR, 'pedine_reroll_fronte.pdf'));
