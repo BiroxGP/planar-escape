@@ -92,9 +92,7 @@ function frontHtml() {
       filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
     }
     .tokslot{ position:absolute; border:2.5px solid #3b3128; border-radius:6px; background:rgba(255,255,255,.12); }
-    .tokslot::before, .tokslot.plus::after{ content:''; position:absolute; left:50%; top:50%; background:rgba(59,49,40,.5); border-radius:1px; }
-    .tokslot::before{ width:26px; height:4px; transform:translate(-50%,-50%); }
-    .tokslot.plus::after{ width:4px; height:26px; transform:translate(-50%,-50%); }
+    /* solo il riquadro vuoto: niente segni +/− dentro (richiesta 03/10), la posizione sopra/sotto il dado basta */
     .lbl{
       position:absolute; transform:translateX(-50%);
       font-family:'JetBrains Mono',monospace; font-weight:700; font-size:${LABEL_PX}px;
@@ -291,7 +289,9 @@ async function renderHtmlToFile(browser, html, outPath, viewport) {
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
-  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
+  // /opt/pw-browsers = sessione cloud; in locale (Windows) usa il Chromium di Playwright
+  const exe = process.env.PW_CHROMIUM || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+  const browser = await chromium.launch(exe ? { executablePath: exe } : {});
 
   const frontPngPath = path.join(OUT_DIR, 'plancia_giocatore_fronte.png');
   const backPngPath = path.join(OUT_DIR, 'plancia_giocatore_retro.png');
