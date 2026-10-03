@@ -27,11 +27,11 @@ const ITEM_BACK = path.join(__dirname, '..', 'cards_final', 'retro', 'retro_ogge
 // tenue (valore 1).
 const SCALE = CARD_H / 2048;
 const rows = [
-  { value: 5, yTop: 170, yBot: 484, items: 2, stat: 'perm', statN: 2 },
-  { value: 4, yTop: 524, yBot: 828, items: 1, stat: 'perm', statN: 1 },
-  { value: 3, yTop: 868, yBot: 1180, items: 1, stat: 'temp', statN: 1 },
-  { value: 2, yTop: 1220, yBot: 1516, items: 1, stat: null, statN: 0 },
-  { value: 1, yTop: 1520, yBot: 1880, items: 0, stat: 'temp', statN: 1 },
+  { value: 5, yTop: 175, yBot: 480, items: 2, stat: 'perm', statN: 2 },
+  { value: 4, yTop: 524, yBot: 829, items: 1, stat: 'perm', statN: 1 },
+  { value: 3, yTop: 872, yBot: 1180, items: 1, stat: 'temp', statN: 1 },
+  { value: 2, yTop: 1221, yBot: 1528, items: 1, stat: null, statN: 0 },
+  { value: 1, yTop: 1569, yBot: 1876, items: 0, stat: 'temp', statN: 1 },
 ].map(r => ({ ...r, y0: r.yTop * SCALE, y1: r.yBot * SCALE }));
 
 // lo sfondo (quadrato 2048x2048) viene adattato con background-size:cover a una carta più
@@ -39,7 +39,7 @@ const rows = [
 // (2048*SCALE - CARD_W)/2 px di larghezza (in coordinate carta) — va sottratto, altrimenti
 // le coordinate dei pannelli restano quelle dell'immagine intera, non quelle visibili.
 const CROP_EACH_SIDE = (2048 * SCALE - CARD_W) / 2;
-const PANEL_X0 = 793 * SCALE - CROP_EACH_SIDE, PANEL_X1 = 1252 * SCALE - CROP_EACH_SIDE; // 258..491 circa
+const PANEL_X0 = 804 * SCALE - CROP_EACH_SIDE, PANEL_X1 = 1244 * SCALE - CROP_EACH_SIDE; // 258..491 circa
 
 function statIcon(kind, size) {
   // anello tratteggiato = temporanea (svanisce al Recupero) · anello pieno con perno in
@@ -85,8 +85,8 @@ function pageHtml() {
     }
     .subtitle{
       position:absolute; top:60px; left:0; right:0; text-align:center;
-      color:#d8c093; text-shadow:0 2px 5px rgba(0,0,0,.6);
-      font-size:15px; font-style:italic;
+      color:#f6e9c9; text-shadow:0 1px 3px rgba(0,0,0,.9), 0 2px 8px rgba(0,0,0,.75);
+      font-size:17px; font-style:italic;
     }
     .valuecol{
       position:absolute; left:0; width:${PANEL_X0}px;
