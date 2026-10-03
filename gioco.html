@@ -2125,8 +2125,9 @@ function applyPlaneIntrinsic(plane){
   let drawTargets = null;
   const dreaming = plane.id==='sogno' ? (state.currentDraw.dreamers || []) : [];
   const turnSkippers = acts.filter(c=>c.skipNextIncontro);
-  if(dreaming.length || turnSkippers.length){
-    drawTargets = acts.filter(c=>!dreaming.includes(c.id) && !c.skipNextIncontro);
+  const dragged = plane.id==='acqua' && state.currentDraw.acquaDragged ? [state.currentDraw.acquaDragged] : [];
+  if(dreaming.length || turnSkippers.length || dragged.length){
+    drawTargets = acts.filter(c=>!dreaming.includes(c.id) && !c.skipNextIncontro && !dragged.includes(c.id));
   }
   if(turnSkippers.length){
     const names = turnSkippers.map(c=>c.name);
@@ -2220,7 +2221,17 @@ const PLANE_EFFECTS = {
       const minFor = Math.min(...acts.map(c=>effectiveStat(c,'for')));
       const victims = acts.filter(c=>effectiveStat(c,'for')===minFor);
       const victim = victims[Math.floor(Math.random()*victims.length)];
-      logMsg(`🌊 ${victim.name} (Forza più bassa) viene trascinato via da solo in un portale casuale.`,'warn');
+      if(acts.length>=2){
+        // Come per Aria (sbalzato via): l'Incontro del gruppo si risolve senza di lui, e SOLO a
+        // quel punto (finishIncontro) lui finisce davvero da solo in un piano casuale — un salto
+        // forzato subito qui sovrascriverebbe lo schermo del gruppo a metà turno.
+        logMsg(`🌊 ${victim.name} (Forza più bassa) viene trascinato via da solo in un portale casuale: lascia il gruppo dopo l'Incontro di questo turno.`,'warn');
+        state.pendingSoloJumps = state.pendingSoloJumps || [];
+        state.pendingSoloJumps.push({ id: victim.id, reason: "la Corrente dell'Acqua" });
+        state.currentDraw.acquaDragged = victim.id;
+      } else {
+        logMsg(`🌊 ${victim.name} è da solo: non c'è nessuno da cui essere separato, la corrente non lo porta via.`);
+      }
     }
     logMsg('🌊 Dal 2° turno di permanenza: chi non ha protezioni e non è Druido/Sciamano/Monaco deve superare un check di Forza o sviene.');
   },
@@ -3682,6 +3693,14 @@ function finishIncontro(){
   if(!state.currentDraw || !state.currentDraw.skipFineTurno) applyFineTurnoIfNeeded();
   const reunionPlaneId = state.currentDraw && state.currentDraw.pendingReunionPlaneId;
   state.currentDraw = null;
+  // Chi è stato trascinato via (Acqua) lascia ora il gruppo e finisce da solo in un piano casuale.
+  if(state.pendingSoloJumps && state.pendingSoloJumps.length){
+    const queue = state.pendingSoloJumps; state.pendingSoloJumps = [];
+    for(const job of queue){
+      const c = state.players.find(p=>p.id===job.id);
+      if(c && isConscious(c) && soloForcedJump([c], job.reason)) return;
+    }
+  }
   if(reunionPlaneId){
     // Aria: l'Incontro extra di chi era stato sbalzato via è stato risolto per intero —
     // solo ORA il gruppo riunito affronta davvero il secondo Incontro promesso dal testo.
