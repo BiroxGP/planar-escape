@@ -1,6 +1,6 @@
 // Carta di riferimento per i giocatori: "scala dei premi" di Contesa, in base al valore
 // massimo delle entità sconfitte (vedi grantCombatReward in gioco.html). Sfondo fornito
-// dall'utente (assets/ui/scala_ricompense.jpg, 2048x2048, 5 pannelli luminosi impilati,
+// dall'utente (assets/cards_raw/scala_ricompense.jpg, 2048x2048, 5 pannelli luminosi impilati,
 // dal più luminoso/valore 5 in alto al più tenue/valore 1 in basso) — i bordi dei pannelli
 // sono stati misurati con uno script di supporto (pixel scan sulla colonna centrale) invece
 // di essere stimati a occhio, stesso approccio già usato per i gettoni fisici.
@@ -19,7 +19,7 @@ const { chromium } = require('playwright');
 const CARD_W = 750, CARD_H = 1039; // stesse dimensioni di PORTRAIT_CARD_W/H in template.js
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'altro');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
-const BG = path.join(__dirname, '..', 'assets', 'ui', 'scala_ricompense.jpg');
+const BG = path.join(__dirname, '..', 'assets', 'cards_raw', 'scala_ricompense.jpg');
 const ITEM_BACK = path.join(__dirname, '..', 'cards_final', 'retro', 'retro_oggetto.png');
 
 // pannelli misurati sull'immagine sorgente 2048x2048 (scan pixel, vedi cardgen/_measure-scala.js),
@@ -158,12 +158,12 @@ function printSheetHtml(pngPath, label) {
   </div></body></html>`;
 }
 
-// Retro: illustrazione fornita dall'utente (assets/ui/retro_scala_ricompense.jpg, 1696x2528) con
+// Retro: illustrazione fornita dall'utente (assets/cards_raw/scala_ricompense_retro.jpg, 1696x2528) con
 // un medaglione vuoto al centro dove va il titolo. Adattata a tutta la carta (100% 100%, come
 // già succede ai retro degli altri mazzi in stampa) così la cornice dorata resta intera; il
 // testo, centrato sul medaglione (misurato sul 2000px di altezza dell'anteprima: centro a metà
 // larghezza e al 50% dell'altezza), è sopra e non viene deformato.
-const BACK_SRC = path.join(__dirname, '..', 'assets', 'ui', 'retro_scala_ricompense.jpg');
+const BACK_SRC = path.join(__dirname, '..', 'assets', 'cards_raw', 'scala_ricompense_retro.jpg');
 function backHtml() {
   const bg = pathToFileURL(BACK_SRC).href;
   return `<!doctype html><html><head><meta charset="utf-8">

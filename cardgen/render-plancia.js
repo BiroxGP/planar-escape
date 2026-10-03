@@ -37,13 +37,17 @@ const STAT_LABEL = { for: 'Forza', int: 'Intelletto', des: 'Destrezza', pv: 'Pun
 // griglia 2x3 nello stesso ordine di lettura dell'array STATS del gioco. topEdge/bottomEdge
 // = dove inizia/finisce l'ombra/bevel della casella — l'icona si appoggia sopra a topEdge,
 // l'etichetta sotto a bottomEdge (lati opposti del dado, non più impilate insieme).
+// cx = asse comune per colonna (822 / 998 / 1172): le caselle dado nell'immagine sono sfalsate di
+// ~2px tra riga alta e bassa (misurato sui pixel della cornice colorata: 822.5/821.5, 999/997,
+// 1172.5/1171), i quadrati pedina impilati sullo stesso asse no — altrimenti il "−" della riga
+// alta e il "+" di quella bassa mostrano uno scalino.
 const SLOTS = [
-  { stat: 'for',   cx: 821,    topEdge: 314, bottomEdge: 428 },
-  { stat: 'int',   cx: 999,    topEdge: 314, bottomEdge: 428 },
-  { stat: 'des',   cx: 1172.5, topEdge: 314, bottomEdge: 428 },
-  { stat: 'pv',    cx: 821,    topEdge: 592, bottomEdge: 708 },
-  { stat: 'san',   cx: 997,    topEdge: 592, bottomEdge: 708 },
-  { stat: 'anima', cx: 1171,   topEdge: 592, bottomEdge: 708 },
+  { stat: 'for',   cx: 822,  topEdge: 314, bottomEdge: 428, row: 1 },
+  { stat: 'int',   cx: 998,  topEdge: 314, bottomEdge: 428, row: 1 },
+  { stat: 'des',   cx: 1172, topEdge: 314, bottomEdge: 428, row: 1 },
+  { stat: 'pv',    cx: 822,  topEdge: 592, bottomEdge: 708, row: 2 },
+  { stat: 'san',   cx: 998,  topEdge: 592, bottomEdge: 708, row: 2 },
+  { stat: 'anima', cx: 1172, topEdge: 592, bottomEdge: 708, row: 2 },
 ];
 const ICON_H = 27; // altezza icona in px nativi — dimensionata per restare ~4mm reali come nella v3
 const LABEL_PX = 15; // font-size dell'etichetta sotto il dado — ~2,3mm reali come nella v3
@@ -52,15 +56,31 @@ const LABEL_PX = 15; // font-size dell'etichetta sotto il dado — ~2,3mm reali 
 // forzato a corrispondere a 63,5mm (formato Poker).
 const CARD_SLOT_W_PX = 424;
 const MM_PER_PX = 63.5 / CARD_SLOT_W_PX;
+// Alloggiamenti della pedina temporanea: un quadrato SOPRA ogni dado (bonus, +) e uno SOTTO
+// (malus, −), da ritagliare con il cutter insieme alle caselle dado in un cartoncino
+// sovrapposto. 10,5mm = pedina da 10mm più un po' di gioco. Tra la riga alta e la bassa non c'è
+// spazio per icona e nome in mezzo: la riga 1 li ha sopra lo slot "+", la riga 2 sotto lo "−".
+const TOKEN_SLOT_PX = Math.round(10.5 / MM_PER_PX);
+const TOKEN_SLOT_GAP = 4;
 const BOARD_W_MM = W * MM_PER_PX;
 const BOARD_H_MM = H * MM_PER_PX;
 
 function frontHtml() {
   const imgUrl = pathToFileURL(SRC_IMG).href;
+  const iconTop = s => s.row === 1
+    ? s.topEdge - TOKEN_SLOT_GAP - TOKEN_SLOT_PX - 4 - ICON_H
+    : s.bottomEdge + TOKEN_SLOT_GAP + TOKEN_SLOT_PX + 4;
+  const labelTop = s => s.row === 1 ? iconTop(s) - 20 : iconTop(s) + ICON_H + 4;
   const iconsHtml = SLOTS.map(s => `
-    <div class="ic" style="left:${s.cx}px; bottom:${H - s.topEdge + 4}px;">${STAT_ICON[s.stat]}</div>`).join('');
+    <div class="ic" style="left:${s.cx}px; top:${iconTop(s)}px;">${STAT_ICON[s.stat]}</div>`).join('');
   const labelsHtml = SLOTS.map(s => `
-    <div class="lbl" style="left:${s.cx}px; top:${s.bottomEdge + 6}px;">${STAT_LABEL[s.stat]}</div>`).join('');
+    <div class="lbl" style="left:${s.cx}px; top:${labelTop(s)}px;">${STAT_LABEL[s.stat]}</div>`).join('');
+  const tokenSlotsHtml = SLOTS.map(s => {
+    const upTop = s.topEdge - TOKEN_SLOT_GAP - TOKEN_SLOT_PX;
+    const downTop = s.bottomEdge + TOKEN_SLOT_GAP;
+    const box = (top, cls) => `<div class="tokslot ${cls}" style="left:${s.cx - TOKEN_SLOT_PX / 2}px; top:${top}px; width:${TOKEN_SLOT_PX}px; height:${TOKEN_SLOT_PX}px;"></div>`;
+    return box(upTop, 'plus') + box(downTop, 'minus');
+  }).join('');
   return `<!doctype html><html><head><meta charset="utf-8">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&display=swap">
   <style>
@@ -71,6 +91,10 @@ function frontHtml() {
       position:absolute; transform:translateX(-50%); font-size:${ICON_H}px; line-height:1;
       filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
     }
+    .tokslot{ position:absolute; border:2.5px solid #3b3128; border-radius:6px; background:rgba(255,255,255,.12); }
+    .tokslot::before, .tokslot.plus::after{ content:''; position:absolute; left:50%; top:50%; background:rgba(59,49,40,.5); border-radius:1px; }
+    .tokslot::before{ width:26px; height:4px; transform:translate(-50%,-50%); }
+    .tokslot.plus::after{ width:4px; height:26px; transform:translate(-50%,-50%); }
     .lbl{
       position:absolute; transform:translateX(-50%);
       font-family:'JetBrains Mono',monospace; font-weight:700; font-size:${LABEL_PX}px;
@@ -80,6 +104,7 @@ function frontHtml() {
   </style></head>
   <body>
     <img class="board" src="${imgUrl}">
+    ${tokenSlotsHtml}
     ${iconsHtml}
     ${labelsHtml}
   </body></html>`;
