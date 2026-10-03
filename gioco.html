@@ -836,7 +836,7 @@ const SPELLS = {
     S("sp_cerchio","Cerchio di Protezione","Il gruppo para il primo danno subito in questo piano, per un turno.",{cerchioSpell:true}),
     S("sp_fiammapurif","Fiamma Purificatrice","2 danni diretti a tutte le entità non-morte/demoniache in una Contesa.",{combatDamageAll:2,filterUndeadDemon:true}),
     S("sp_ristoro","Ristoro","Trasforma il piano corrente in Recupero per un turno, solo per chi lo lancia.",{selfRecupero:true}),
-    S("sp_sigillo","Sigillo","Impedisce a un compagno di agire ostilmente contro il gruppo, finché si resta nel piano.",{sigilloSpell:true}),
+    S("sp_sigillo","Sigillo","Si usa all'istante quando un compagno impazzisce (Follia o Corruzione): lo preserva dall'effetto.",{sigilloSpell:true}),
     S("sp_rinascita","Rinascita","Una volta per partita: se un compagno sviene a 0 PV, lo rimette in piedi con 1 PV.",{rinascitaSpell:true,oncePerGame:true}),
     S("sp_egida","Egida","Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",{egidaSpell:true}),
   ],
@@ -996,7 +996,6 @@ function makeChar(name, clsKey, bonus){
     mirrorBoost:null, // Labirinto degli Specchi: {stat:delta} da revertire dopo il prossimo piano
     pendingPersonalReunion:false, // Anello del Legame: al prossimo salto si riunisce col resto del gruppo
     egidaReady:false, // Egida: para il prossimo danno Fisico, fino al prossimo salto
-    sigilloActive:false, // Sigillo: non può agire ostilmente per Corruzione, finché resta nel piano
     dmgBonusPlane:0, // Benedizione: +2 danno per tutta la permanenza nel piano
     ordineResetReady:false, // Ordine: può riportare una propria caratteristica al valore di partenza di 1° livello, finché resta nel piano
     skipNextIncontro:false, // perdita individuale del turno: escluso dal prossimo Incontro del gruppo, poi si consuma
@@ -2434,9 +2433,11 @@ function applySanLoss(c,n){
 // personaggi che perdono Sanità nello stesso Incontro). Si accoda invece l'evento e lo mostra
 // renderPendingMadnessPopup(), agganciata in cima a render(): uno per volta, nell'ordine in cui
 // sono avvenuti, senza dover toccare ogni singolo punto di chiamata.
-function queueMadnessPopup(c, kind, text){
+function queueMadnessPopup(c, kind, text, bad){
   state.pendingMadnessPopups = state.pendingMadnessPopups || [];
-  state.pendingMadnessPopups.push({ name:c.name, kind, text });
+  // bad: l'effetto è davvero scattato (pendingFollia/pendingCorruzione impostato) — solo
+  // allora ha senso proporre il Sigillo, che lo annulla all'istante.
+  state.pendingMadnessPopups.push({ name:c.name, charId:c.id, kind, text, bad:!!bad });
 }
 function triggerFollia(c){
   const check = checkRoll(c,'san');
@@ -2449,7 +2450,7 @@ function triggerFollia(c){
   else if(r>=3){ c.pendingFollia='salto'; outcome = 'al prossimo turno si lancerà da solo in un portale casuale'; }
   else { c.pendingFollia='trascina'; outcome = 'al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza)'; }
   logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): ${outcome}.`, 'warn');
-  queueMadnessPopup(c, 'follia', `Check di Sanità fallito (${check.roll} vs ${check.val}): ${outcome}.`);
+  queueMadnessPopup(c, 'follia', `Check di Sanità fallito (${check.roll} vs ${check.val}): ${outcome}.`, r<5);
 }
 function triggerCorruzione(c){
   const check = checkRoll(c,'anima');
@@ -2460,10 +2461,9 @@ function triggerCorruzione(c){
   // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
   if(r>=5) outcome = 'nulla, nonostante il campanello d\'allarme';
   else if(r>=3){ c.pendingCorruzione='contrario'; outcome = 'al prossimo turno farà il contrario del resto del gruppo'; }
-  else if(c.sigilloActive) outcome = 'agirebbe contro il team, ma il Sigillo lo impedisce';
   else { c.pendingCorruzione='ostile'; outcome = 'al prossimo turno agirà contro il team'; }
   logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): ${outcome}.`, c.pendingCorruzione==='ostile'||c.pendingCorruzione==='contrario'?'warn':'good');
-  queueMadnessPopup(c, 'corruzione', `Check di Anima fallito (${check.roll} vs ${check.val}): ${outcome}.`);
+  queueMadnessPopup(c, 'corruzione', `Check di Anima fallito (${check.roll} vs ${check.val}): ${outcome}.`, r<5);
 }
 /* -------- risoluzione delle azioni dovute a Follia/Corruzione al turno successivo -------- */
 function resolveForceContest(a,b){
@@ -4205,9 +4205,8 @@ function revertPlaneDebuffs(c){
   c.planeDebuff={};
 }
 function revertPerPlaneBuffs(c){
-  // Sigillo, Benedizione, Vaticinio: durano "finché si resta nel piano" / "per tutta la
-  // permanenza" — finiscono al salto successivo, a prescindere da come è andata.
-  if(c.sigilloActive){ c.sigilloActive=false; }
+  // Benedizione, Vaticinio: durano "per tutta la permanenza" nel piano — finiscono al
+  // salto successivo, a prescindere da come è andata.
   if(c.dmgBonusPlane){ c.dmgBonusPlane=0; }
   if(c.contesaBonusPlane){ c.contesaBonusPlane=0; }
 }
@@ -4400,7 +4399,8 @@ function useSpell(c, idx){
     return;
   }
   if(sp.sigilloSpell){
-    return openSigilloTargetModal(c, idx);
+    openModal(`<h3>🔒 Sigillo</h3><p>Il Sigillo non si lancia in anticipo: si usa all'istante quando un compagno impazzisce (Follia o Corruzione), e ti verrà proposto in quel momento.</p><div class="row mt1"><button class="primary" onclick="closeModal()">Ok</button></div>`);
+    return true;
   }
   if(sp.egidaSpell){
     return openEgidaTargetModal(c, idx);
@@ -4496,19 +4496,6 @@ function useSpell(c, idx){
   c.spells.splice(idx,1);
 }
 
-function openSigilloTargetModal(caster, idx){
-  const targets = activeChars();
-  openModal(`<h3>🔒 Sigillo</h3><p>Scegli chi proteggere dalla Corruzione ostile, finché resta nel piano:</p>
-    <div class="row">${targets.map(t=>`<button class="small" data-sigillo="${t.id}">${escapeHtml(t.name)}</button>`).join('')}</div>`);
-  document.querySelectorAll('[data-sigillo]').forEach(b=>b.onclick=()=>{
-    const t=targets.find(x=>x.id===b.dataset.sigillo);
-    t.sigilloActive = true;
-    logMsg(`🔒 ${caster.name} lancia Sigillo su ${t.name}: non potrà agire ostilmente contro il gruppo finché resta nel piano.`,'good');
-    caster.spells.splice(idx,1);
-    closeModal(); render();
-  });
-  return true;
-}
 function openEgidaTargetModal(caster, idx){
   const targets = activeChars();
   openModal(`<h3>🛡️ Egida</h3><p>Scegli il bersaglio: parerà sempre il primo danno di Tipo Fisico subito, fino al prossimo salto.</p>
@@ -4725,12 +4712,22 @@ function renderPendingMadnessPopup(){
   if(document.getElementById('modalRoot').open) return false;
   const ev = state.pendingMadnessPopups[0];
   const isFollia = ev.kind==='follia';
+  // Sigillo: spell istantaneo di un compagno (non di chi impazzisce) che annulla l'effetto.
+  const casters = ev.bad ? activeChars().filter(x=>x.id!==ev.charId && x.spells.includes('sp_sigillo')) : [];
   openModal(`<img src="assets/ui/${isFollia?'follia':'corruzione'}.jpg" alt="${isFollia?'Follia':'Corruzione'}" class="endgame-img" onerror="this.style.display='none';">
     <h3 style="text-align:center;">${isFollia?'🌀 Follia':'👹 Corruzione'} — ${escapeHtml(ev.name)}</h3>
     <p>${escapeHtml(ev.text)}</p>
-    <div class="row mt1"><button class="primary" id="btnMadnessPopupClose">Continua</button></div>`);
+    <div class="row mt1">${casters.map(x=>`<button class="small" data-sigillocaster="${x.id}">🔒 Lancia Sigillo (${escapeHtml(x.name)})</button>`).join('')}<button class="primary" id="btnMadnessPopupClose">Continua</button></div>`);
   const btn = document.getElementById('btnMadnessPopupClose');
   if(btn) btn.onclick=()=>{ state.pendingMadnessPopups.shift(); closeModal(); render(); };
+  document.querySelectorAll('[data-sigillocaster]').forEach(b=>b.onclick=()=>{
+    const caster = casters.find(x=>x.id===b.dataset.sigillocaster);
+    const victim = state.players.find(p=>p.id===ev.charId);
+    caster.spells.splice(caster.spells.indexOf('sp_sigillo'),1);
+    if(victim){ if(isFollia) victim.pendingFollia=null; else victim.pendingCorruzione=null; }
+    logMsg(`🔒 ${caster.name} lancia Sigillo all'istante su ${ev.name}: l'effetto ${isFollia?'della Follia':'della Corruzione'} è annullato.`,'good');
+    state.pendingMadnessPopups.shift(); closeModal(); render();
+  });
   return true;
 }
 

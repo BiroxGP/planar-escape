@@ -157,7 +157,7 @@
     "id": "sp_sigillo",
     "name": "Sigillo",
     "school": "flusso",
-    "text": "Impedisce a un compagno di agire ostilmente contro il gruppo, finché si resta nel piano.",
+    "text": "Si usa all'istante quando un compagno impazzisce (Follia o Corruzione): lo preserva dall'effetto.",
     "cost": 0
   },
   {
