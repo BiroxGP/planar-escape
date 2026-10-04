@@ -280,7 +280,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "incontro",
-    "text": "Un'intera legione di demoni minori marcia in massa. Scontro di Forza (valore nemico = girone +1), persistente (torna anche nei prossimi turni).",
+    "text": "Un'intera legione di demoni minori marcia in massa. Scontro di Forza (valore nemico = girone +1), persistente: da sconfitta serve un check di Destrezza di gruppo (valore più alto) per fuggire, se fallisce lo stesso Incontro torna e il turno si ripete. Se ti ritiri, resta e torna al turno dopo.",
     "manual": false,
     "forte": false,
     "persistent": true
@@ -379,7 +379,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente (torna anche nei prossimi turni).",
+    "text": "Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente: da sconfitto serve un check di Destrezza di gruppo (valore più alto) per fuggire, se fallisce lo stesso Incontro torna e il turno si ripete. Se ti ritiri, resta e torna al turno dopo.",
     "manual": false,
     "forte": false,
     "persistent": true
@@ -555,7 +555,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: perdita anche del turno).",
+    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -808,7 +808,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",
+    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Intelletto).",
     "manual": false,
     "forte": false,
     "persistent": false

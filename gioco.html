@@ -654,7 +654,7 @@ const INCONTRI = {
     C("de_guardiano","Guardiano del girone","incontro","Un demone maggiore sorveglia il passaggio. Scontro forte di Forza (valore nemico = girone +1).",{check:"for",gravity:"level+1",forte:true}),
     C("de_fiamme","Fiamme eterne","check","Il fuoco infernale non si spegne mai e logora chi lo attraversa. Check di Forza: se fallito, depotenziamento temporaneo a una caratteristica casuale.",{check:"for",onFail:{type:"tempDebuff",stat:"random"}}),
     C("de_mercante","Mercante d'anime","ricompensa","Un demone offre un oggetto raro. Ricompensa: paga 1 risorsa planare o 1 Anima → oggetto (oppure rifiuta).",{reward:{type:"tradeForItem"}}),
-    C("de_legione","Legione in marcia","incontro","Un'intera legione di demoni minori marcia in massa. Scontro di Forza (valore nemico = girone +1), persistente (torna anche nei prossimi turni).",{check:"for",gravity:"level+1",persistent:true}),
+    C("de_legione","Legione in marcia","incontro","Un'intera legione di demoni minori marcia in massa. Scontro di Forza (valore nemico = girone +1), persistente: da sconfitta serve un check di Destrezza di gruppo (valore più alto) per fuggire, se fallisce lo stesso Incontro torna e il turno si ripete. Se ti ritiri, resta e torna al turno dopo.",{check:"for",gravity:"level+1",persistent:true}),
     C("de_infranto","Patto Infranto","check","Il retaggio di un patto non mantenuto perseguita il luogo. Check di Anima: se fallito, -1 Anima (rischio Corruzione).",{check:"anima",onFail:{type:"animaLoss",n:1}}),
   ],
   nonmorti:[
@@ -665,7 +665,7 @@ const INCONTRI = {
     C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta. Check di Destrezza: se superato, trovi un oggetto; se fallito, una trappola ti ferisce (-1 PV).",{check:"des",onFail:{type:"damage",n:1},onSuccess:{type:"item"}}),
     C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
     C("nm_lich","Lich minore","incontro","Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto (valore nemico = girone +1).",{check:"int",gravity:"level+1",forte:true}),
-    C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente (torna anche nei prossimi turni).",{check:"for",gravity:"level",persistent:true}),
+    C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente: da sconfitto serve un check di Destrezza di gruppo (valore più alto) per fuggire, se fallisce lo stesso Incontro torna e il turno si ripete. Se ti ritiri, resta e torna al turno dopo.",{check:"for",gravity:"level",persistent:true}),
     C("nm_reliquia","Reliquia protettiva","ricompensa","Un amuleto trovato fra le rovine, di natura ignota. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
     C("nm_eco","Eco di un caduto","check","La disperazione di un'anima perduta si insinua nella mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
     C("nm_mano","Mano Putrescente","incontro","Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita (valore nemico 2).",{check:"pv",gravity:0}),
@@ -683,7 +683,7 @@ const INCONTRI = {
     C("et_portale","Portale instabile","check","Il confine fra i piani è sottile e cede al passaggio. Check di Destrezza per ciascuno: chi fallisce viene risucchiato e forma un nuovo gruppo, separato dal resto.",{check:"des",onFail:{type:"splitGroup"}}),
     C("et_reliquia","Reliquia astrale","ricompensa","Un oggetto ancora carico di energia eterea. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
     C("et_quiete","Quiete astrale","ricompensa","Un momento di calma cosmica pervade il piano. Ricompensa: Recupero per il gruppo, più 1 Sanità Mentale extra.",{reward:{type:"restChoice"}}),
-    C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: perdita anche del turno).",{check:"des",gravity:0,onLoseExtra:"loseTurn"}),
+    C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",{check:"des",gravity:0,onLoseExtra:"tempDebuffDes"}),
     C("et_incubo","Incubo ricorrente","incontro","Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
     C("et_doppio","Doppio specchiato","incontro","Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta (valore nemico 3).",{check:"choice",gravity:1,forte:true}),
     C("et_sogno","Frammento di sogno","ricompensa","Un oggetto onirico e instabile si materializza. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
@@ -710,7 +710,7 @@ const INCONTRI = {
     C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
     C("en_voragine","Voragine del Vuoto","ricompensa","Il vuoto reclama qualcosa in cambio del passaggio. Scelta: -1 PV, oppure perdi un oggetto, uno spell o un'abilità.",{reward:{type:"choiceLoss"}}),
     C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto. Automatico, nessun check: perdita di un oggetto casuale.",{onFail:{type:"loseItem"},auto:true}),
-    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",{check:"int",gravity:0,onLoseExtra:"tempDebuffDes"}),
+    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Intelletto).",{check:"int",gravity:0,onLoseExtra:"tempDebuffInt"}),
     C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa. Check di Destrezza: se fallito, allontanamento temporaneo dal gruppo (ci si riunisce al turno successivo).",{check:"des",onFail:{type:"scatterSelf"}}),
     C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente una caratteristica a scelta, ma si trova in cambio un oggetto minore (oppure si rifiuta, senza conseguenze).",{oblioCard:true}),
     C("en_ombra","Ombra strisciante","incontro","Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
@@ -910,7 +910,7 @@ function newGame(){
     jumps:0,
     log:[],
     currentDraw:null, // {planeId, incontroId, phase}
-    pendingPersistent:null, // {planeId, entities:[...]}
+    pendingPersistent:null, // {[planeId]: {cardId, deckKey, cb}}: Incontro persistente che torna al prossimo turno su quel piano (cb = nemici con i PV residui, o null se ritorna da capo)
     gameOver:false,
     turnConsecutive:{}, // per Piano Negativo tracking: {planeId: n}
     stayTurn:null, // {planeId, count}: turni consecutivi passati sullo stesso piano senza saltare via
@@ -1816,6 +1816,8 @@ function doJump(){
     maybeResetJumpRound();
   }
   state.jumps++;
+  // lasciando il piano, un Incontro persistente in sospeso lì non ti segue: si dimentica.
+  if(state.pendingPersistent && state.stayTurn) delete state.pendingPersistent[state.stayTurn.planeId];
   refillMazzoPianiIfNeeded();
   if(state.noTerrenoNextJump){
     skipTerrenoIfFlagged();
@@ -2602,19 +2604,30 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
   if(acts.length===0){ render(); return; }
   applyGironeEffects(plane, acts);
   let deckKey = forcedDeck || plane.deck || 'generico';
-  // "uguale per tutti i piani, senza eccezioni" — vale anche in Demoniaco e Piano Negativo (girone forzato).
-  const roll = d6();
-  if(roll===6 && deckKey!=='generico'){ logMsg('🎲 d6 = 6 → si pesca dal sotto-mazzo Generico invece che da quello tematico.'); deckKey='generico'; }
-  const deck = state.subdecks[deckKey];
-  if(deck.length===0){
-    state.subdecks[deckKey] = shuffle(state.subdecksDiscard[deckKey]);
-    state.subdecksDiscard[deckKey]=[];
+  // Incontro persistente in sospeso su questo piano (ritirata a metà scontro, o fuga fallita dopo
+  // averlo sconfitto): ritorna LO STESSO, fisso — non si tira il d6 né si pesca dal mazzo.
+  const pend = state.pendingPersistent && state.pendingPersistent[plane.id];
+  let cardId;
+  if(pend){
+    delete state.pendingPersistent[plane.id];
+    deckKey = pend.deckKey;
+    cardId = pend.cardId;
+  } else {
+    // "uguale per tutti i piani, senza eccezioni" — vale anche in Demoniaco e Piano Negativo (girone forzato).
+    const roll = d6();
+    if(roll===6 && deckKey!=='generico'){ logMsg('🎲 d6 = 6 → si pesca dal sotto-mazzo Generico invece che da quello tematico.'); deckKey='generico'; }
+    const deck = state.subdecks[deckKey];
+    if(deck.length===0){
+      state.subdecks[deckKey] = shuffle(state.subdecksDiscard[deckKey]);
+      state.subdecksDiscard[deckKey]=[];
+    }
+    cardId = state.subdecks[deckKey].shift();
+    state.subdecksDiscard[deckKey].push(cardId);
   }
-  const cardId = state.subdecks[deckKey].shift();
-  state.subdecksDiscard[deckKey].push(cardId);
   const card = INCONTRI[deckKey].find(c=>c.id===cardId);
   state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[], manualUsed:{} };
-  logMsg(`🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`);
+  if(pend && pend.cb){ pend.cb.rounds = 0; state.currentDraw.combat = pend.cb; } // stessi nemici, con i PV che avevano
+  logMsg(pend ? `🔁 Incontro persistente: torna <strong>${card.name}</strong>.` : `🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`, pend?'warn':undefined);
   render();
 }
 
@@ -2896,7 +2909,6 @@ function consequenceLabel(cons, plane){
     case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
     case 'scatterSelf': return 'allontanamento temporaneo dal gruppo';
     case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
-    case 'minor': return 'un piccolo effetto negativo, a discrezione del tavolo';
     case 'mentalBattle': return `battaglia mentale in solitaria su Sanità Mentale contro un'illusione (abilità ${cons.value||1})`;
     case 'revisitedPlane': return 'il prossimo salto riporta su un piano già visitato';
     default: return null;
@@ -2906,6 +2918,7 @@ function onLoseExtraLabel(key){
   if(key==='loseTurn') return 'esclusione anche dal prossimo Incontro';
   if(key==='tempDebuffSan') return 'depotenziamento temporaneo a Sanità Mentale';
   if(key==='tempDebuffDes') return 'depotenziamento temporaneo a Destrezza';
+  if(key==='tempDebuffInt') return 'depotenziamento temporaneo a Intelletto';
   if(key==='tempDebuffRandom') return 'depotenziamento temporaneo a una caratteristica casuale';
   return null;
 }
@@ -2924,7 +2937,6 @@ function applyConsequence(cons, targets, plane){
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
-      case 'minor': logMsg(`❓ ${c.name}: effetto minore casuale, risolvilo narrativamente.`); break;
       case 'mentalBattle': {
         // Un solo giro di Contesa in solitaria (stessa formula/funzioni della Contesa di
         // gruppo, per coerenza: pareggio favorisce chi tira, danno netto altrimenti), su
@@ -3137,7 +3149,7 @@ function bindCombatPanel(plane, card, acts){
     logMsg(`↩️ Il gruppo tenta la ritirata verso il portale: check di gruppo su Destrezza (vale la più bassa presente, ${minDes}) — ${roll} vs ${minDes} → ${success?'RIUSCITA':'FALLITA'}.`, success?'good':'warn');
     if(success){
       logMsg('↩️ Il gruppo raggiunge il portale e interrompe lo scontro.','good');
-      if(card.persistent){ persistCombat(plane, cb); }
+      if(card.persistent){ persistCombat(plane, cb, card, state.currentDraw.incontroDeck); }
       // la fuga interrompe lo scontro, ma c'era comunque un nemico da affrontare: l'effetto
       // di fine turno del piano (Veleno/Tempesta) scatta lo stesso, fuga riuscita o no.
       finishIncontro();
@@ -3197,6 +3209,7 @@ function fightRound(plane, card, acts, cb){
       if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso anche dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); }
       if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
       if(card.onLoseExtra==='tempDebuffDes') applyTempDebuff(c,'des');
+      if(card.onLoseExtra==='tempDebuffInt') applyTempDebuff(c,'int');
       if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
     });
   }
@@ -3211,6 +3224,25 @@ function fightRound(plane, card, acts, cb){
   const allDead = cb.entities.every(e=>e.hp<=0);
   if(allDead){
     logMsg('🏆 Tutte le entità sono state sconfitte.');
+    if(card.persistent){
+      // Incontro persistente: da sconfitto non basta, bisogna anche riuscire a fuggire — check di
+      // gruppo di Destrezza col valore PIÙ ALTO presente (a differenza della ritirata a metà
+      // scontro, che vale la più bassa). Se fallisce non ci si è liberati: lo STESSO Incontro
+      // ritorna (fisso, non se ne pesca un altro) e il turno si ripete davvero — fine turno del
+      // piano e effetti d'inizio turno compresi, quindi i danni a Sanità/Anima a turno si
+      // riprendono. Il bottino si dà una volta sola, quando ci si libera.
+      const bestDes = Math.max(...acts.map(c=>effectiveStat(c,'des')));
+      const chk = groupCheckRoll(acts, bestDes, 'check di Destrezza di gruppo per la fuga');
+      logMsg(`🏃 Fuga dall'Incontro persistente: check di gruppo su Destrezza (vale la più alta presente, ${bestDes}) — ${chk.roll} vs ${bestDes} → ${chk.success?'RIUSCITA':'FALLITA'}.`, chk.success?'good':'warn');
+      if(!chk.success){
+        logMsg(`🔁 Non riuscite a liberarvi: ${card.name} ritorna, lo stesso Incontro si ripresenta e il turno si ripete (gli effetti a turno del piano si riprendono).`,'warn');
+        state.pendingPersistent = state.pendingPersistent||{};
+        state.pendingPersistent[plane.id] = { cardId:card.id, deckKey:state.currentDraw.incontroDeck, cb:null };
+        finishIncontro();   // fine turno: gli effetti di fine turno del piano scattano
+        stayAnotherTurn();  // nuovo turno su questo piano: effetti d'inizio turno + lo stesso Incontro
+        return;
+      }
+    }
     const logStart = state.log.length;
     grantCombatReward(plane, card, acts, cb);
     const lootLines = state.log.slice(logStart).map(e=>e.msg);
@@ -3231,9 +3263,11 @@ function showCombatWinModal(lootLines){
     </div>
   `);
 }
-function persistCombat(plane, cb){
+// Ritirata a metà scontro da un Incontro persistente: il nemico resta dov'era, con i PV che gli
+// restano, e ritorna al prossimo turno su questo piano (vedi drawIncontroForPlane).
+function persistCombat(plane, cb, card, deckKey){
   state.pendingPersistent = state.pendingPersistent||{};
-  state.pendingPersistent[plane.id] = cb;
+  state.pendingPersistent[plane.id] = { cardId:card.id, deckKey, cb };
 }
 function grantCombatReward(plane, card, acts, cb){
   if(state.currentDraw && state.currentDraw.drenaggioActive && acts.length){
