@@ -137,7 +137,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",
+    "text": "Correnti che disorientano. Check di Destrezza: se fallito, subisci 1 danno ai PV e l'effetto di fine turno del piano (Veleno, Tempesta), se c'è, colpisce di sicuro e doppio.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -236,7 +236,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "check",
-    "text": "Una voce promette scorciatoie, ma inganna. Check di Intelletto: se fallito, perdita del turno.",
+    "text": "Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato, pescato dagli scarti.",
     "manual": false,
     "forte": false,
     "persistent": false

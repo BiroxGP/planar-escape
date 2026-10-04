@@ -639,7 +639,7 @@ const INCONTRI = {
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta. Al riparo qui: si evita anche l'effetto di fine turno del piano.",{reward:{type:"heal",n:1},safeRespite:true}),
     C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
     C("el_onda","Onda d'Urto","check","Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",{check:"des",onFail:{type:"damage",n:1}}),
-    C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
+    C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, subisci 1 danno ai PV e l'effetto di fine turno del piano (Veleno, Tempesta), se c'è, colpisce di sicuro e doppio.",{check:"des",onFail:{type:"windBlast"}}),
     C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",{reward:{type:"spellBoost"}}),
     C("el_fumo","Fumo Tossico","check","Esalazioni velenose. Check di Punti Vita: se fallito, -1 PV.",{check:"pv",onFail:{type:"damage",n:1}}),
   ],
@@ -650,7 +650,7 @@ const INCONTRI = {
     C("de_patto","Patto di sangue","check","Un demone offre 1 risorsa planare in cambio di 1 Anima; rifiutabile con check Intelletto.",{pattoSangueCard:true}),
     C("de_orda","Orda minore","incontro","Un gruppo di diavoletti minori assale in massa. Scontro di Forza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",{check:"for",gravity:"level-1",swarm:"auto"}),
     C("de_bottino","Bottino infernale","ricompensa","Un oggetto strappato a un demone sconfitto da altri viandanti. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
-    C("de_sussurro","Sussurro tentatore","check","Una voce promette scorciatoie, ma inganna. Check di Intelletto: se fallito, perdita del turno.",{check:"int",onFail:{type:"loseTurn"}}),
+    C("de_sussurro","Sussurro tentatore","check","Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato, pescato dagli scarti.",{groupCheck:"int",penalty:0,onFail:{type:"revisitedPlane"}}),
     C("de_guardiano","Guardiano del girone","incontro","Un demone maggiore sorveglia il passaggio. Scontro forte di Forza (valore nemico = girone +1).",{check:"for",gravity:"level+1",forte:true}),
     C("de_fiamme","Fiamme eterne","check","Il fuoco infernale non si spegne mai e logora chi lo attraversa. Check di Forza: se fallito, depotenziamento temporaneo a una caratteristica casuale.",{check:"for",onFail:{type:"tempDebuff",stat:"random"}}),
     C("de_mercante","Mercante d'anime","ricompensa","Un demone offre un oggetto raro. Ricompensa: paga 1 risorsa planare o 1 Anima → oggetto (oppure rifiuta).",{reward:{type:"tradeForItem"}}),
@@ -1024,7 +1024,42 @@ function drawSpell(school){
 }
 function drawOggetto(){
   if(state.oggettiDeck.length===0){ logMsg('Il mazzo Oggetti è esaurito!','warn'); return null; }
-  return state.oggettiDeck.shift();
+  const id = state.oggettiDeck.shift();
+  // Legge: "ogni oggetto preso qui richiede un pegno in cambio" — l'oggetto viene comunque aggiunto
+  // dal chiamante; il pegno lo chiede renderLeggeDebtPopup() (in coda, come i popup di Follia).
+  const here = currentPlane();
+  if(here && here.id==='legge'){
+    state.pendingLeggeDebts = state.pendingLeggeDebts || [];
+    state.pendingLeggeDebts.push({ itemId:id });
+  }
+  return id;
+}
+// Chi ha preso l'oggetto lo si ricava da chi lo ha in inventario; scelta del pegno o rinuncia.
+function renderLeggeDebtPopup(){
+  if(!state || !state.pendingLeggeDebts || !state.pendingLeggeDebts.length) return false;
+  if(document.getElementById('modalRoot').open) return false;
+  const debt = state.pendingLeggeDebts[0];
+  const holder = state.players.find(p=>p.status!=='dead' && p.inventory.includes(debt.itemId));
+  if(!holder){ state.pendingLeggeDebts.shift(); return renderLeggeDebtPopup(); } // nessuno lo tiene (già perso/scartato)
+  const item = OGGETTI_BY_ID[debt.itemId];
+  const idxNew = holder.inventory.lastIndexOf(debt.itemId);
+  const options = holder.inventory.map((id,i)=>({id,i})).filter(o=>o.i!==idxNew && o.id!==holder.protectedItemId);
+  openModal(`<h3>⚖️ Legge — ${escapeHtml(holder.name)}</h3>
+    <p>${escapeHtml(holder.name)} ha preso <strong>${escapeHtml(item?.name||debt.itemId)}</strong>. Su questo piano ogni oggetto richiede un pegno in cambio, mai gratuito: dai uno dei tuoi oggetti, oppure rinuncia a quello nuovo.</p>
+    <div class="row">${options.map(o=>`<button class="small" data-pledge="${o.i}">Dai ${escapeHtml(OGGETTI_BY_ID[o.id]?.name||o.id)}</button>`).join('')}<button class="small" data-pledge="new">Rinuncia a ${escapeHtml(item?.name||'quello nuovo')}</button></div>`);
+  document.querySelectorAll('[data-pledge]').forEach(b=>b.onclick=()=>{
+    const v = b.dataset.pledge;
+    if(v==='new'){
+      holder.inventory.splice(idxNew,1);
+      logMsg(`⚖️ ${holder.name} rinuncia a ${item?.name||'all\'oggetto'}: la Legge non concede nulla senza pegno.`,'warn');
+    } else {
+      const [given] = holder.inventory.splice(+v,1);
+      logMsg(`⚖️ ${holder.name} lascia ${OGGETTI_BY_ID[given]?.name||given} come pegno e tiene ${item?.name||'il nuovo oggetto'}.`,'good');
+    }
+    state.pendingLeggeDebts.shift();
+    closeModal(); render();
+  });
+  return true;
 }
 function statFloor(stat){ return stat==='pv' ? 0 : 1; }
 
@@ -1085,6 +1120,16 @@ function applyDamage(c, stat, n, ctx){
         c.equipped.shield=null;
       }
       return;
+    }
+  }
+  // Cristallo: "incantesimi e danni fisici subiti qui valgono il doppio" — gli incantesimi sono già
+  // raddoppiati altrove; qui i danni ai PV di Tipo Fisico (Elementare/Terrestre) dopo ogni parata.
+  if(n>0 && stat==='pv'){
+    const here = currentPlane();
+    const isPhysical = ctx.type==='fisico' || (ctx.family && FAMILIES[ctx.family]?.type==='fisico');
+    if(here && here.id==='cristallo' && isPhysical){
+      n *= 2;
+      logMsg(`💎 Cristallo amplifica il colpo: il danno fisico raddoppia (${n}).`,'warn');
     }
   }
   const before = c.stats[stat];
@@ -1349,7 +1394,7 @@ function render(){
   app.innerHTML = renderGame();
   bindGame();
   applyI18nStatic();
-  renderPendingMadnessPopup();
+  if(!renderPendingMadnessPopup()) renderLeggeDebtPopup();
 }
 /* ---------------- LANDING ---------------- */
 function renderLanding(){
@@ -2279,7 +2324,7 @@ const PLANE_EFFECTS = {
     logMsg('🌊 Dal 2° turno di permanenza: chi non ha protezioni e non è Druido/Sciamano/Monaco deve superare un check di Forza o sviene.');
   },
   tempesta:(p,acts,ctx)=>{ logMsg('⚡ Fulmini nell\'aria: se il gruppo non riesce a evitare del tutto l\'Incontro (scappando dallo scontro o restando nascosto), un fulmine colpirà qualcuno a fine turno.'); },
-  cristallo:(p,acts,ctx)=>{ logMsg('💎 Ogni spell lanciato qui ha effetto raddoppiato (+100%, automatico). I danni fisici subiti qui sono raddoppiati: tienine conto applicandoli manualmente.'); },
+  cristallo:(p,acts,ctx)=>{ logMsg('💎 Ogni spell lanciato qui ha effetto raddoppiato e anche i danni fisici subiti qui sono raddoppiati (+100% entrambi, in automatico).'); },
   luce:(p,acts,ctx)=>{ acts.forEach(c=>{ const r=checkRoll(c,'int'); logMsg(`☀️ ${c.name} check Intelletto: ${r.roll} vs ${r.val} → ${r.success?'superato':'FALLITO'}.`); if(!r.success){ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); logMsg(`☀️ ${c.name}: -1 For/Des/Int per tutta la permanenza nel piano.`);} }); },
   tenebre:(p,acts,ctx)=>{ acts.forEach(c=>{ ['for','des','int'].forEach(s=>applyPlaneDebuff(c,s)); }); logMsg('🌑 Buio automatico: -1 For/Des/Int per tutti, per tutta la permanenza nel piano.'); },
   sogno:(p,acts,ctx)=>{
@@ -2300,7 +2345,7 @@ const PLANE_EFFECTS = {
     acts.forEach(c=>{ c.ordineResetReady = true; });
     logMsg('⚖️ Chi vuole può riportare una propria caratteristica al valore di partenza di 1° livello, una sola volta (usa Gestisci).');
   },
-  legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio (baratto forzato, applica manualmente).'); },
+  legge:(p,acts,ctx)=>{ logMsg('⚖️ Ogni oggetto preso qui richiede un pegno in cambio: ti verrà chiesto di scegliere quale oggetto dare (o di rinunciare a quello nuovo).'); },
   sacro:(p,acts,ctx)=>{ annihilateUndead(acts,'Sacro'); logMsg('✨ Piano protetto: non-morti/demoni subiscono danno passivo; qui il Recupero cura anche 1 San in più.'); },
   stasi:(p,acts,ctx)=>{ logMsg('⏳ Qui nulla può cambiare: cure, potenziamenti e danni non hanno effetto. Mazzo Piani non manipolabile.'); },
   sole:(p,acts,ctx)=>{ annihilateUndead(acts,'Sole'); acts.forEach(c=>{ if(c.status==='undead') return; if(c.stats.anima<c.start.anima){ const r=checkRoll(c,'anima'); if(!r.success){ applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]); logMsg(`☀️ ${c.name} porta Corruzione e fallisce il check extra di Anima: depotenziamento casuale.`);} } }); },
@@ -2903,7 +2948,7 @@ function consequenceLabel(cons, plane){
       return stat ? `depotenziamento temporaneo a ${STAT_LABEL[stat]}` : 'depotenziamento temporaneo';
     }
     case 'damage': return `-${cons.n||1} PV`;
-    case 'loseTurn': return 'esclusione dal prossimo Incontro';
+    case 'windBlast': return '1 danno ai PV, e l\'effetto di fine turno del piano (se c\'è) colpisce di sicuro e doppio';
     case 'loseItem': return 'perdita di un oggetto casuale';
     case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
     case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
@@ -2915,7 +2960,6 @@ function consequenceLabel(cons, plane){
   }
 }
 function onLoseExtraLabel(key){
-  if(key==='loseTurn') return 'esclusione anche dal prossimo Incontro';
   if(key==='tempDebuffSan') return 'depotenziamento temporaneo a Sanità Mentale';
   if(key==='tempDebuffDes') return 'depotenziamento temporaneo a Destrezza';
   if(key==='tempDebuffInt') return 'depotenziamento temporaneo a Intelletto';
@@ -2932,7 +2976,16 @@ function applyConsequence(cons, targets, plane){
         applyTempDebuff(c,stat); break;
       }
       case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
-      case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); break;
+      case 'windBlast': {
+        // Vento Ingannatore: danno certo a chi fallisce; e se il piano ha un effetto di fine turno
+        // (Veleno, Tempesta) quello scatta comunque (anche se l'Incontro fosse stato evitato) e due volte.
+        applyDamage(c,'pv',1,{family:plane.family, planeId:plane.id});
+        if(hasFineTurnoRisk(plane) && state.currentDraw && !state.currentDraw.fineTurnoDoubled){
+          state.currentDraw.fineTurnoDoubled = true;
+          logMsg(`🌪️ Le correnti ti sbattono contro ${plane.name}: l'effetto di fine turno del piano colpirà di sicuro e doppio.`,'warn');
+        }
+        break;
+      }
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
@@ -3206,7 +3259,6 @@ function fightRound(plane, card, acts, cb){
   });
   if(card.onLoseExtra && passThrough>0){
     acts.filter(c=>!stillHidden(c)).forEach(c=>{
-      if(card.onLoseExtra==='loseTurn'){ c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso anche dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); }
       if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
       if(card.onLoseExtra==='tempDebuffDes') applyTempDebuff(c,'des');
       if(card.onLoseExtra==='tempDebuffInt') applyTempDebuff(c,'int');
@@ -3764,7 +3816,11 @@ function applyFineTurnoIfNeeded(){
   }
 }
 function finishIncontro(){
-  if(!state.currentDraw || !state.currentDraw.skipFineTurno) applyFineTurnoIfNeeded();
+  // fineTurnoDoubled (Vento Ingannatore): l'effetto di fine turno scatta anche se sarebbe stato
+  // evitato, e due volte.
+  const doubled = !!(state.currentDraw && state.currentDraw.fineTurnoDoubled);
+  if(!state.currentDraw || !state.currentDraw.skipFineTurno || doubled) applyFineTurnoIfNeeded();
+  if(doubled) applyFineTurnoIfNeeded();
   const reunionPlaneId = state.currentDraw && state.currentDraw.pendingReunionPlaneId;
   state.currentDraw = null;
   // Chi è stato trascinato via (Acqua) lascia ora il gruppo e finisce da solo in un piano casuale.
