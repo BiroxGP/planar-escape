@@ -819,7 +819,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "La tempesta disorienta e separa. Check di Destrezza: se fallito, allontanamento temporaneo dal gruppo (ci si riunisce al turno successivo).",
+    "text": "La tempesta disorienta e separa. Check di Destrezza per ciascuno: chi fallisce viene separato dal gruppo, e i due gruppi affrontano ciascuno un Incontro diverso. Superati entrambi, si ritrovano al portale.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -907,7 +907,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "check",
-    "text": "Automatico: chi ha già perso PV in questo turno (dall'ingresso nel piano o da un evento precedente) ne perde 1 in più.",
+    "text": "Il sangue chiama altro sangue. Finché il gruppo resta su questo piano, chi subisce un qualsiasi danno ai PV ne perde 1 in più. L'Incontro si ripete: si pesca subito un altro Incontro.",
     "manual": false,
     "forte": false,
     "persistent": false

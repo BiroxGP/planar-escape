@@ -711,7 +711,7 @@ const INCONTRI = {
     C("en_voragine","Voragine del Vuoto","ricompensa","Il vuoto reclama qualcosa in cambio del passaggio. Scelta: -1 PV, oppure perdi un oggetto, uno spell o un'abilità.",{reward:{type:"choiceLoss"}}),
     C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto. Automatico, nessun check: perdita di un oggetto casuale.",{onFail:{type:"loseItem"},auto:true}),
     C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Intelletto).",{check:"int",gravity:0,onLoseExtra:"tempDebuffInt"}),
-    C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa. Check di Destrezza: se fallito, allontanamento temporaneo dal gruppo (ci si riunisce al turno successivo).",{check:"des",onFail:{type:"scatterSelf"}}),
+    C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa. Check di Destrezza per ciascuno: chi fallisce viene separato dal gruppo, e i due gruppi affrontano ciascuno un Incontro diverso. Superati entrambi, si ritrovano al portale.",{check:"des",onFail:{type:"stormSplit"}}),
     C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente una caratteristica a scelta, ma si trova in cambio un oggetto minore (oppure si rifiuta, senza conseguenze).",{oblioCard:true}),
     C("en_ombra","Ombra strisciante","incontro","Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
     C("en_relitto","Relitto insanguinato","ricompensa","Un'arma intrisa di sangue avversario, ancora carica di potere. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
@@ -719,7 +719,7 @@ const INCONTRI = {
     C("en_corrosione","Corrosione lenta","check","Un'arma o un'armatura equipaggiata perde temporaneamente il bonus. Automatico, nessun check: se ne hai entrambe scegli quale, il bonus torna al prossimo Recupero.",{auto:true,onFail:{type:"corrode"}}),
     C("en_eco","Eco del Nulla","ricompensa","Si ottiene una risorsa planare, in cambio di un piccolo sacrificio. Ricompensa: sacrifica 1 PV o un oggetto → +1 risorsa planare (oppure rifiuta).",{reward:{type:"resourceForSacrifice"}}),
     C("en_marcescenza","Marcescenza contagiosa","incontro","Una creatura nata dalla decomposizione attacca. Scontro di Forza (valore nemico 2).",{check:"for",gravity:0}),
-    C("en_richiamo","Richiamo di sangue","check","Automatico: chi ha già perso PV in questo turno (dall'ingresso nel piano o da un evento precedente) ne perde 1 in più.",{richiamoCard:true}),
+    C("en_richiamo","Richiamo di sangue","check","Il sangue chiama altro sangue. Finché il gruppo resta su questo piano, chi subisce un qualsiasi danno ai PV ne perde 1 in più. L'Incontro si ripete: si pesca subito un altro Incontro.",{richiamoCard:true}),
     C("en_voce","Voce dimenticata","check","Si dimentica temporaneamente come usare uno spell o abilità. Check di Intelletto: se fallito, dimentica temporaneamente uno spell (o depotenziamento a Intelletto se non ne ha).",{check:"int",onFail:{type:"forgetSpell"}}),
   ],
   generico:[
@@ -916,6 +916,8 @@ function newGame(){
     stayTurn:null, // {planeId, count}: turni consecutivi passati sullo stesso piano senza saltare via
     groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
+    pendingTempesta:null, // Tempesta di Cenere: {planeId, mainGroupId, splitGroupId, stage:'start'|'main'|'split'}
+    richiamoPlaneId:null, // Richiamo di sangue: id del piano su cui ogni danno ai PV costa 1 in più, finché lo si lascia
     noTerrenoNextJump:false, // Stranezza del portale: il prossimo salto non può portare a una destinazione del Piano Terreno
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
@@ -1007,7 +1009,6 @@ function makeChar(name, clsKey, bonus){
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
     protectedItemId:null, // Statua di Stasi: oggetto immune a qualsiasi perdita/furto/distruzione, un solo oggetto alla volta
-    turnStartPv:null, // PV all'inizio del turno corrente, per Richiamo di sangue (chi ha già perso PV in questo turno)
     planeDebuff:{}, // Luce/Tenebre: depotenziamento per tutta la permanenza, non curabile a Recupero
     log:[],
   };
@@ -1131,6 +1132,14 @@ function applyDamage(c, stat, n, ctx){
     if(here && here.id==='cristallo' && isPhysical){
       n *= 2;
       logMsg(`💎 Cristallo amplifica il colpo: il danno fisico raddoppia (${n}).`,'warn');
+    }
+  }
+  // Richiamo di sangue (finché si resta sul piano dove è uscito): ogni danno ai PV ne costa 1 in più.
+  if(n>0 && stat==='pv' && state.richiamoPlaneId){
+    const here = currentPlane();
+    if(here && here.id===state.richiamoPlaneId){
+      n += 1;
+      logMsg(`🩸 Richiamo di sangue: ${c.name} perde 1 PV in più (${n} in tutto).`,'warn');
     }
   }
   const before = c.stats[stat];
@@ -1864,6 +1873,8 @@ function doJump(){
   state.jumps++;
   // lasciando il piano, un Incontro persistente in sospeso lì non ti segue: si dimentica.
   if(state.pendingPersistent && state.stayTurn) delete state.pendingPersistent[state.stayTurn.planeId];
+  // Richiamo di sangue vale solo sul piano dove è uscito: lasciandolo finisce.
+  if(state.richiamoPlaneId && state.stayTurn && state.stayTurn.planeId===state.richiamoPlaneId) state.richiamoPlaneId = null;
   refillMazzoPianiIfNeeded();
   if(state.noTerrenoNextJump){
     skipTerrenoIfFlagged();
@@ -1880,7 +1891,6 @@ function doJump(){
   // il rapporto __PT__/Piani veri sotto controllo invece di farlo crescere per sempre.
   if(drawnId!=='__PT__') state.mazzoPiani.push('__PT__');
   const jumpers = activeChars();
-  jumpers.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: chi ha già perso PV in questo turno
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
     state.stayTurn = null;
@@ -2239,7 +2249,6 @@ function attemptTerraDig(plane){
   if(success){
     logMsg('⛰️ Il gruppo si fa strada e torna libero: si pesca il normale Incontro del turno.','good');
     state.currentDraw.phase = 'plane';
-    acts.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: baseline PV di questo turno di scavo
     drawIncontroForPlane(plane, null);
     return;
   }
@@ -2267,7 +2276,6 @@ function stayAnotherTurn(){
   const ctx = {family: plane.family, type: plane.type || FAMILIES[plane.family]?.type, planeId: plane.id};
   logMsg(`🏕️ Il gruppo resta ancora un turno su ${plane.name} (turno ${state.stayTurn.count} di permanenza).`);
   state.currentDraw = { planeId: plane.id, phase:'plane', log:[] };
-  acts.forEach(c=>{ c.turnStartPv = c.stats.pv; }); // Richiamo di sangue: baseline PV di questo turno, non di un salto precedente
   if(plane.id==='fuoco'){
     acts.forEach(c=>applyDamage(c,'pv',1,ctx));
     logMsg('🔥 Il fuoco continua a bruciare: 1 danno extra a tutti per la permanenza.','warn');
@@ -2784,14 +2792,26 @@ function renderIncontroAction(){
     return;
   }
   if(card.richiamoCard){
+    // Richiamo di sangue: finché si resta su questo piano, ogni danno ai PV costa 1 in più (vedi
+    // applyDamage), e l'Incontro si ripete — così il malus ha davvero occasione di scattare (nella
+    // versione precedente colpiva solo chi aveva già perso PV in quel momento, quasi mai nessuno).
     if(!state.currentDraw.autoApplied){
-      const victims = acts.filter(c=>c.turnStartPv!=null && c.stats.pv < c.turnStartPv);
-      victims.forEach(c=>{ applyDamage(c,'pv',1,{family:plane.family, planeId:plane.id}); logMsg(`🩸 ${c.name} aveva già perso PV in questo turno: il Richiamo di sangue lo colpisce di nuovo (-1 PV).`,'warn'); });
-      if(!victims.length) logMsg('🩸 Nessuno ha ancora perso PV in questo turno: il Richiamo di sangue non ha effetto.');
       state.currentDraw.autoApplied = true;
+      if(state.richiamoPlaneId===plane.id){
+        logMsg('🩸 Il Richiamo di sangue è già attivo su questo piano: nessun effetto in più.');
+      } else {
+        state.richiamoPlaneId = plane.id;
+        state.currentDraw.richiamoRepeat = true;
+        logMsg(`🩸 Il sangue chiama altro sangue: finché restate su ${plane.name}, chi subisce un qualsiasi danno ai PV ne perde 1 in più.`,'warn');
+      }
     }
-    el.innerHTML = `<button class="primary" id="btnResolveDone">Continua</button>`;
-    document.getElementById('btnResolveDone').onclick=finishIncontro;
+    el.innerHTML = `<button class="primary" id="btnResolveDone">${state.currentDraw.richiamoRepeat?'Continua: l\'Incontro si ripete':'Continua'}</button>`;
+    document.getElementById('btnResolveDone').onclick=()=>{
+      if(state.currentDraw.richiamoRepeat){
+        logMsg('🩸 L\'Incontro si ripete: si pesca subito un altro Incontro (stesso turno).','warn');
+        drawIncontroForPlane(plane, null);
+      } else finishIncontro();
+    };
     return;
   }
   if(card.anomaliaCard){
@@ -2902,7 +2922,7 @@ function renderIncontroAction(){
         const r=checkRoll(c,checkStat);
         document.getElementById('res_'+c.id).innerHTML = `<span class="roll-chip ${r.success?'hit':'miss'}"><span class="roll-die">${r.roll}</span> ${r.success?'OK':'Fallito'}</span>`;
         b.disabled=true;
-        if(!r.success && card.onFail?.type==='splitGroup'){ splitFailed.push(c.id); }
+        if(!r.success && (card.onFail?.type==='splitGroup' || card.onFail?.type==='stormSplit')){ splitFailed.push(c.id); }
         else if(!r.success && card.onFail){ applyConsequence(card.onFail, [c], plane); }
         if(r.success && card.onSuccess?.type==='item'){ const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); } }
         done++; if(done>=acts.length){ document.getElementById('btnResolveDone').disabled=false; }
@@ -2911,7 +2931,21 @@ function renderIncontroAction(){
     document.getElementById('btnResolveDone').onclick=()=>{
       // lo split va fatto qui, a risoluzione ultimata: farlo dentro il singolo click
       // toglierebbe personaggi dal gruppo mentre altri stanno ancora tirando il check.
-      if(splitFailed.length){
+      if(splitFailed.length && card.onFail.type==='stormSplit'){
+        // Tempesta di Cenere: se si separa solo una parte del gruppo, i due gruppi affrontano ciascuno
+        // un Incontro diverso (prima quello rimasto, poi quello staccato) e, superati entrambi, si
+        // ritrovano al portale (vedi pendingTempesta in finishIncontro). Se falliscono tutti nessuno
+        // si stacca: restano uniti, come se nessuno fosse stato separato.
+        if(splitFailed.length>=acts.length){
+          logMsg('🌪️ La tempesta sballotta tutti allo stesso modo: nessuno si stacca, il gruppo resta unito.');
+        } else {
+          const mainGroupId = state.currentGroupId;
+          const newG = splitIntoNewGroup(splitFailed);
+          const names = groupMembers(newG).map(x=>x.name).join(', ');
+          logMsg(`🌪️ La tempesta separa ${names} dal resto: i due gruppi affronteranno due Incontri diversi e si ritroveranno al portale.`,'warn');
+          state.pendingTempesta = { planeId:plane.id, mainGroupId, splitGroupId:newG.id, stage:'start' };
+        }
+      } else if(splitFailed.length){
         const newG = splitIntoNewGroup(splitFailed);
         const names = groupMembers(newG).map(x=>x.name).join(', ');
         logMsg(`🌀 ${names} non regge la frattura e finisce in un nuovo gruppo, separato dal resto.`,'warn');
@@ -2953,7 +2987,7 @@ function consequenceLabel(cons, plane){
     case 'loseItem': return 'perdita di un oggetto casuale';
     case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
     case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
-    case 'scatterSelf': return 'allontanamento temporaneo dal gruppo';
+    case 'stormSplit': return 'separazione dal gruppo: i due gruppi affrontano un Incontro diverso ciascuno e, superati entrambi, si ritrovano al portale';
     case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
     case 'mentalBattle': return `battaglia mentale in solitaria su Sanità Mentale contro un'illusione (abilità ${cons.value||1})`;
     case 'revisitedPlane': return 'il prossimo salto riporta su un piano già visitato';
@@ -2980,7 +3014,6 @@ function applyConsequence(cons, targets, plane){
       case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); break;
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
-      case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'mentalBattle': {
         // Un solo giro di Contesa in solitaria (stessa formula/funzioni della Contesa di
@@ -3817,6 +3850,39 @@ function finishIncontro(){
     for(const job of queue){
       const c = state.players.find(p=>p.id===job.id);
       if(c && isConscious(c) && soloForcedJump([c], job.reason)) return;
+    }
+  }
+  // Tempesta di Cenere: separazione in due gruppi, ciascuno col proprio Incontro, poi ricongiungimento.
+  if(state.pendingTempesta){
+    const pt = state.pendingTempesta;
+    const tPlane = PIANI_BY_ID[pt.planeId];
+    const hasMembers = id => { const g = state.groups.find(x=>x.id===id); return !!g && groupMembers(g).length>0; };
+    if(pt.stage==='start'){
+      // la carta è risolta: il gruppo rimasto pesca il suo Incontro
+      pt.stage = 'main';
+      if(hasMembers(pt.mainGroupId)){
+        state.currentGroupId = pt.mainGroupId;
+        logMsg('🌪️ Il gruppo rimasto affronta il suo Incontro.','warn');
+        drawIncontroForPlane(tPlane, null);
+        return;
+      }
+    }
+    if(pt.stage==='main'){
+      // il gruppo rimasto ha finito: tocca a quello separato, con un Incontro diverso
+      pt.stage = 'split';
+      if(hasMembers(pt.splitGroupId)){
+        state.currentGroupId = pt.splitGroupId;
+        logMsg('🌪️ Ora tocca al gruppo separato: affronta un altro Incontro.','warn');
+        drawIncontroForPlane(tPlane, null);
+        return;
+      }
+    }
+    // entrambi gli Incontri sono stati affrontati: i due gruppi si ritrovano al portale
+    state.pendingTempesta = null;
+    if(state.groups.some(g=>g.id===pt.mainGroupId) && state.groups.some(g=>g.id===pt.splitGroupId)){
+      mergeGroups(pt.mainGroupId, pt.splitGroupId);
+      state.currentGroupId = pt.mainGroupId;
+      logMsg('🌀 I due gruppi si ritrovano al portale: di nuovo insieme.','good');
     }
   }
   if(reunionPlaneId){
