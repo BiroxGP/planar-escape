@@ -639,7 +639,7 @@ const INCONTRI = {
     C("el_rifugio","Rifugio temporaneo","ricompensa","Un angolo relativamente sicuro: +1 PV a un personaggio a scelta. Al riparo qui: si evita anche l'effetto di fine turno del piano.",{reward:{type:"heal",n:1},safeRespite:true}),
     C("el_frattura","Frattura planare","check","Una crepa instabile verso un altro piano elementare si apre sotto i piedi. Check di Intelletto per ciascuno: chi fallisce ci cade dentro e forma un nuovo gruppo, separato dal resto.",{check:"int",onFail:{type:"splitGroup"}}),
     C("el_onda","Onda d'Urto","check","Una scarica improvvisa mette alla prova i riflessi. Check di Destrezza: se fallito, 1 danno.",{check:"des",onFail:{type:"damage",n:1}}),
-    C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, subisci 1 danno ai PV e l'effetto di fine turno del piano (Veleno, Tempesta), se c'è, colpisce di sicuro e doppio.",{check:"des",onFail:{type:"windBlast"}}),
+    C("el_vento","Vento Ingannatore","check","Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",{check:"des",onFail:{type:"loseTurn"}}),
     C("el_grotta","Grotta di Cristallo","ricompensa","Echi del piano Cristallo potenziano il prossimo spell lanciato da un personaggio a scelta (+100% di effetto).",{reward:{type:"spellBoost"}}),
     C("el_fumo","Fumo Tossico","check","Esalazioni velenose. Check di Punti Vita: se fallito, -1 PV.",{check:"pv",onFail:{type:"damage",n:1}}),
   ],
@@ -2948,7 +2948,7 @@ function consequenceLabel(cons, plane){
       return stat ? `depotenziamento temporaneo a ${STAT_LABEL[stat]}` : 'depotenziamento temporaneo';
     }
     case 'damage': return `-${cons.n||1} PV`;
-    case 'windBlast': return '1 danno ai PV, e l\'effetto di fine turno del piano (se c\'è) colpisce di sicuro e doppio';
+    case 'loseTurn': return 'esclusione dal prossimo Incontro';
     case 'loseItem': return 'perdita di un oggetto casuale';
     case 'animaLoss': return `-${cons.n||1} Anima (rischio Corruzione)`;
     case 'splitGroup': return 'separazione: finisci in un nuovo gruppo, staccato dal resto';
@@ -2976,16 +2976,7 @@ function applyConsequence(cons, targets, plane){
         applyTempDebuff(c,stat); break;
       }
       case 'damage': applyDamage(c,'pv',cons.n,{family:plane.family, planeId:plane.id}); break;
-      case 'windBlast': {
-        // Vento Ingannatore: danno certo a chi fallisce; e se il piano ha un effetto di fine turno
-        // (Veleno, Tempesta) quello scatta comunque (anche se l'Incontro fosse stato evitato) e due volte.
-        applyDamage(c,'pv',1,{family:plane.family, planeId:plane.id});
-        if(hasFineTurnoRisk(plane) && state.currentDraw && !state.currentDraw.fineTurnoDoubled){
-          state.currentDraw.fineTurnoDoubled = true;
-          logMsg(`🌪️ Le correnti ti sbattono contro ${plane.name}: l'effetto di fine turno del piano colpirà di sicuro e doppio.`,'warn');
-        }
-        break;
-      }
+      case 'loseTurn': c.skipNextIncontro=true; logMsg(`⏳ ${c.name} sarà escluso dal prossimo Incontro (il resto del turno prosegue normalmente).`,'warn'); break;
       case 'loseItem': { const idx=pickLosableItemIndex(c); if(idx>=0){ const lost=c.inventory.splice(idx,1)[0]; logMsg(`🎒 ${c.name} perde ${OGGETTI_BY_ID[lost]?.name}.`); } else if(c.protectedItemId && c.inventory.length){ logMsg(`⏳ ${c.name}: il tempo fermo protegge l'unico oggetto rimasto.`); } break; }
       case 'animaLoss': applyAnimaLoss(c,cons.n||1); break;
       case 'scatterSelf': logMsg(`🌀 ${c.name} si allontana dal gruppo, si riunirà al turno successivo.`,'warn'); break;
@@ -3816,11 +3807,7 @@ function applyFineTurnoIfNeeded(){
   }
 }
 function finishIncontro(){
-  // fineTurnoDoubled (Vento Ingannatore): l'effetto di fine turno scatta anche se sarebbe stato
-  // evitato, e due volte.
-  const doubled = !!(state.currentDraw && state.currentDraw.fineTurnoDoubled);
-  if(!state.currentDraw || !state.currentDraw.skipFineTurno || doubled) applyFineTurnoIfNeeded();
-  if(doubled) applyFineTurnoIfNeeded();
+  if(!state.currentDraw || !state.currentDraw.skipFineTurno) applyFineTurnoIfNeeded();
   const reunionPlaneId = state.currentDraw && state.currentDraw.pendingReunionPlaneId;
   state.currentDraw = null;
   // Chi è stato trascinato via (Acqua) lascia ora il gruppo e finisce da solo in un piano casuale.

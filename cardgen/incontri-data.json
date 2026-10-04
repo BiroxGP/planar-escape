@@ -137,7 +137,7 @@
     "deck": "elementare",
     "family": "elementare",
     "type": "check",
-    "text": "Correnti che disorientano. Check di Destrezza: se fallito, subisci 1 danno ai PV e l'effetto di fine turno del piano (Veleno, Tempesta), se c'è, colpisce di sicuro e doppio.",
+    "text": "Correnti che disorientano. Check di Destrezza: se fallito, si perde il turno.",
     "manual": false,
     "forte": false,
     "persistent": false
