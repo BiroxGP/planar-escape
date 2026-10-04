@@ -727,7 +727,7 @@ const INCONTRI = {
     C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo al prossimo piano, guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",{reward:{type:"choice3"}}),
     C("ge_mercante","Mercante planare","ricompensa","Un mercante offre a chi vuole un oggetto casuale in cambio di 1 risorsa planare.",{reward:{type:"tradeResourceForItem"}}),
     C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta: +1 Sanità Mentale a un personaggio a scelta.",{reward:{type:"sanheal",n:1}}),
-    C("ge_stranezza","Stranezza del portale","check","Il portale ha uno strano sussulto. Check di Intelletto: se fallito, un piccolo effetto negativo a discrezione del tavolo.",{check:"int",onFail:{type:"minor"}}),
+    C("ge_stranezza","Stranezza del portale","ricompensa","Il portale ha uno strano sussulto. Il prossimo salto non può mai condurre a una destinazione del Piano Terreno: se ne pescassi una, rimettila in fondo al mazzo e pesca la carta successiva.",{reward:{type:"noTerreno"}}),
     C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma la scoperta turba la mente. Check di Sanità: se fallito, depotenziamento temporaneo a Sanità.",{reward:{type:"itemPlusCheck"}}),
     C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
     C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani: diventerà la prossima destinazione.",{bivioCard:true}),
@@ -916,6 +916,7 @@ function newGame(){
     stayTurn:null, // {planeId, count}: turni consecutivi passati sullo stesso piano senza saltare via
     groups:[], // [{id, memberIds:[...]}] — separazione: chi si divide forma un proprio gruppo
     currentGroupId:null, // il gruppo che sta facendo il proprio turno adesso
+    noTerrenoNextJump:false, // Stranezza del portale: il prossimo salto non può portare a una destinazione del Piano Terreno
     pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
     pendingSferaAntiplanare:null, // {groupId}: annulla l'effetto intrinseco del prossimo piano in cui questo gruppo entra
@@ -1776,6 +1777,17 @@ function refillMazzoPianiIfNeeded(){
   state.mazzoPianiScarti = [];
   state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
 }
+// Stranezza del portale: finché il flag è attivo, i segnaposto Piano Terreno in cima al mazzo vengono
+// rimessi in fondo (dopo refillMazzoPianiIfNeeded c'è sempre almeno un Piano vero nel mazzo). Va
+// chiamata anche prima di guardare la cima (anteprima del salto, sbirciate), così la carta mostrata
+// è quella che esce davvero; il flag lo consuma solo doJump.
+function skipTerrenoIfFlagged(){
+  if(!state.noTerrenoNextJump) return;
+  let guard = state.mazzoPiani.length;
+  while(state.mazzoPiani[0]==='__PT__' && state.mazzoPiani.some(x=>x!=='__PT__') && guard-- > 0){
+    state.mazzoPiani.push(state.mazzoPiani.shift());
+  }
+}
 function doJump(){
   state.amplifySpellsActive = false; // la finestra di Amplificazione si chiude appena si salta via
   if(state.pendingReunion && state.groups.length>1){
@@ -1805,6 +1817,11 @@ function doJump(){
   }
   state.jumps++;
   refillMazzoPianiIfNeeded();
+  if(state.noTerrenoNextJump){
+    skipTerrenoIfFlagged();
+    state.noTerrenoNextJump = false;
+    logMsg('🌀 Per la Stranezza del portale, questo salto non può condurre al Piano Terreno.');
+  }
   const drawnId = state.mazzoPiani.shift();
   // un nuovo segnaposto __PT__ si aggiunge in fondo solo quando si pesca un Piano VERO — se se
   // ne aggiungesse uno anche quando si pesca già un __PT__ (bug segnalato dall'utente), i
@@ -1903,6 +1920,7 @@ function startJump(){
   const isFullParty = activeChars().length>0 && activeChars().length===allActiveChars().length;
   if(!isFullParty){ doJump(); return; }
   refillMazzoPianiIfNeeded(); // altrimenti l'anteprima può mostrare una carta che poi il salto cambia
+  skipTerrenoIfFlagged();
   const nextId = state.mazzoPiani[0];
   const isPT = nextId==='__PT__';
   const nextPlane = isPT ? null : PIANI_BY_ID[nextId];
@@ -3292,6 +3310,7 @@ function renderRewardPanel(card, acts){
     case 'healChoiceSanAnima': return `<div>${acts.map(c=>`<button class="small" data-hcsa="${c.id}-san">+1 San a ${c.name}</button><button class="small" data-hcsa="${c.id}-anima">+1 Anima a ${c.name}</button>`).join(' ')}</div>`;
     case 'choice3': return `<div>${acts.length?`<button class="small" data-choice3="resistance">🛡️ Resistenza per tutto il gruppo (prossimo piano)</button>`:''}<button class="small" data-choice3="peek">👁️ Guarda 2 carte in cima al mazzo Piani, scegli quale resta in cima</button><button class="small" data-choice3="reshuffle">🔀 Rimescola il mazzo Piani</button></div>`;
     case 'itemPlusCheck': return `<p class="hint">⚠️ Se il check di Sanità fallisce: depotenziamento temporaneo a San.</p><div>${acts.map(c=>`<button class="small" data-itemcheck="${c.id}">Pesca oggetto e fai il check di Sanità → ${c.name}</button>`).join(' ')}</div>`;
+    case 'noTerreno': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto non porterà a una destinazione del Piano Terreno</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
     case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
     case 'tradeItemForItemOrResource': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradeitem="${c.id}-item" ${c.inventory.length?'':'disabled'}>scambia oggetto → nuovo oggetto</button> <button class="small" data-tradeitem="${c.id}-resource" ${c.inventory.length?'':'disabled'}>scambia oggetto → risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta il baratto</button></div>`;
@@ -3316,6 +3335,7 @@ function bindRewardPanel(card, acts){
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); return; }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); }
+    if(r.type==='noTerreno'){ state.noTerrenoNextJump=true; logMsg('🌀 Il portale sussulta: il prossimo salto non può condurre a una destinazione del Piano Terreno (se ne esce una, torna in fondo al mazzo).','good'); }
     if(r.type==='syncJump'){ state.pendingReunion=true; logMsg('🔗 Segnale intercettato: al prossimo salto tutti i gruppi separati si riuniranno in uno solo.','good'); }
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
@@ -3460,6 +3480,7 @@ function showPeekModal(r, usedRedraw, onDone){
   onDone = onDone || finishIncontro;
   const n = r.n||1;
   refillMazzoPianiIfNeeded(); // la carta in cima che si mostra deve essere quella che il prossimo salto pescherà davvero
+  skipTerrenoIfFlagged();
   const top = state.mazzoPiani.slice(-n).reverse(); // deck stored with next-draw at index0 via shift, so top = index0.. wait we shift from front
   render(); // no-op, just ensure state consistent
   const cards = r.type==='peekBottom' ? [state.mazzoPiani[state.mazzoPiani.length-1]] : state.mazzoPiani.slice(0,n);

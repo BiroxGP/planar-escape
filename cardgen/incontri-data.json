@@ -972,8 +972,8 @@
     "name": "Stranezza del portale",
     "deck": "generico",
     "family": "generico",
-    "type": "check",
-    "text": "Il portale ha uno strano sussulto. Check di Intelletto: se fallito, un piccolo effetto negativo a discrezione del tavolo.",
+    "type": "ricompensa",
+    "text": "Il portale ha uno strano sussulto. Il prossimo salto non può mai condurre a una destinazione del Piano Terreno: se ne pescassi una, rimettila in fondo al mazzo e pesca la carta successiva.",
     "manual": false,
     "forte": false,
     "persistent": false
