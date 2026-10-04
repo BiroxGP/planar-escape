@@ -940,7 +940,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo al prossimo piano, guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",
+    "text": "Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1061,7 +1061,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",
+    "text": "Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), sbircia 2 carte Piani, o rimescola il mazzo.",
     "manual": false,
     "forte": false,
     "persistent": false

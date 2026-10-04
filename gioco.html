@@ -724,7 +724,7 @@ const INCONTRI = {
   ],
   generico:[
     C("ge_nessuno","Nessun evento","nessun","Un turno di viaggio senza incidenti."),
-    C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo al prossimo piano, guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",{reward:{type:"choice3"}}),
+    C("ge_viandante","Viandante smarrito","ricompensa","Un altro viaggiatore offre una scelta fra tre aiuti: Resistenza per tutto il gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), guardare le prime 2 carte del mazzo Piani scegliendo quale resta in cima, oppure rimescolare il mazzo Piani.",{reward:{type:"choice3"}}),
     C("ge_mercante","Mercante planare","ricompensa","Un mercante offre a chi vuole un oggetto casuale in cambio di 1 risorsa planare.",{reward:{type:"tradeResourceForItem"}}),
     C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta: +1 Sanità Mentale a un personaggio a scelta.",{reward:{type:"sanheal",n:1}}),
     C("ge_stranezza","Stranezza del portale","ricompensa","Il portale ha uno strano sussulto. Il prossimo salto non può mai condurre a una destinazione del Piano Terreno: se ne pescassi una, rimettila in fondo al mazzo e pesca la carta successiva.",{reward:{type:"noTerreno"}}),
@@ -735,7 +735,7 @@ const INCONTRI = {
     C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
     C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
     C("ge_randagio","Randagio planare","check","Una creatura minore e spaventata si avvicina, in cerca di un compagno. Nessun check: chi lo accoglie lo lega a sé come compagno (valore 1) — aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.",{randagioCard:true}),
-    C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo, sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
+    C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
     C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
   ],
 };
@@ -1000,7 +1000,8 @@ function makeChar(name, clsKey, bonus){
     dmgBonusPlane:0, // Benedizione: +2 danno per tutta la permanenza nel piano
     ordineResetReady:false, // Ordine: può riportare una propria caratteristica al valore di partenza di 1° livello, finché resta nel piano
     skipNextIncontro:false, // perdita individuale del turno: escluso dal prossimo Incontro del gruppo, poi si consuma
-    wildcardResistance:false, // Cimelio del Viandante/Vaticinio: para il primo danno d'ingresso del prossimo piano, qualunque famiglia
+    wildcardResistance:false, // Resistenza universale ATTIVA: para il primo danno del piano in cui si è; scade al salto successivo
+    wildcardResistanceNext:false, // prepara la Resistenza universale (Cimelio/Viandante/Superstite) per il prossimo piano: si attiva al salto
     contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
@@ -3446,7 +3447,7 @@ function bindRewardPanel(card, acts){
   });
   document.querySelectorAll('[data-choice3]').forEach(b=>b.onclick=()=>{
     const mode=b.dataset.choice3;
-    if(mode==='resistance'){ acts.forEach(c=>{ c.wildcardResistance=true; }); logMsg('🛡️ Il gruppo ottiene Resistenza universale per il prossimo piano (para il primo danno d\'ingresso, qualunque famiglia).','good'); done(); }
+    if(mode==='resistance'){ acts.forEach(c=>{ c.wildcardResistanceNext=true; }); logMsg('🛡️ Il gruppo ottiene Resistenza universale per il prossimo piano: al prossimo salto parerà il primo danno d\'ingresso, qualunque famiglia (bonus temporaneo, vale solo per quel piano).','good'); done(); }
     else if(mode==='reshuffle'){ reshuffleMazzoPiani(); done(); }
     else if(mode==='peek'){ showPeekModal({type:'peek', n:2, chooseBottom:true}); }
   });
@@ -4345,6 +4346,12 @@ function revertPlaneDebuffs(c){
 function revertPerPlaneBuffs(c){
   // Benedizione, Vaticinio: durano "per tutta la permanenza" nel piano — finiscono al
   // salto successivo, a prescindere da come è andata.
+  // Resistenza universale (Viandante/Superstite, Cimelio): è un bonus temporaneo per il PROSSIMO
+  // piano. Si prepara come "wildcardResistanceNext" e diventa attiva solo qui, al salto; se non è
+  // stata consumata durante il piano che si lascia scade — non resta in giro per i piani dopo e
+  // non si spreca su un danno preso prima del salto. (Vaticinio la imposta dopo, all'arrivo.)
+  c.wildcardResistance = !!c.wildcardResistanceNext;
+  c.wildcardResistanceNext = false;
   if(c.dmgBonusPlane){ c.dmgBonusPlane=0; }
   if(c.contesaBonusPlane){ c.contesaBonusPlane=0; }
 }
@@ -4447,8 +4454,8 @@ function useItem(c, idx){
     return;
   }
   if(it.wildcardResistanceItem){
-    c.wildcardResistance = true;
-    logMsg(`🍀 ${c.name} usa ${it.name}: para il primo danno subito nel prossimo piano, qualunque esso sia.`,'good');
+    c.wildcardResistanceNext = true;
+    logMsg(`🍀 ${c.name} usa ${it.name}: nel prossimo piano parerà il primo danno subito, qualunque esso sia (bonus temporaneo, vale solo per quel piano).`,'good');
     c.inventory.splice(idx,1);
     return;
   }
