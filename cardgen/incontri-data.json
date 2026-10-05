@@ -236,7 +236,7 @@
     "deck": "demoni",
     "family": "demoniaco",
     "type": "check",
-    "text": "Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato, pescato dagli scarti.",
+    "text": "Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, questo stesso piano torna in cima al mazzo Piani e il prossimo salto riporta qui.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -390,7 +390,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "ricompensa",
-    "text": "Un amuleto trovato fra le rovine, di natura ignota. Ricompensa: pesca un oggetto.",
+    "text": "Una reliquia trovata fra le rovine, che protegge dalla negatività dei piani. Ricompensa: pesca un oggetto di protezione.",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -423,7 +423,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "check",
-    "text": "Una cripta sigillata da un rito antico. Check di Anima: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",
+    "text": "Una cripta sigillata da un rito antico. Check di Anima facoltativo, a scelta di chi vuole rischiare: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -555,7 +555,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",
+    "text": "Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Destrezza).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -566,7 +566,7 @@
     "deck": "eterei",
     "family": "eterei",
     "type": "incontro",
-    "text": "Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",
+    "text": "Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Sanità).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -775,7 +775,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",
+    "text": "Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a una caratteristica casuale).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -808,7 +808,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Intelletto).",
+    "text": "Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Intelletto).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -841,7 +841,7 @@
     "deck": "entropia",
     "family": "entropia",
     "type": "incontro",
-    "text": "Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",
+    "text": "Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Sanità).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -995,7 +995,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "incontro",
-    "text": "Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro su una caratteristica a scelta (valore nemico 2).",
+    "text": "Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro sulla caratteristica del piano (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false
@@ -1028,7 +1028,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "incontro",
-    "text": "Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",
+    "text": "Un cacciatore di taglie planare attacca il gruppo. Scontro sulla caratteristica del piano (valore nemico 2).",
     "manual": false,
     "forte": false,
     "persistent": false

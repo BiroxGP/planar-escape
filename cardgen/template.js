@@ -435,7 +435,7 @@ function incontroPageHtml(cards, artDir) {
 <style>${sharedCardCss()}
   .incontro-panel{ height:62%; padding:16px 26px 24px; }
   .incontro-badges{ flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; }
-  .incontro-badges .badge{ font-size:12px; padding:4px 10px; }
+  .incontro-badges .badge{ font-size:20px; padding:4px 13px; }
   .badge-manual{ background:rgba(214,140,69,.22); border-color:rgba(214,140,69,.55); color:#f0c396; }
   .badge-forte{ background:rgba(196,64,64,.22); border-color:rgba(196,64,64,.55); color:#f3a3a3; }
 </style></head>

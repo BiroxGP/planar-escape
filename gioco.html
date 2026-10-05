@@ -650,7 +650,7 @@ const INCONTRI = {
     C("de_patto","Patto di sangue","check","Un demone offre 1 risorsa planare in cambio di 1 Anima; rifiutabile con check Intelletto.",{pattoSangueCard:true}),
     C("de_orda","Orda minore","incontro","Un gruppo di diavoletti minori assale in massa. Scontro di Forza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",{check:"for",gravity:"level-1",swarm:"auto"}),
     C("de_bottino","Bottino infernale","ricompensa","Un oggetto strappato a un demone sconfitto da altri viandanti. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
-    C("de_sussurro","Sussurro tentatore","check","Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, il prossimo salto riporta su un piano già visitato, pescato dagli scarti.",{groupCheck:"int",penalty:0,onFail:{type:"revisitedPlane"}}),
+    C("de_sussurro","Sussurro tentatore","check","Una voce promette scorciatoie, ma inganna. Check di gruppo di Intelletto (vale il più alto presente): se fallito, questo stesso piano torna in cima al mazzo Piani e il prossimo salto riporta qui.",{groupCheck:"int",penalty:0,onFail:{type:"samePlaneTop"}}),
     C("de_guardiano","Guardiano del girone","incontro","Un demone maggiore sorveglia il passaggio. Scontro forte di Forza (valore nemico = girone +1).",{check:"for",gravity:"level+1",forte:true}),
     C("de_fiamme","Fiamme eterne","check","Il fuoco infernale non si spegne mai e logora chi lo attraversa. Check di Forza: se fallito, depotenziamento temporaneo a una caratteristica casuale.",{check:"for",onFail:{type:"tempDebuff",stat:"random"}}),
     C("de_mercante","Mercante d'anime","ricompensa","Un demone offre un oggetto raro. Ricompensa: paga 1 risorsa planare o 1 Anima → oggetto (oppure rifiuta).",{reward:{type:"tradeForItem"}}),
@@ -666,10 +666,10 @@ const INCONTRI = {
     C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",{check:"for",onFail:{type:"damage",n:1,group:true}}),
     C("nm_lich","Lich minore","incontro","Un non-morto senziente scaglia un piccolo incantesimo ostile. Scontro forte di Intelletto (valore nemico = girone +1).",{check:"int",gravity:"level+1",forte:true}),
     C("nm_catena","Catena di non-vita","incontro","Un non-morto incatenato attacca finché non è sconfitto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°), persistente: da sconfitto serve un check di Destrezza di gruppo (valore più alto) per fuggire, se fallisce lo stesso Incontro torna e il turno si ripete. Se ti ritiri, resta e torna al turno dopo.",{check:"for",gravity:"level",persistent:true}),
-    C("nm_reliquia","Reliquia protettiva","ricompensa","Un amuleto trovato fra le rovine, di natura ignota. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
+    C("nm_reliquia","Reliquia protettiva","ricompensa","Una reliquia trovata fra le rovine, che protegge dalla negatività dei piani. Ricompensa: pesca un oggetto di protezione.",{reward:{type:"item",cat:"protezione"}}),
     C("nm_eco","Eco di un caduto","check","La disperazione di un'anima perduta si insinua nella mente. Check di Intelletto: se fallito, depotenziamento temporaneo a Sanità Mentale.",{check:"int",onFail:{type:"tempDebuff",stat:"san"}}),
     C("nm_mano","Mano Putrescente","incontro","Un arto in decomposizione emerge dal terreno e afferra alla cieca. Scontro di Punti Vita (valore nemico 2).",{check:"pv",gravity:0}),
-    C("nm_cripta","Cripta Sigillata","check","Una cripta sigillata da un rito antico. Check di Anima: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",{check:"anima",onFail:{type:"animaLoss",n:1},onSuccess:{type:"item"}}),
+    C("nm_cripta","Cripta Sigillata","check","Una cripta sigillata da un rito antico. Check di Anima facoltativo, a scelta di chi vuole rischiare: se superato, trovi un oggetto; se fallito, infrangere il sigillo ti costa -1 Anima (rischio Corruzione).",{check:"anima",optional:true,onFail:{type:"animaLoss",n:1},onSuccess:{type:"item"}}),
   ],
   eterei:[
     C("et_nessuno","Nessun evento","nessun","Un momento di quiete irreale. Nessun effetto."),
@@ -683,8 +683,8 @@ const INCONTRI = {
     C("et_portale","Portale instabile","check","Il confine fra i piani è sottile e cede al passaggio. Check di Destrezza per ciascuno: chi fallisce viene risucchiato e forma un nuovo gruppo, separato dal resto.",{check:"des",onFail:{type:"splitGroup"}}),
     C("et_reliquia","Reliquia astrale","ricompensa","Un oggetto ancora carico di energia eterea. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
     C("et_quiete","Quiete astrale","ricompensa","Un momento di calma cosmica pervade il piano. Ricompensa: Recupero per il gruppo, più 1 Sanità Mentale extra.",{reward:{type:"restChoice"}}),
-    C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: depotenziamento temporaneo anche a Destrezza).",{check:"des",gravity:0,onLoseExtra:"tempDebuffDes"}),
-    C("et_incubo","Incubo ricorrente","incontro","Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
+    C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Destrezza).",{check:"des",gravity:0,onLoseExtra:"tempDebuffDes"}),
+    C("et_incubo","Incubo ricorrente","incontro","Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Sanità).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
     C("et_doppio","Doppio specchiato","incontro","Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta (valore nemico 3).",{check:"choice",gravity:1,forte:true}),
     C("et_sogno","Frammento di sogno","ricompensa","Un oggetto onirico e instabile si materializza. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
   ],
@@ -707,13 +707,13 @@ const INCONTRI = {
   ],
   entropia:[
     C("en_nessuno","Nessun evento","nessun","Il nulla, per una volta, è letteralmente nulla. Nessun effetto."),
-    C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: depotenziamento temporaneo anche a una caratteristica casuale).",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
+    C("en_caos","Manifestazione del Caos","incontro","Un'entità di puro Caos attacca su una statistica casuale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a una caratteristica casuale).",{check:"random",gravity:0,onLoseExtra:"tempDebuffRandom"}),
     C("en_voragine","Voragine del Vuoto","ricompensa","Il vuoto reclama qualcosa in cambio del passaggio. Scelta: -1 PV, oppure perdi un oggetto, uno spell o un'abilità.",{reward:{type:"choiceLoss"}}),
     C("en_sciame","Sciame di Decadimento","check","Accelera la perdita di un oggetto. Automatico, nessun check: perdita di un oggetto casuale.",{onFail:{type:"loseItem"},auto:true}),
-    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: depotenziamento temporaneo anche a Intelletto).",{check:"int",gravity:0,onLoseExtra:"tempDebuffInt"}),
+    C("en_spettro","Spettro del Tempo","incontro","Un'entità che ruba letteralmente tempo attacca. Scontro di Intelletto (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Intelletto).",{check:"int",gravity:0,onLoseExtra:"tempDebuffInt"}),
     C("en_cenere","Tempesta di Cenere","check","La tempesta disorienta e separa. Check di Destrezza per ciascuno: chi fallisce viene separato dal gruppo, e i due gruppi affrontano ciascuno un Incontro diverso. Superati entrambi, si ritrovano al portale.",{check:"des",onFail:{type:"stormSplit"}}),
     C("en_oblio","Sussurro dell'Oblio","check","Si dimentica temporaneamente una caratteristica a scelta, ma si trova in cambio un oggetto minore (oppure si rifiuta, senza conseguenze).",{oblioCard:true}),
-    C("en_ombra","Ombra strisciante","incontro","Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: depotenziamento temporaneo anche a San).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
+    C("en_ombra","Ombra strisciante","incontro","Non è il combattimento fisico di Ombra: qui è un ricordo che perseguita. Scontro di Sanità Mentale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Sanità).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
     C("en_relitto","Relitto insanguinato","ricompensa","Un'arma intrisa di sangue avversario, ancora carica di potere. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
     C("en_avatar","Avatar dell'Entropia","incontro","Incarna la rovina stessa. Scontro forte sulla statistica nativa del piano (valore nemico 3).",{check:"native",gravity:1,forte:true}),
     C("en_corrosione","Corrosione lenta","check","Un'arma o un'armatura equipaggiata perde temporaneamente il bonus. Automatico, nessun check: se ne hai entrambe scegli quale, il bonus torna al prossimo Recupero.",{auto:true,onFail:{type:"corrode"}}),
@@ -729,10 +729,10 @@ const INCONTRI = {
     C("ge_ecocasa","Eco di casa","ricompensa","Un ricordo di casa conforta: +1 Sanità Mentale a un personaggio a scelta.",{reward:{type:"sanheal",n:1}}),
     C("ge_stranezza","Stranezza del portale","ricompensa","Il portale ha uno strano sussulto. Il prossimo salto non può mai condurre a una destinazione del Piano Terreno: se ne pescassi una, rimettila in fondo al mazzo e pesca la carta successiva.",{reward:{type:"noTerreno"}}),
     C("ge_relitto","Relitto di un viaggiatore","ricompensa","Un oggetto utile, ma la scoperta turba la mente. Check di Sanità: se fallito, depotenziamento temporaneo a Sanità.",{reward:{type:"itemPlusCheck"}}),
-    C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
+    C("ge_predatore","Predatore planare","incontro","Una creatura adattata a vivere tra i piani, ostile ovunque. Scontro sulla caratteristica del piano (valore nemico 2).",{check:"native",gravity:0}),
     C("ge_bivio","Bivio","check","Una scelta alla cieca fra le prime tre carte del mazzo Piani: diventerà la prossima destinazione.",{bivioCard:true}),
     C("ge_segnale","Segnale di richiamo","ricompensa","Si intercetta un segnale per ritrovare un compagno separato: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
-    C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro su una caratteristica a scelta (valore nemico 2).",{check:"choice",gravity:0}),
+    C("ge_cacciatore","Cacciatore di taglie planare","incontro","Un cacciatore di taglie planare attacca il gruppo. Scontro sulla caratteristica del piano (valore nemico 2).",{check:"native",gravity:0}),
     C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
     C("ge_randagio","Randagio planare","check","Una creatura minore e spaventata si avvicina, in cerca di un compagno. Nessun check: chi lo accoglie lo lega a sé come compagno (valore 1) — aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.",{randagioCard:true}),
     C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
@@ -1024,9 +1024,15 @@ function drawSpell(school){
   if(!deck || deck.length===0) return null;
   return deck.shift();
 }
-function drawOggetto(){
+function drawOggetto(cat){
   if(state.oggettiDeck.length===0){ logMsg('Il mazzo Oggetti è esaurito!','warn'); return null; }
-  const id = state.oggettiDeck.shift();
+  // cat (opzionale): pesca il primo oggetto di quella categoria (es. 'protezione' per la Reliquia protettiva)
+  let idx = 0;
+  if(cat){
+    idx = state.oggettiDeck.findIndex(x=>OGGETTI_BY_ID[x] && OGGETTI_BY_ID[x].cat===cat);
+    if(idx<0){ logMsg(`Nel mazzo Oggetti non resta nessun oggetto di categoria «${cat}».`,'warn'); return null; }
+  }
+  const id = state.oggettiDeck.splice(idx,1)[0];
   // Legge: "ogni oggetto preso qui richiede un pegno in cambio" — l'oggetto viene comunque aggiunto
   // dal chiamante; il pegno lo chiede renderLeggeDebtPopup() (in coda, come i popup di Follia).
   const here = currentPlane();
@@ -2913,7 +2919,8 @@ function renderIncontroAction(){
     const checkStat = card.check==='native' ? nativeStatFor(plane) : card.check;
     const failHint = consequenceLabel(card.onFail, plane);
     const successHint = card.onSuccess?.type==='item' ? 'trovi un oggetto' : null;
-    el.innerHTML = (successHint?`<p class="hint">✨ Se superi: ${successHint}.</p>`:'') + (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" disabled>Continua</button>`;
+    // card.optional (Cripta Sigillata): il check lo tenta solo chi vuole rischiare; si può continuare subito.
+    el.innerHTML = (card.optional?`<p class="hint">🎲 Facoltativo: ognuno sceglie se tentare il check — chi non vuole rischiare non fa nulla.</p>`:'') + (successHint?`<p class="hint">✨ Se superi: ${successHint}.</p>`:'') + (failHint?`<p class="hint">⚠️ Se fallisci: ${failHint}.</p>`:'') + acts.map(c=>`<div class="row" style="margin-bottom:.4rem;"><span style="min-width:140px;">${c.name}</span><button class="small" data-checkchar="${c.id}">Check ${STAT_LABEL[checkStat]} (${effectiveStat(c,checkStat)})</button><span id="res_${c.id}"></span></div>`).join('') + `<button class="primary mt1" id="btnResolveDone" ${card.optional?'':'disabled'}>Continua</button>`;
     let done=0;
     const splitFailed = [];
     el.querySelectorAll('[data-checkchar]').forEach(b=>{
@@ -2991,6 +2998,7 @@ function consequenceLabel(cons, plane){
     case 'forgetSpell': return 'dimenticanza temporanea di uno spell (o depotenziamento a Intelletto se non ne hai)';
     case 'mentalBattle': return `battaglia mentale in solitaria su Sanità Mentale contro un'illusione (abilità ${cons.value||1})`;
     case 'revisitedPlane': return 'il prossimo salto riporta su un piano già visitato';
+    case 'samePlaneTop': return 'questo stesso piano torna in cima al mazzo Piani: il prossimo salto riporta qui';
     default: return null;
   }
 }
@@ -3002,6 +3010,7 @@ function onLoseExtraLabel(key){
   return null;
 }
 function applyConsequence(cons, targets, plane){
+  let samePlaneDone = false; // 'samePlaneTop' idem: un effetto di gruppo sul mazzo Piani, una volta sola
   let revisitDone = false; // 'revisitedPlane' è un effetto di gruppo (mazzo Piani): va applicato
   // una sola volta per chiamata anche se targets contiene più personaggi, non una volta a testa.
   targets.forEach(c=>{
@@ -3025,6 +3034,16 @@ function applyConsequence(cons, targets, plane){
         const entityDmg = hit?entVal:0;
         const passThrough = resolveContesaDamage({teamDmg:a.dmg, entityDmg, entities:[{name:'Illusione', hp:entVal, value:entVal}], targets:[c], dmgStat:'san', ctx:{family:plane?.family, planeId:plane?.id, combat:true}});
         logMsg(`🧠 ${c.name}: battaglia mentale in solitaria contro un'illusione (abilità ${entVal}) — ${a.dardo?'Dardo Incantato':'tiro '+a.roll} ${a.hit?'✔':'✘'}${a.dmg?` (${a.dmg} dmg)`:''} vs tiro ${r} ${hit?'✔':'✘'}${passThrough>0?`: subisce ${passThrough} danno a Sanità Mentale.`:': nessun danno.'}`, passThrough>0?'warn':undefined);
+        break;
+      }
+      case 'samePlaneTop': {
+        if(samePlaneDone) break;
+        samePlaneDone = true;
+        // il piano è già stato scartato all'ingresso: si toglie dagli scarti e si rimette in cima al mazzo
+        const si = state.mazzoPianiScarti.lastIndexOf(plane.id);
+        if(si>=0) state.mazzoPianiScarti.splice(si,1);
+        state.mazzoPiani.unshift(plane.id);
+        logMsg(`🌀 La voce inganna: ${plane.name} torna in cima al mazzo Piani, il prossimo salto riporta qui.`,'warn');
         break;
       }
       case 'revisitedPlane': {
@@ -3402,7 +3421,7 @@ function renderRewardPanel(card, acts){
   switch(r.type){
     case 'resource': return `<button class="primary" id="btnApplyReward">+${r.n} risorsa planare per il gruppo</button>`;
     case 'heal': return `<div>${acts.map(c=>`<button class="small" data-heal="${c.id}">Cura ${r.n} PV → ${c.name}</button>`).join(' ')}<button id="btnDeclineReward">Rifiuta, non serve</button></div>`;
-    case 'item': return `<button class="primary" id="btnApplyReward">Pesca un oggetto</button><div class="row mt1">${acts.map(c=>`<button class="small" data-giveitem="${c.id}">a ${c.name}</button>`).join('')}</div>`;
+    case 'item': return `<button class="primary" id="btnApplyReward">Pesca un oggetto${r.cat?' di '+r.cat:''}</button><div class="row mt1">${acts.map(c=>`<button class="small" data-giveitem="${c.id}">a ${c.name}</button>`).join('')}</div>`;
     case 'peek': return `<button class="primary" id="btnApplyReward">Guarda ${r.n} carta/e in cima al mazzo Piani</button>`;
     case 'peekBottom': return `<button class="primary" id="btnApplyReward">Guarda la carta in fondo al mazzo Piani</button>`;
     case 'spellBoost': return `<div>${acts.map(c=>`<button class="small" data-spellboost="${c.id}">Potenzia il prossimo spell di ${escapeHtml(c.name)} (+100%)</button>`).join(' ')}</div>`;
@@ -3442,7 +3461,7 @@ function bindRewardPanel(card, acts){
   const genericBtn=document.getElementById('btnApplyReward');
   if(genericBtn) genericBtn.onclick=()=>{
     if(r.type==='resource'){ acts.forEach(c=>{}); if(acts[0]) acts[0].resources+=r.n; logMsg(`💠 Il gruppo ottiene ${r.n} risorsa planare (assegnata a ${acts[0]?.name}).`); }
-    if(r.type==='item'){ const it=drawOggetto(); if(it && acts[0]){ acts[0].inventory.push(it); logMsg(`🎁 ${acts[0].name} trova ${OGGETTI_BY_ID[it].name}.`);} }
+    if(r.type==='item'){ const it=drawOggetto(r.cat); if(it && acts[0]){ acts[0].inventory.push(it); logMsg(`🎁 ${acts[0].name} trova ${OGGETTI_BY_ID[it].name}.`);} }
     if(r.type==='peek'||r.type==='peekBottom'){ showPeekModal(r); return; }
     if(r.type==='restChoice'){ acts.forEach(c=>{ recuperoFor(c); }); if(acts[0]) healStat(acts[0],'san',1); }
     if(r.type==='groupHealCure'){ acts.forEach(c=>healStat(c,'pv',1)); }
@@ -3465,7 +3484,7 @@ function bindRewardPanel(card, acts){
     if(d) cureOneDebuff(c,d);
     done();
   });
-  document.querySelectorAll('[data-giveitem]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.giveitem); const it=drawOggetto(); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`);} done(); });
+  document.querySelectorAll('[data-giveitem]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.giveitem); const it=drawOggetto(r.cat); if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} trova ${OGGETTI_BY_ID[it].name}.`);} done(); });
   document.querySelectorAll('[data-rmperm]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.rmperm); openRemovePermModal(c); });
   document.querySelectorAll('[data-sanheal]').forEach(b=>b.onclick=()=>{ const c=acts.find(x=>x.id===b.dataset.sanheal); healStat(c,'san',1); done(); });
   document.querySelectorAll('[data-hcsa]').forEach(b=>b.onclick=()=>{ const [id,stat]=b.dataset.hcsa.split('-'); const c=acts.find(x=>x.id===id); healStat(c,stat,1); done(); });
