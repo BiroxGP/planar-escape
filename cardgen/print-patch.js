@@ -21,7 +21,8 @@ const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 10;
 const CARD_W_MM = 63.5, CARD_H_MM = 88;
 
 // items: {id, back} — formato Poker reale per tutte, griglia automatica.
-const ITEMS = [
+// PATCH_ITEMS=<file.json> e PATCH_NAME=<nome> permettono un foglio temporaneo senza toccare questo elenco
+const ITEMS_DEFAULT = [
   { id: 'sciamano', back: 'retro_classi' },
   { id: 'barbaro', back: 'retro_classi' },
   { id: 'warlock', back: 'retro_classi' },
@@ -31,6 +32,8 @@ const ITEMS = [
   { id: 'paladino', back: 'retro_classi' },
   { id: 'sp_sigillo', back: 'retro_spell_flusso' },
 ];
+const ITEMS = process.env.PATCH_ITEMS ? JSON.parse(fs.readFileSync(process.env.PATCH_ITEMS, 'utf8')) : ITEMS_DEFAULT;
+const OUT_NAME = process.env.PATCH_NAME || 'patch';
 
 function buildGrid() {
   const usableW = PAGE_W_MM - 2 * MARGIN_MM;
@@ -116,10 +119,10 @@ async function main() {
     fs.unlinkSync(htmlPath);
   }
 
-  await renderPdf(false, path.join(OUT_DIR, 'patch_fronte.pdf'));
-  await renderPdf(true, path.join(OUT_DIR, 'patch_retro.pdf'));
+  await renderPdf(false, path.join(OUT_DIR, OUT_NAME + '_fronte.pdf'));
+  await renderPdf(true, path.join(OUT_DIR, OUT_NAME + '_retro.pdf'));
   await browser.close();
-  console.log(`Fatto: patch_fronte.pdf / patch_retro.pdf (${ITEMS.length} carte)`);
+  console.log(`Fatto: ${OUT_NAME}_fronte.pdf / ${OUT_NAME}_retro.pdf (${ITEMS.length} carte)`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
