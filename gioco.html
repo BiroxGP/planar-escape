@@ -685,7 +685,7 @@ const INCONTRI = {
     C("et_quiete","Quiete astrale","ricompensa","Un momento di calma cosmica pervade il piano. Ricompensa: Recupero per il gruppo, più 1 Sanità Mentale extra.",{reward:{type:"restChoice"}}),
     C("et_ombra","Ombra in agguato","incontro","Qualcosa si muove nel buio e attacca di soppiatto. Scontro di Destrezza (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Destrezza).",{check:"des",gravity:0,onLoseExtra:"tempDebuffDes"}),
     C("et_incubo","Incubo ricorrente","incontro","Un incubo prende forma propria e attacca la mente. Scontro di Sanità Mentale (valore nemico 2; danno passante: oltre ai PV, anche -1 temporaneo a Sanità).",{check:"san",gravity:0,onLoseExtra:"tempDebuffSan"}),
-    C("et_doppio","Doppio specchiato","incontro","Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta (valore nemico 3).",{check:"choice",gravity:1,forte:true}),
+    C("et_doppio","Doppio specchiato","incontro","Un doppelganger nato dalla pura riflessione attacca. Scontro forte su una caratteristica a scelta (valore nemico 3).",{check:"choice",choiceStats:STATS,gravity:1,forte:true}),
     C("et_sogno","Frammento di sogno","ricompensa","Un oggetto onirico e instabile si materializza. Ricompensa: pesca un oggetto.",{reward:{type:"item"}}),
   ],
   armonia:[
@@ -3190,10 +3190,18 @@ function gravityValue(gravitySpec, plane){
   return 2 + (gravitySpec||0);
 }
 function renderCombatPanel(plane, card, acts){
+  if(!state.currentDraw.combat && card.check==='choice' && !state.currentDraw.choiceStat){
+    // "caratteristica a scelta": il gruppo decide una volta sola, prima dello scontro, e tutti
+    // combattono su quella (Frammento: solo For/Int/Des; Doppio: una qualsiasi delle tre base).
+    const opts = card.choiceStats || ['for','int','des'];
+    return `
+      <p class="hint">${escapeHtml(card.name)}: il gruppo sceglie su quale caratteristica giocare lo scontro (vale per tutti, per tutto lo scontro).</p>
+      <div class="row mt1">${opts.map(s=>`<button class="primary btnPickStat" data-stat="${s}">${STAT_LABEL[s]}</button>`).join('')}</div>`;
+  }
   if(!state.currentDraw.combat){
     let checkStat = card.check;
     if(checkStat==='native') checkStat = nativeStatFor(plane);
-    if(checkStat==='choice') checkStat = null; // decided per-char
+    if(checkStat==='choice') checkStat = state.currentDraw.choiceStat;
     if(checkStat==='random') checkStat = null; // decided per-roll
     let gravity = card.forceBase2 ? gravityValue(card.gravity,{girone:1}) : gravityValue(card.gravity, plane);
     let entities=[];
@@ -3221,7 +3229,7 @@ function renderCombatPanel(plane, card, acts){
     <div class="mb1"><strong>Entità:</strong> ${cb.entities.map(e=>`${e.name} (${STAT_LABEL[e.statKey]||''} ${e.value}, PV ${e.hp===undefined?e.value:e.hp})`).join(' · ')}</div>
     ${cloakedNow.length?`<p class="hint">🥷 Ancora nascosti: ${cloakedNow.map(c=>escapeHtml(c.name)).join(', ')} — scelgono cosa fare a ogni giro prima che si tiri.</p>`:''}
     <p class="hint">Ogni giro: a pareggio (con almeno 1 danno reale) le entità subiscono il danno pieno del gruppo; se il gruppo è superiore lo subiscono solo per la differenza; se le entità sono superiori, la differenza passa a un bersaglio a caso del gruppo (PV in meno, si punta sempre alla più ferita fra le entità) — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
-    ${cb.choiceEach ? `<p class="hint">Ogni personaggio sceglie su quale caratteristica (For/Int/Des) giocare questa Contesa.</p>`:''}
+    ${cb.choiceEach ? `<p class="hint">Caratteristica scelta dal gruppo: <strong>${STAT_LABEL[cb.checkStat]}</strong>.</p>`:''}
     ${loseExtra ? `<p class="hint">⚠️ Se il danno passa oltre le difese: anche ${loseExtra}.</p>` : ''}
     <div id="combatLog"></div>
     <div class="row mt1">
@@ -3232,6 +3240,12 @@ function renderCombatPanel(plane, card, acts){
 }
 function bindCombatPanel(plane, card, acts){
   const cb = state.currentDraw.combat;
+  document.querySelectorAll('.btnPickStat').forEach(b=>b.onclick=()=>{
+    state.currentDraw.choiceStat = b.dataset.stat;
+    logMsg(`🪞 Il gruppo sceglie di giocare lo scontro su ${STAT_LABEL[b.dataset.stat]}.`);
+    render();
+    setTimeout(renderIncontroAction,0);
+  });
   const btn = document.getElementById('btnRoundFight');
   if(btn) btn.onclick=()=>{
     fightRound(plane, card, acts, cb);
@@ -3271,7 +3285,6 @@ function fightRound(plane, card, acts, cb){
     if(stillHidden(c) && !isSurpriseAttack) return; // nascosto e non attacca: nessun tiro questo giro
     let stat = cb.checkStat;
     if(cb.randomEach) stat = STATS[Math.floor(Math.random()*6)];
-    if(cb.choiceEach) stat = 'for'; // simplificazione dichiarata: default a Forza invece di scelta per round
     // attacco di sorpresa da Furtività: un 6 naturale vale 2 danni, come la Furia del Barbaro.
     const a=resolveAttack(c,stat,{critBonus:isSurpriseAttack});
     teamDmg+=a.dmg;
