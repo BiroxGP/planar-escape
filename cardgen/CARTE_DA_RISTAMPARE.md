@@ -16,6 +16,11 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 
 ## Da ristampare (non ancora confermato)
 
+
+_(nessuna carta in attesa di ristampa)_
+
+## Già ristampate / in attesa di conferma stampa
+
 | Data | Carta | Tipo | Cosa è cambiato |
 |---|---|---|---|
 | 2026-09-30 | Paradosso Logico (Incontro Armonia, `ar_paradosso`) | Testo + Illustrazione | La penalità "perdita del turno" non costava nulla su Armonia — cambiata in depotenziamento temporaneo a Intelletto. Illustrazione poi sostituita dall'utente con nuova versione (drop-file da root, `paradosso logico.jpg` -> `assets/cards_raw/ar_paradosso.jpg`). Rigenerata con `render-incontri.js` (mazzo `armonia`), copiata su `assets/cards/ar_paradosso.png`, PDF Incontri (`incontri_fronte.pdf`/`incontri_retro.pdf`) rigenerato per intero. |
@@ -44,11 +49,6 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 | 2026-10-03 | 9 carte Incontro Entropia (`en_nessuno`, `en_caos`, `en_voragine`, `en_sciame`, `en_spettro`, `en_cenere`, `en_oblio`, `en_ombra`, `en_relitto`) | Illustrazione | Nuove illustrazioni fornite dall'utente per 9 delle 15 carte del mazzo Entropia (drop-file da root). Rigenerate con `render-incontri.js` (mazzo `entropia`), copiate su `assets/cards/`, PDF Incontri rigenerato per intero. |
 | 2026-10-03 | 14 carte Incontro Armonia (tutte tranne `ar_paradosso`, già in lista sopra: `ar_nessuno`, `ar_giudice`, `ar_esattore`, `ar_custode`, `ar_automa`, `ar_oracolo`, `ar_eternita`, `ar_statua`, `ar_benedizione`, `ar_geometria`, `ar_bagliore`, `ar_pattodonore`, `ar_ingranaggio`, `ar_illuminazione`) | Illustrazione | Quasi tutto il mazzo Armonia sostituito dall'utente con nuove illustrazioni (drop-file da root, una per carta). Rigenerate con `render-incontri.js` (mazzo `armonia`), copiate su `assets/cards/`, PDF Incontri rigenerato per intero. |
 | 2026-10-01 | Tutte le 15 carte Incontro Eterei (`et_nessuno`, `et_frammento`, `et_visione`, `et_guida`, `et_distorsione`, `et_eco`, `et_entita`, `et_silenzio`, `et_portale`, `et_reliquia`, `et_quiete`, `et_ombra`, `et_incubo`, `et_doppio`, `et_sogno`) | Illustrazione | Tutto il mazzo Eterei sostituito dall'utente con nuove illustrazioni (drop-file da root, una per carta) — `et_visione` ed `et_distorsione` avevano già una voce più vecchia qui sopra, ora superata da questa versione più recente. Rigenerate tutte e 15 con `render-incontri.js` (mazzo `eterei`), copiate su `assets/cards/`, PDF Incontri rigenerato per intero. |
-
-## Già ristampate / in attesa di conferma stampa
-
-| Data | Carta | Tipo | Cosa è cambiato |
-|---|---|---|---|
 | 2026-09-29 | Sciamano (Classe, `sciamano`) | Dati | Troppo potente: Destrezza ridotta da 3 a 2 (per, int, pv, san, anima invariati). Rigenerata solo questa da `assets/cards_raw/` con `render-classes.js`, copiata su `assets/cards/sciamano.png`, PDF Classi (`classi_fronte.pdf`/`classi_retro.pdf`) rigenerato per intero. Confermata ristampata il 05/10 (già stampate dall'utente). |
 | 2026-09-30 | Barbaro (Classe, `barbaro`) | Dati | Forza ridotta da 5 a 4 (int, des, pv, san, anima invariati). Rigenerata solo questa da `assets/cards_raw/` con `render-classes.js`, copiata su `assets/cards/barbaro.png`, PDF Classi rigenerato per intero. Confermata ristampata il 05/10 (già stampate dall'utente). |
 | 2026-09-30 | Warlock (Classe, `warlock`), Negromante (Classe, `negromante`), Monaco (Classe, `monaco`) | Dati | Correzione statistiche: Warlock Anima 5→4, Negromante Sanità Mentale 5→4, Monaco Sanità Mentale 6→5 (tutti gli altri valori invariati). Rigenerate le 3 da `assets/cards_raw/` con `render-classes.js`, copiate su `assets/cards/{warlock,negromante,monaco}.png`, PDF Classi rigenerato per intero. Confermata ristampata il 05/10 (già stampate dall'utente). |
