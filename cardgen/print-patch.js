@@ -29,9 +29,7 @@ const ITEMS = [
   { id: 'monaco', back: 'retro_classi' },
   { id: 'guerriero', back: 'retro_classi' },
   { id: 'paladino', back: 'retro_classi' },
-  { id: 'ar_paradosso', back: 'retro_incontro_armonia' },
-  { id: 'et_visione', back: 'retro_incontro_eterei' },
-  { id: 'et_distorsione', back: 'retro_incontro_eterei' },
+  { id: 'sp_sigillo', back: 'retro_spell_flusso' },
 ];
 
 function buildGrid() {
