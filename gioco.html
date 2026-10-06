@@ -2685,7 +2685,13 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
     state.subdecksDiscard[deckKey].push(cardId);
   }
   const card = INCONTRI[deckKey].find(c=>c.id===cardId);
+  // il Cerchio di Protezione (lanciato prima o all'ingresso del piano) vale "per un turno": non
+  // deve sparire quando la carta Piano lascia il posto all'Incontro, altrimenti il danno di
+  // fine turno (Veleno/Tempesta) lo trova già scaduto senza essere stato usato.
+  const prevDraw = state.currentDraw;
+  const keepCerchio = prevDraw && prevDraw.planeId===plane.id && prevDraw.cerchioActive;
   state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[], manualUsed:{} };
+  if(keepCerchio){ state.currentDraw.cerchioActive = true; state.currentDraw.cerchioUsedBy = prevDraw.cerchioUsedBy || []; }
   if(pend && pend.cb){ pend.cb.rounds = 0; state.currentDraw.combat = pend.cb; } // stessi nemici, con i PV che avevano
   logMsg(pend ? `🔁 Incontro persistente: torna <strong>${card.name}</strong>.` : `🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`, pend?'warn':undefined);
   render();
