@@ -31,7 +31,7 @@ const BLOCKS_LEFT = [
   ]],
   ['Scontro (Contesa)', [
     'Tutti i personaggi tirano sulla <b>stessa caratteristica</b> indicata dalla carta; ogni nemico tira per sé. Un colpo a segno di un personaggio infligge <b>1 danno</b> (alcune armi e capacità di più) e un 6 naturale è sempre a segno. Un nemico colpisce se tira ≤ al suo valore (per lui un 6 è sempre un fallimento) e fa tanto danno quant\'è il suo valore, che è anche il suo numero di <b>PV</b>.',
-    'A fine giro si <b>sommano i danni</b> delle due parti: se il team ne ha fatti di più, i nemici incassano la differenza; se ne hanno fatti di più i nemici, la differenza passa a un solo personaggio, a caso. A <b>pareggio</b> (almeno 1 danno) i nemici incassano tutto il danno del team.',
+    'A fine giro si <b>sommano i danni</b> delle due parti: se il team ne ha fatti di più, i nemici incassano la differenza; se ne hanno fatti di più i nemici, la differenza passa a un solo personaggio, a caso. A <b>pareggio</b> (con almeno 1 danno dei giocatori) i nemici incassano <b>1 solo danno</b>.',
     'A fine giro si può <b>ritirarsi</b> nel portale (check di Destrezza di gruppo, vale il valore più basso). Un nemico <b>persistente</b> sconfitto va anche seminato: check di Destrezza di gruppo (valore più alto), se fallisce lo stesso Incontro torna.',
   ]],
 ];
@@ -42,8 +42,12 @@ const BLOCKS_RIGHT = [
     '<b>Resistenza:</b> se la tua classe è resistente a una famiglia di piani, il <b>primo danno a ogni ingresso</b> in un piano di quella famiglia è parato.',
   ]],
   ['Follia e Corruzione', [
-    'Ogni punto di <b>Sanità</b> perso richiede un check di Sanità; ogni punto di <b>Anima</b> perso, un check di Anima. Se fallisce, si tira un d6:',
-    '<b>5–6</b> nulla, solo un brivido. <b>3–4</b> Follia: al prossimo turno salti da solo in un portale casuale · Corruzione: farai il contrario del gruppo. <b>1–2</b> Follia: tenterai di trascinare con te un compagno (Contesa di Forza) · Corruzione: agirai contro il team.',
+    'Ogni punto di <b>Sanità</b> perso richiede un check di Sanità, ogni punto di <b>Anima</b> perso un check di Anima. Se il check fallisce, si tira un d6:',
+    '<table class="tb"><thead><tr><th>d6</th><th>Follia (Sanità)</th><th>Corruzione (Anima)</th></tr></thead><tbody>' +
+      '<tr><td class="r">1–2</td><td>Al prossimo turno tenti di trascinare con te un compagno (Contesa di Forza)</td><td>Al prossimo turno agisci contro il team</td></tr>' +
+      '<tr><td class="r">3–4</td><td>Al prossimo turno salti da solo in un portale casuale</td><td>Al prossimo turno fai il contrario del resto del gruppo</td></tr>' +
+      '<tr><td class="r">5–6</td><td colspan="2">Nulla: solo un brivido</td></tr>' +
+    '</tbody></table>',
   ]],
   ['Reroll e risorse', [
     '<b>Reroll:</b> rilancia un dado tuo (check o scontro), mai un check di gruppo. Ladro, Monaco e Saltimbanco ne hanno fissi.',
@@ -63,7 +67,7 @@ const SCHOOLS = [
 ];
 
 function blockHtml(b) {
-  return `<section class="blk"><h2>${b[0]}</h2>${b[1].map(p => `<p>${p}</p>`).join('')}</section>`;
+  return `<section class="blk"><h2>${b[0]}</h2>${b[1].map(p => p.startsWith('<table') ? p : `<p>${p}</p>`).join('')}</section>`;
 }
 
 function rowHtml(c) {
@@ -94,6 +98,11 @@ function html() {
     .blk p{ font-size:3.5mm; line-height:1.32; margin-top:1.3mm; }
     .blk p:first-of-type{ margin-top:0; }
     .blk b{ color:#3a2347; }
+    .tb{ margin-top:1.8mm; width:100%; border-collapse:collapse; }
+    .tb th{ font-family:'JetBrains Mono',monospace; font-size:2.7mm; letter-spacing:.03em; text-transform:uppercase; color:#8a6a35; text-align:left; padding:0 1.4mm 1.2mm; border-bottom:.35mm solid #b8874a; }
+    .tb td{ font-size:3.3mm; line-height:1.25; padding:1.4mm 1.4mm; border-bottom:.2mm solid #d8c9a6; vertical-align:top; }
+    .tb tr:last-child td{ border-bottom:none; }
+    .tb td.r{ font-family:'JetBrains Mono',monospace; font-weight:700; color:#3a2347; white-space:nowrap; width:11mm; }
     .foot{ position:absolute; left:12mm; right:12mm; bottom:6mm; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:2.6mm; color:#8a7a5c; }
 
     table{ margin-top:4.2mm; width:100%; border-collapse:collapse; }

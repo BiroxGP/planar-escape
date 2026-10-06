@@ -2460,8 +2460,8 @@ function passthroughTargets(acts, hiddenIds){
   return eligible.length ? eligible : acts;
 }
 // Confronta danno del team e delle entità in un giro di Contesa:
-//  - pareggio (entrambi >0, uguali): le entità subiscono il danno PIENO del team (bonus del
-//    pareggio, non va diviso) — focus fire sulla meno in salute, come sempre.
+//  - pareggio (entrambi >0, uguali): le entità subiscono UN solo danno (basta che i giocatori
+//    ne abbiano fatto almeno 1), non tutto quello del team — focus fire sulla meno in salute.
 //  - team superiore: le entità subiscono solo il danno NETTO (team - entità), il loro stesso
 //    colpo attutisce parzialmente quello che incassano.
 //  - entità superiori: il gruppo subisce solo il danno NETTO (entità - team) passante, non
@@ -2471,7 +2471,7 @@ function resolveContesaDamage({teamDmg, entityDmg, entities, targets, dmgStat, c
   let passThrough = 0;
   let toEntities = 0;
   if(teamDmg>0 && teamDmg===entityDmg){
-    toEntities = teamDmg;
+    toEntities = 1;
   } else if(teamDmg>entityDmg){
     toEntities = teamDmg - entityDmg;
   } else if(entityDmg>teamDmg){
@@ -3021,7 +3021,7 @@ function applyConsequence(cons, targets, plane){
       case 'forgetSpell': if(c.spells.length) logMsg(`🌫️ ${c.name} dimentica temporaneamente uno spell (torna a Recupero).`); else applyTempDebuff(c,'int'); break;
       case 'mentalBattle': {
         // Un solo giro di Contesa in solitaria (stessa formula/funzioni della Contesa di
-        // gruppo, per coerenza: pareggio favorisce chi tira, danno netto altrimenti), su
+        // gruppo, per coerenza: a pareggio 1 solo danno all'entità, danno netto altrimenti), su
         // Sanità Mentale invece delle statistiche fisiche — è uno scontro mentale, non fisico.
         const entVal = cons.value||1;
         const a = resolveAttack(c,'san');
@@ -3223,7 +3223,7 @@ function renderCombatPanel(plane, card, acts){
   return `
     <div class="mb1"><strong>Entità:</strong> ${cb.entities.map(e=>`${e.name} (${STAT_LABEL[e.statKey]||''} ${e.value}, PV ${e.hp===undefined?e.value:e.hp})`).join(' · ')}</div>
     ${cloakedNow.length?`<p class="hint">🥷 Ancora nascosti: ${cloakedNow.map(c=>escapeHtml(c.name)).join(', ')} — scelgono cosa fare a ogni giro prima che si tiri.</p>`:''}
-    <p class="hint">Ogni giro: a pareggio (con almeno 1 danno reale) le entità subiscono il danno pieno del gruppo; se il gruppo è superiore lo subiscono solo per la differenza; se le entità sono superiori, la differenza passa a un bersaglio a caso del gruppo (PV in meno, si punta sempre alla più ferita fra le entità) — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
+    <p class="hint">Ogni giro: a pareggio (con almeno 1 danno reale dei giocatori) le entità subiscono 1 solo danno; se il gruppo è superiore lo subiscono solo per la differenza; se le entità sono superiori, la differenza passa a un bersaglio a caso del gruppo (PV in meno, si punta sempre alla più ferita fra le entità) — chi è ancora nascosto per Furtività non può essere quel bersaglio, a meno che non ci sia nessun altro.</p>
     ${cb.choiceEach ? `<p class="hint">Caratteristica scelta dal gruppo: <strong>${STAT_LABEL[cb.checkStat]}</strong>.</p>`:''}
     ${loseExtra ? `<p class="hint">⚠️ Se il danno passa oltre le difese: anche ${loseExtra}.</p>` : ''}
     <div id="combatLog"></div>
