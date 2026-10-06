@@ -41,6 +41,9 @@ const BLOCKS_RIGHT = [
     '<b>Punti Vita:</b> a 0 si sviene, sotto 0 si muore (il Barbaro resta in piedi a 0).',
     '<b>Resistenza:</b> se la tua classe è resistente a una famiglia di piani, il <b>primo danno a ogni ingresso</b> in un piano di quella famiglia è parato.',
   ]],
+  ['Piani di Recupero', [
+    'Chi li attraversa: <b>+1 PV</b> (mai oltre il massimo), <b>1 spell</b> a scelta della scuola se ne ha meno del numero scritto in scheda, <b>abilità di classe</b> ricaricata. Spariscono tutti i depotenziamenti <b>e</b> tutti i bonus temporanei.',
+  ]],
   ['Follia e Corruzione', [
     'Ogni punto di <b>Sanità</b> perso richiede un check di Sanità, ogni punto di <b>Anima</b> perso un check di Anima. Se il check fallisce, si tira un d6:',
     '<table class="tb"><thead><tr><th>d6</th><th>Follia (Sanità)</th><th>Corruzione (Anima)</th></tr></thead><tbody>' +
@@ -92,15 +95,15 @@ function html() {
     .band h1{ font-family:'Cinzel',serif; font-weight:700; font-size:8.2mm; letter-spacing:.05em; color:#3a2347; }
     .band span{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:2.9mm; letter-spacing:.08em; color:#8a6a35; text-transform:uppercase; }
     .cols{ margin-top:4.5mm; display:grid; grid-template-columns:1fr 1fr; gap:6mm; }
-    .col{ display:flex; flex-direction:column; gap:3.6mm; }
+    .col{ display:flex; flex-direction:column; gap:3mm; }
     .blk{ background:#fffaf0; border:.3mm solid #cdb98f; border-radius:2mm; padding:3mm 3.6mm 3.2mm; }
-    .blk h2{ font-family:'Cinzel',serif; font-weight:700; font-size:4.4mm; letter-spacing:.06em; text-transform:uppercase; color:#8a5a1f; margin-bottom:1.6mm; }
-    .blk p{ font-size:3.5mm; line-height:1.32; margin-top:1.3mm; }
+    .blk h2{ font-family:'Cinzel',serif; font-weight:700; font-size:4.2mm; letter-spacing:.06em; text-transform:uppercase; color:#8a5a1f; margin-bottom:1.6mm; }
+    .blk p{ font-size:3.3mm; line-height:1.3; margin-top:1.3mm; }
     .blk p:first-of-type{ margin-top:0; }
     .blk b{ color:#3a2347; }
     .tb{ margin-top:1.8mm; width:100%; border-collapse:collapse; }
     .tb th{ font-family:'JetBrains Mono',monospace; font-size:2.7mm; letter-spacing:.03em; text-transform:uppercase; color:#8a6a35; text-align:left; padding:0 1.4mm 1.2mm; border-bottom:.35mm solid #b8874a; }
-    .tb td{ font-size:3.3mm; line-height:1.25; padding:1.4mm 1.4mm; border-bottom:.2mm solid #d8c9a6; vertical-align:top; }
+    .tb td{ font-size:3.1mm; line-height:1.25; padding:1.4mm 1.4mm; border-bottom:.2mm solid #d8c9a6; vertical-align:top; }
     .tb tr:last-child td{ border-bottom:none; }
     .tb td.r{ font-family:'JetBrains Mono',monospace; font-weight:700; color:#3a2347; white-space:nowrap; width:11mm; }
     .foot{ position:absolute; left:12mm; right:12mm; bottom:6mm; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:2.6mm; color:#8a7a5c; }

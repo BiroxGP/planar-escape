@@ -1017,7 +1017,25 @@ function makeChar(name, clsKey, bonus){
   Object.entries(cls.affinity||{}).forEach(([school,n])=>{
     for(let i=0;i<n;i++){ const id = drawSpell(school); if(id) c.spells.push(id); }
   });
+  // il "numero scritto in scheda" per ogni scuola: tetto di spell che il Recupero riporta in mano
+  // (cresce con i progressi di classe che danno una carta spell, vedi gainSpellSlot)
+  c.spellMax = Object.assign({}, cls.affinity||{});
   return c;
+}
+function spellMaxOf(c){
+  if(!c.spellMax) c.spellMax = Object.assign({}, CLASSES[c.cls].affinity||{}); // salvataggi vecchi
+  return c.spellMax;
+}
+function spellsInSchool(c, school){
+  return c.spells.filter(id=>SPELLS_BY_ID[id] && SPELLS[school].some(s=>s.id===id)).length;
+}
+// Progresso di classe che dà una carta spell: il tetto di quella scuola sale di 1 (come se il
+// giocatore lo scrivesse in scheda) e la carta si pesca subito.
+function gainSpellSlot(c, school){
+  const mx = spellMaxOf(c);
+  mx[school] = (mx[school]||0) + 1;
+  const s = drawSpell(school);
+  if(s) c.spells.push(s);
 }
 function drawSpell(school){
   const deck = state.spellDecks[school];
@@ -1399,7 +1417,7 @@ function render(){
   app.innerHTML = renderGame();
   bindGame();
   applyI18nStatic();
-  if(!renderPendingMadnessPopup()) renderLeggeDebtPopup();
+  if(!renderPendingMadnessPopup() && !renderLeggeDebtPopup()) renderSpellPickPopup();
 }
 /* ---------------- LANDING ---------------- */
 function renderLanding(){
@@ -2039,12 +2057,12 @@ function applyClassProgress(c){
   switch(c.cls){
     case 'guerriero': case 'barbaro': { const it=drawOggetto(); if(it) c.inventory.push(it); logMsg(`🎁 ${c.name} riceve un oggetto gratuito.`); break; }
     case 'ladro': c.resources++; c.rerolls++; break;
-    case 'veggente': { const s=drawSpell('divinazione'); if(s) c.spells.push(s); break; }
-    case 'mago': { const s=drawSpell('essenza'); if(s) c.spells.push(s); break; }
-    case 'chierico': case 'druido': case 'paladino': { const s=drawSpell('flusso'); if(s) c.spells.push(s); break; }
-    case 'warlock': { const s=drawSpell('essenza'); if(s) c.spells.push(s); break; }
-    case 'negromante': { const school=Math.random()<0.5?'flusso':'essenza'; const s=drawSpell(school); if(s) c.spells.push(s); break; }
-    case 'sciamano': { const schools=['flusso','essenza','divinazione']; const school=schools[Math.floor(Math.random()*3)]; const s=drawSpell(school); if(s) c.spells.push(s); break; }
+    case 'veggente': gainSpellSlot(c,'divinazione'); break;
+    case 'mago': gainSpellSlot(c,'essenza'); break;
+    case 'chierico': case 'druido': case 'paladino': gainSpellSlot(c,'flusso'); break;
+    case 'warlock': gainSpellSlot(c,'essenza'); break;
+    case 'negromante': gainSpellSlot(c, Math.random()<0.5?'flusso':'essenza'); break;
+    case 'sciamano': { const schools=['flusso','essenza','divinazione']; gainSpellSlot(c, schools[Math.floor(Math.random()*3)]); break; }
     case 'saltimbanco': c.rerolls+=2; break;
     case 'monaco': c.resources++; c.rerolls++; break;
   }
@@ -3926,35 +3944,77 @@ function finishIncontro(){
 }
 
 /* ---------- Recupero ---------- */
+// Recupero: +1 PV (mai oltre il massimo), UNO spell (a scelta della scuola) se si è sotto il
+// numero di spell scritto in scheda, abilità di classe ricaricata, via tutti i depotenziamenti
+// temporanei e anche tutti i bonus temporanei.
 function recuperoFor(c){
   const parts = [];
-  const beforePv = c.stats.pv;
-  healStat(c,'pv',1);
-  if(c.stats.pv>beforePv) parts.push(`+1 PV (${beforePv}→${c.stats.pv})`);
-  const debuffed = activeTempDebuffs(c);
-  debuffed.forEach(s=>cureOneDebuff(c,s));
-  if(debuffed.length) parts.push(`guarisce ${debuffed.map(s=>STAT_LABEL[s]).join(', ')}`);
-  const spellsGained = [];
-  Object.entries(CLASSES[c.cls].affinity||{}).forEach(([school,base])=>{
-    const have = c.spells.filter(id=>SPELLS_BY_ID[id] && SPELLS[school].some(s=>s.id===id)).length;
-    if(have<base){ const s=drawSpell(school); if(s){ c.spells.push(s); spellsGained.push(SPELLS_BY_ID[s]?.name||school); } }
-  });
-  if(spellsGained.length) parts.push(`pesca ${spellsGained.join(', ')}`);
-  const chargeRefreshed = CLASSES[c.cls].special && !c.charges.special;
-  c.charges.special = true;
-  if(chargeRefreshed) parts.push('ricarica l\'abilità di classe');
+  // prima si tolgono i bonus temporanei: se uno era sui PV, la cura non deve rimbalzare sul massimo
   const boosted = Object.keys(c.tempBonus||{}).filter(s=>c.tempBonus[s]);
   if(boosted.length){
-    boosted.forEach(s=>{ c.stats[s]=Math.max(1,c.stats[s]-c.tempBonus[s]); });
+    boosted.forEach(s=>{ c.stats[s]=Math.max(statFloor(s),c.stats[s]-c.tempBonus[s]); });
     c.tempBonus={};
     parts.push(`perde il bonus temporaneo a ${boosted.map(s=>STAT_LABEL[s]).join(', ')}`);
   }
+  const debuffed = activeTempDebuffs(c);
+  debuffed.forEach(s=>cureOneDebuff(c,s));
+  if(debuffed.length) parts.push(`guarisce ${debuffed.map(s=>STAT_LABEL[s]).join(', ')}`);
+  const beforePv = c.stats.pv;
+  healStat(c,'pv',1);
+  if(c.stats.pv>beforePv) parts.push(`+1 PV (${beforePv}→${c.stats.pv})`);
+  const schools = spellSchoolsBelowMax(c);
+  if(schools.length===1){
+    const s = drawSpell(schools[0]);
+    if(s){ c.spells.push(s); parts.push(`pesca ${SPELLS_BY_ID[s]?.name||schools[0]}`); }
+  } else if(schools.length>1){
+    state.pendingSpellPicks = state.pendingSpellPicks || [];
+    state.pendingSpellPicks.push(c.id);
+    parts.push('può pescare uno spell (sceglie la scuola)');
+  }
+  const chargeRefreshed = CLASSES[c.cls].special && !c.charges.special;
+  c.charges.special = true;
+  if(chargeRefreshed) parts.push('ricarica l\'abilità di classe');
   const corroded = Object.keys(c.corroded||{}).filter(slot=>c.corroded[slot]);
   if(corroded.length){
     corroded.forEach(slot=>{ c.corroded[slot]=false; });
     parts.push(`l'equipaggiamento corroso torna a funzionare normalmente`);
   }
   logMsg(parts.length ? `🛌 ${c.name} recupera: ${parts.join('; ')}.` : `🛌 ${c.name} riposa, ma non aveva nulla da recuperare.`);
+}
+
+// scuole in cui il personaggio ha meno spell del numero scritto in scheda e il mazzo ne ha ancora
+function spellSchoolsBelowMax(c){
+  return Object.entries(spellMaxOf(c))
+    .filter(([school,max])=>spellsInSchool(c,school)<max && state.spellDecks[school] && state.spellDecks[school].length>0)
+    .map(([school])=>school);
+}
+const SPELL_SCHOOL_LABEL = {flusso:'Flusso', essenza:'Essenza', divinazione:'Divinazione'};
+// Scelta della scuola dello spell di Recupero: in coda come gli altri popup, mostrata solo a
+// modale libera. L'idoneità si ricalcola qui (nel frattempo può essere cambiata).
+function renderSpellPickPopup(){
+  if(!state || !state.pendingSpellPicks || !state.pendingSpellPicks.length) return false;
+  if(document.getElementById('modalRoot').open) return false;
+  const id = state.pendingSpellPicks[0];
+  const c = state.players.find(p=>p.id===id);
+  const schools = c && c.status!=='dead' ? spellSchoolsBelowMax(c) : [];
+  if(!schools.length){ state.pendingSpellPicks.shift(); return renderSpellPickPopup(); }
+  if(schools.length===1){ // una sola scelta rimasta: si pesca da sé
+    state.pendingSpellPicks.shift();
+    const s = drawSpell(schools[0]); if(s){ c.spells.push(s); logMsg(`📜 ${c.name} pesca ${SPELLS_BY_ID[s]?.name||schools[0]} dal Recupero.`,'good'); }
+    return renderSpellPickPopup();
+  }
+  const mx = spellMaxOf(c);
+  openModal(`<h3>📜 Recupero — ${escapeHtml(c.name)}</h3>
+    <p>Hai meno spell del numero scritto in scheda: scegli da quale scuola pescarne <strong>uno</strong>.</p>
+    <div class="row">${schools.map(sc=>`<button class="small" data-spellpick="${sc}">${SPELL_SCHOOL_LABEL[sc]} (${spellsInSchool(c,sc)}/${mx[sc]})</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-spellpick]').forEach(b=>b.onclick=()=>{
+    const sc = b.dataset.spellpick;
+    const s = drawSpell(sc);
+    if(s){ c.spells.push(s); logMsg(`📜 ${c.name} pesca ${SPELLS_BY_ID[s]?.name||sc} (${SPELL_SCHOOL_LABEL[sc]}) dal Recupero.`,'good'); }
+    state.pendingSpellPicks.shift();
+    closeModal(); render();
+  });
+  return true;
 }
 
 /* ---------- Piano Terreno ---------- */
