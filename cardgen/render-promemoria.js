@@ -50,7 +50,7 @@ const BLOCKS_RIGHT = [
     '<b>Risorsa planare:</b> un gettone da spendere con mercanti ed entità, e che si può passare a un compagno (per esempio per un suo incantesimo).',
   ]],
   ['Gruppo e vittoria', [
-    'Ci si può staccare dal gruppo: chi va da solo <b>non divide il bottino</b>. Gli oggetti trovati insieme vanno assegnati a una persona sola.',
+    'Ci si può staccare dal gruppo: chi va da solo <b>viaggia per conto suo</b> (il suo turno, i suoi salti) e può trovare la via di casa anche senza gli altri.',
     'A ogni salto una carta <b>Piano Terreno</b> si aggiunge in fondo al mazzo Piani. Pescarla porta a una destinazione leggendaria: <b>La Via di Casa</b> è una vittoria, altre sono scontri, prove o bonus.',
     '<b>Vince chi torna a casa</b>, anche da solo: non serve che ce la facciano tutti.',
   ]],

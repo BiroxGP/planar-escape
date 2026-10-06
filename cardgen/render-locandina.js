@@ -42,7 +42,7 @@ const T = {
     fams: [['🔥', 'Elementare', 'Fuoco, Acqua, Veleno, Tempesta…'], ['🌋', 'Terrestre', 'Età della Terra Antica, Flora Aliena'], ['👹', 'Demoniaco', 'Tre gironi infernali sempre più duri'], ['☠️', 'Non-morti', 'Il Piano Negativo, che logora la mente'], ['🌙', 'Eterei', 'Sogno, Specchi, Luce, Tenebre…'], ['✨', 'Armonia', 'Ordine, Legge, Logica, Verità…'], ['🌀', 'Entropia', 'Caos, Tempo, Vuoto, Oblio…']],
     classes: '13 classi: Guerriero, Mago, Ladro, Druido, Monaco…',
     winH: 'Come si vince',
-    win: 'Non si torna a casa per scelta: serve la fortuna di <b>pescare la Via di Casa</b> tra le destinazioni leggendarie del Piano Terreno. Si lascia il gruppo? Il bottino è tutto tuo, ma sei solo.',
+    win: 'Non si torna a casa per scelta: serve la fortuna di <b>pescare la Via di Casa</b> tra le destinazioni leggendarie del Piano Terreno. Il gruppo può dividersi: anche da solo si può trovare la via del ritorno.',
     demo: 'PROVA LA DEMO',
     foot1: 'Planar Escape · prototipo in playtest',
     foot2: 'Instagram / TikTok @planar.escape',
