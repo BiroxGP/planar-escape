@@ -1344,22 +1344,11 @@ function checkRoll(c, stat, opts){
   }
   return {roll, val, success};
 }
-// Check di GRUPPO (vale il valore più alto presente): un solo tiro per tutti, ma chiunque nel
-// gruppo abbia un reroll lo può spendere subito se fallisce, senza passare dal menu Gestisci —
-// come già succede per i check individuali (checkRoll).
+// Check di GRUPPO (vale il valore più alto presente): un solo tiro per tutti. I reroll sono
+// strettamente personali e NON si possono mai usare sui check di gruppo, da nessuna fonte.
 function groupCheckRoll(acts, best, label){
-  let roll = d6();
-  let success = roll<=best || roll===6;
-  for(const c of acts){
-    while(!success && isConscious(c) && c.rerolls>0){
-      if(!confirm(`${c.name}: ${label} fallito (${roll} vs ${best}). Usare 1 reroll per il gruppo? (${c.rerolls} disponibile/i)`)) break;
-      c.rerolls--;
-      roll = d6();
-      success = roll<=best || roll===6;
-      logMsg(`🔁 ${c.name} usa un reroll sul ${label}: nuovo tiro ${roll} vs ${best} → ${success?'superato':'ancora fallito'} (${c.rerolls} reroll rimasti).`);
-    }
-    if(success) break;
-  }
+  const roll = d6();
+  const success = roll<=best || roll===6;
   return {roll, success};
 }
 function effectiveStat(c, stat){
