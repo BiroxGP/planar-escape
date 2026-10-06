@@ -3,7 +3,8 @@
 // biglietto da visita (render-biglietto.js).
 //
 // Uso: node render-locandina.js
-//   genera cards_final/altro/locandina.png (anteprima) e cards_final/print/locandina.pdf (A4, 210x297mm)
+//   genera, per italiano e inglese, cards_final/altro/locandina[_en].png (anteprima) e
+//   cards_final/print/locandina[_en].pdf (A4, 210x297mm). I testi sono nel dizionario T.
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -20,36 +21,58 @@ const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">`;
 
-const STEPS = [
-  { n: '1', t: 'Salta', d: 'Destinazione <b>a caso</b>, mai a scelta. Tenendosi per mano si vede la carta Piano.' },
-  { n: '2', t: 'Il piano', d: 'Ogni piano ha un suo effetto: fuoco, veleno, follia, tempo che si spezza.' },
-  { n: '3', t: 'Incontro', d: 'Una carta: scontro, prova, mercante o ricompensa.' },
-  { n: '4', t: 'Crescita', d: 'Ogni <b>5 salti</b>: +1 a una caratteristica e un potere di classe.' },
-];
-
-const STATS = [
-  ['#c9573d', 'Forza', 'scontri fisici'],
-  ['#4d8fc9', 'Intelletto', 'magia e conoscenza'],
-  ['#5fb36a', 'Destrezza', 'schivare e fuggire'],
-  ['#d8506b', 'Punti Vita', 'a 0 si sviene'],
-  ['#a37bd6', 'Sanità', 'se crolla, Follia'],
-  ['#e0b04a', 'Anima', 'se crolla, Corruzione'],
-];
-
-const FAMILIES = [
-  ['🔥', 'Elementare', 'Fuoco, Acqua, Veleno, Tempesta…'],
-  ['🌋', 'Terrestre', 'Età della Terra Antica, Flora Aliena'],
-  ['👹', 'Demoniaco', 'Tre gironi infernali sempre più duri'],
-  ['☠️', 'Non-morti', 'Il Piano Negativo, che logora la mente'],
-  ['🌙', 'Eterei', 'Sogno, Specchi, Luce, Tenebre…'],
-  ['✨', 'Armonia', 'Ordine, Legge, Logica, Verità…'],
-  ['🌀', 'Entropia', 'Caos, Tempo, Vuoto, Oblio…'],
-];
-
-const CLASSES = [
-  ['⚔️', 'Guerriero'], ['🪓', 'Barbaro'], ['🗡️', 'Ladro'], ['🔮', 'Veggente'], ['🪄', 'Mago'], ['🙏', 'Chierico'], ['🌿', 'Druido'],
-  ['👹', 'Warlock'], ['☠️', 'Negromante'], ['🏔️', 'Sciamano'], ['🎭', 'Saltimbanco'], ['👊', 'Monaco'], ['🛡️', 'Paladino'],
-];
+const T = {
+  it: {
+    file: 'locandina',
+    tagline: "Un ultimo respiro. Un portale. Un salto nell'ignoto.",
+    lead: "Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte. All'ultimo momento, <b>tenendosi per mano, apre un portale e fugge</b> senza sapere dove porti. Da lì è un salto continuo tra piani generati a caso, con un solo obiettivo: <b>tornare a casa</b>. Si collabora per sopravvivere, ma <b>vince ognuno per sé</b>.",
+    turnH: 'Un turno in quattro mosse',
+    steps: [
+      ['1', 'Salta', 'Destinazione <b>a caso</b>. Nel portale il gruppo è un\'unica entità: arriva tutto insieme.'],
+      ['2', 'Il piano', 'Ogni piano ha un suo effetto: fuoco, veleno, follia, tempo che si spezza.'],
+      ['3', 'Incontro', 'Una carta: scontro, prova, mercante o ricompensa.'],
+      ['4', 'Crescita', 'Ogni <b>5 salti</b>: +1 a una caratteristica e un potere di classe.'],
+    ],
+    diceH: 'Il dado',
+    diceRule: 'Ogni prova si fa con <b>un d6</b>: riesce se il risultato è <b>minore o uguale al tuo valore</b>, oppure se esce un <b>6</b>, sempre.',
+    fight: '<b>Scontro:</b> tutti tirano sulla stessa caratteristica; ogni colpo a segno toglie 1 al nemico.',
+    statsH: 'Sei caratteristiche',
+    stats: [['#c9573d', 'Forza', 'scontri fisici'], ['#4d8fc9', 'Intelletto', 'magia e conoscenza'], ['#5fb36a', 'Destrezza', 'schivare e fuggire'], ['#d8506b', 'Punti Vita', 'a 0 si sviene'], ['#a37bd6', 'Sanità', 'se crolla, Follia'], ['#e0b04a', 'Anima', 'se crolla, Corruzione']],
+    famH: 'Sette famiglie di piani',
+    fams: [['🔥', 'Elementare', 'Fuoco, Acqua, Veleno, Tempesta…'], ['🌋', 'Terrestre', 'Età della Terra Antica, Flora Aliena'], ['👹', 'Demoniaco', 'Tre gironi infernali sempre più duri'], ['☠️', 'Non-morti', 'Il Piano Negativo, che logora la mente'], ['🌙', 'Eterei', 'Sogno, Specchi, Luce, Tenebre…'], ['✨', 'Armonia', 'Ordine, Legge, Logica, Verità…'], ['🌀', 'Entropia', 'Caos, Tempo, Vuoto, Oblio…']],
+    classes: '13 classi: Guerriero, Mago, Ladro, Druido, Monaco…',
+    winH: 'Come si vince',
+    win: 'Non si torna a casa per scelta: serve la fortuna di <b>pescare la Via di Casa</b> tra le destinazioni leggendarie del Piano Terreno. Si lascia il gruppo? Il bottino è tutto tuo, ma sei solo.',
+    demo: 'PROVA LA DEMO',
+    foot1: 'Planar Escape · prototipo in playtest',
+    foot2: 'Instagram / TikTok @planar.escape',
+  },
+  en: {
+    file: 'locandina_en',
+    tagline: 'One last breath. One portal. A leap into the unknown.',
+    lead: 'A party of adventurers is about to be wiped out by an enemy far too strong. At the last moment, <b>holding hands, they open a portal and flee</b> without knowing where it leads. From there it is one leap after another through randomly generated planes, with a single goal: <b>getting home</b>. You cooperate to survive, but <b>everyone wins on their own</b>.',
+    turnH: 'A turn in four moves',
+    steps: [
+      ['1', 'Jump', 'Destination is <b>random</b>. In the portal the group is a single entity: it all lands together.'],
+      ['2', 'The plane', 'Every plane has its own effect: fire, poison, madness, time breaking apart.'],
+      ['3', 'Encounter', 'One card: a fight, a test, a merchant or a reward.'],
+      ['4', 'Growth', 'Every <b>5 jumps</b>: +1 to a stat and a new class power.'],
+    ],
+    diceH: 'The die',
+    diceRule: 'Every test uses <b>one d6</b>: it succeeds if the roll is <b>equal to or lower than your value</b>, or on a <b>6</b>, always.',
+    fight: '<b>Fight:</b> everyone rolls on the same stat; each hit takes 1 from the enemy.',
+    statsH: 'Six stats',
+    stats: [['#c9573d', 'Strength', 'physical fights'], ['#4d8fc9', 'Intellect', 'magic and lore'], ['#5fb36a', 'Dexterity', 'dodging and fleeing'], ['#d8506b', 'Hit Points', 'at 0 you pass out'], ['#a37bd6', 'Sanity', 'if it drops, Madness'], ['#e0b04a', 'Soul', 'if it drops, Corruption']],
+    famH: 'Seven plane families',
+    fams: [['🔥', 'Elemental', 'Fire, Water, Poison, Storm…'], ['🌋', 'Terrestrial', 'Ancient Earth Age, Alien Flora'], ['👹', 'Demonic', 'Three infernal circles, ever harsher'], ['☠️', 'Undead', 'The Negative Plane, wearing down the mind'], ['🌙', 'Ethereal', 'Dream, Mirrors, Light, Darkness…'], ['✨', 'Harmony', 'Order, Law, Logic, Truth…'], ['🌀', 'Entropy', 'Chaos, Time, Void, Oblivion…']],
+    classes: '13 classes: Warrior, Mage, Rogue, Druid, Monk…',
+    winH: 'How to win',
+    win: 'You do not go home by choice: you need the luck to <b>draw the Way Home</b> among the legendary Earthly Plane destinations. Leave the group? All the loot is yours, but you are alone.',
+    demo: 'TRY THE DEMO',
+    foot1: 'Planar Escape · prototype in playtest',
+    foot2: 'Instagram / TikTok @planar.escape',
+  },
+};
 
 // facce del d6 disegnate con CSS: pallini sulla griglia 3x3
 function dieFace(n) {
@@ -57,7 +80,8 @@ function dieFace(n) {
   return `<div class="die">${Array.from({ length: 9 }, (_, i) => `<i${pos.includes(i + 1) ? ' class="on"' : ''}></i>`).join('')}</div>`;
 }
 
-async function html() {
+async function html(lang) {
+  const L = T[lang];
   const cover = pathToFileURL(COVER).href;
   const qr = await QRCode.toDataURL(DEMO_URL, { margin: 1, width: 500, color: { dark: '#1c1524', light: '#f4ecdc' } });
   return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
@@ -70,7 +94,7 @@ async function html() {
     .gold{ color:#e7c988; }
 
     /* --- hero --- */
-    .hero{ position:relative; height:65mm; background:url(${cover}) center 34%/cover; }
+    .hero{ position:relative; height:61mm; background:url(${cover}) center 34%/cover; }
     .hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(20,15,26,1) 0%, rgba(20,15,26,.78) 30%, rgba(20,15,26,.15) 70%, rgba(20,15,26,.35) 100%); }
     .hero .txt{ position:absolute; left:14mm; right:14mm; bottom:5mm; z-index:2; }
     .title{ font-family:'Cinzel',serif; font-weight:700; font-size:13mm; letter-spacing:.06em; line-height:1;
@@ -138,47 +162,47 @@ async function html() {
   <div class="sheet">
     <div class="hero"><div class="txt">
       <div class="title">PLANAR ESCAPE</div>
-      <div class="tag">Un ultimo respiro. Un portale. Un salto nell'ignoto.</div>
+      <div class="tag">${L.tagline}</div>
     </div></div>
 
     <div class="pad">
-      <p class="lead">Un gruppo di avventurieri sta per essere spazzato via da un nemico troppo forte. All'ultimo momento, <b>tenendosi per mano, apre un portale e fugge</b> senza sapere dove porti. Da lì è un salto continuo tra piani generati a caso, con un solo obiettivo: <b>tornare a casa</b>. Si collabora per sopravvivere, ma <b>vince ognuno per sé</b>.</p>
+      <p class="lead">${L.lead}</p>
 
       <div class="sec">
-        <h2>Un turno in quattro mosse</h2>
-        <div class="steps">${STEPS.map(s => `<div class="step"><div class="hd"><div class="n">${s.n}</div><div class="t">${s.t}</div></div><div class="d">${s.d}</div></div>`).join('')}</div>
+        <h2>${L.turnH}</h2>
+        <div class="steps">${L.steps.map(st => `<div class="step"><div class="hd"><div class="n">${st[0]}</div><div class="t">${st[1]}</div></div><div class="d">${st[2]}</div></div>`).join('')}</div>
       </div>
 
       <div class="two">
         <div>
-          <h2>Il dado</h2>
+          <h2>${L.diceH}</h2>
           <div class="box">
-            <div class="rule">${dieFace(6)}<div class="r">Ogni prova si fa con <b>un d6</b>: riesce se il risultato è <b>minore o uguale al tuo valore</b>, oppure se esce un <b>6</b>, sempre.</div></div>
-            <p class="sub"><b>Scontro:</b> tutti tirano sulla stessa caratteristica; ogni colpo a segno toglie 1 al nemico.</p>
+            <div class="rule">${dieFace(6)}<div class="r">${L.diceRule}</div></div>
+            <p class="sub">${L.fight}</p>
           </div>
         </div>
         <div>
-          <h2>Sei caratteristiche</h2>
-          <div class="stats">${STATS.map(s => `<div class="stat"><i class="dot" style="background:${s[0]}"></i><span class="nm">${s[1]}</span><span class="ds">${s[2]}</span></div>`).join('')}</div>
+          <h2>${L.statsH}</h2>
+          <div class="stats">${L.stats.map(s => `<div class="stat"><i class="dot" style="background:${s[0]}"></i><span class="nm">${s[1]}</span><span class="ds">${s[2]}</span></div>`).join('')}</div>
         </div>
       </div>
 
       <div class="sec">
-        <h2>Sette famiglie di piani</h2>
-        <div class="fam">${FAMILIES.map(f => `<div class="f"><div class="h"><span>${f[0]}</span>${f[1]}</div><div class="x">${f[2]}</div></div>`).join('')}
-          <div class="f note">13 classi: Guerriero, Mago, Ladro, Druido, Monaco…</div></div>
+        <h2>${L.famH}</h2>
+        <div class="fam">${L.fams.map(f => `<div class="f"><div class="h"><span>${f[0]}</span>${f[1]}</div><div class="x">${f[2]}</div></div>`).join('')}
+          <div class="f note">${L.classes}</div></div>
       </div>
 
     </div>
 
     <div class="bottom">
       <div class="win">
-        <h2>Come si vince</h2>
-        <p>Non si torna a casa per scelta: serve la fortuna di <b>pescare la Via di Casa</b> tra le destinazioni leggendarie del Piano Terreno. Si lascia il gruppo? Il bottino è tutto tuo, ma sei solo.</p>
+        <h2>${L.winH}</h2>
+        <p>${L.win}</p>
       </div>
-      <div class="qr"><img src="${qr}"><div class="l">PROVA LA DEMO</div></div>
+      <div class="qr"><img src="${qr}"><div class="l">${L.demo}</div></div>
     </div>
-    <div class="foot"><span>Planar Escape · prototipo in playtest</span><span>Instagram / TikTok @planar.escape</span></div>
+    <div class="foot"><span>${L.foot1}</span><span>${L.foot2}</span></div>
   </div></body></html>`;
 }
 
@@ -186,20 +210,19 @@ async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
-  const tmp = path.join(__dirname, '_tmp-locandina-' + Date.now() + '.html');
-  fs.writeFileSync(tmp, await html());
-
-  const png = path.join(OUT_DIR, 'locandina.png');
-  const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 2.5 });
-  await page.goto('file://' + tmp);
-  await page.waitForTimeout(1200); // web font da Google Fonts
-  await page.screenshot({ path: png, clip: { x: 0, y: 0, width: 794, height: 1123 } });
-
-  await page.pdf({ path: path.join(PRINT_DIR, 'locandina.pdf'), printBackground: true, preferCSSPageSize: true });
-  await page.close();
-  fs.unlinkSync(tmp);
+  for (const lang of Object.keys(T)) {
+    const tmp = path.join(__dirname, '_tmp-locandina-' + lang + '-' + Date.now() + '.html');
+    fs.writeFileSync(tmp, await html(lang));
+    const png = path.join(OUT_DIR, T[lang].file + '.png');
+    const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 2.5 });
+    await page.goto('file://' + tmp);
+    await page.waitForTimeout(1200); // web font da Google Fonts
+    await page.screenshot({ path: png, clip: { x: 0, y: 0, width: 794, height: 1123 } });
+    await page.pdf({ path: path.join(PRINT_DIR, T[lang].file + '.pdf'), printBackground: true, preferCSSPageSize: true });
+    await page.close();
+    fs.unlinkSync(tmp);
+    console.log('Fatto:', T[lang].file);
+  }
   await browser.close();
-  console.log('Fatto:', png);
-  console.log('Fatto: locandina.pdf in', PRINT_DIR);
 }
 main().catch(e => { console.error(e); process.exit(1); });
