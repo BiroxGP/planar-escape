@@ -3,8 +3,8 @@
 // biglietto da visita (render-biglietto.js).
 //
 // Uso: node render-locandina.js
-//   genera, per italiano e inglese, cards_final/altro/locandina[_en].png (anteprima) e
-//   cards_final/print/locandina[_en].pdf (A4, 210x297mm). I testi sono nel dizionario T.
+//   genera cards_final/altro/locandina.png (anteprima) e cards_final/print/locandina.pdf
+//   (A4, 210x297mm). I testi sono nel dizionario T (una lingua per chiave, per ora solo it).
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -35,7 +35,7 @@ const T = {
     ],
     diceH: 'Il dado',
     diceRule: 'Ogni prova si fa con <b>un d6</b>: riesce se il risultato è <b>minore o uguale al tuo valore</b>, oppure se esce un <b>6</b>, sempre.',
-    fight: '<b>Scontro:</b> tutti tirano sulla stessa caratteristica; ogni colpo a segno toglie 1 al nemico.',
+    fight: '<b>Scontro:</b> tutti tirano sulla stessa caratteristica e si confrontano i danni del giro: chi ne fa meno incassa la differenza.',
     statsH: 'Sei caratteristiche',
     stats: [['#c9573d', 'Forza', 'scontri fisici'], ['#4d8fc9', 'Intelletto', 'magia e conoscenza'], ['#5fb36a', 'Destrezza', 'schivare e fuggire'], ['#d8506b', 'Punti Vita', 'a 0 si sviene'], ['#a37bd6', 'Sanità', 'se crolla, Follia'], ['#e0b04a', 'Anima', 'se crolla, Corruzione']],
     famH: 'Sette famiglie di piani',
@@ -45,31 +45,6 @@ const T = {
     win: 'Non si torna a casa per scelta: serve la fortuna di <b>pescare la Via di Casa</b> tra le destinazioni leggendarie del Piano Terreno. Si lascia il gruppo? Il bottino è tutto tuo, ma sei solo.',
     demo: 'PROVA LA DEMO',
     foot1: 'Planar Escape · prototipo in playtest',
-    foot2: 'Instagram / TikTok @planar.escape',
-  },
-  en: {
-    file: 'locandina_en',
-    tagline: 'One last breath. One portal. A leap into the unknown.',
-    lead: 'A party of adventurers is about to be wiped out by an enemy far too strong. At the last moment, <b>holding hands, they open a portal and flee</b> without knowing where it leads. From there it is one leap after another through randomly generated planes, with a single goal: <b>getting home</b>. You cooperate to survive, but <b>everyone wins on their own</b>.',
-    turnH: 'A turn in four moves',
-    steps: [
-      ['1', 'Jump', 'Destination is <b>random</b>. In the portal the group is a single entity: it all lands together.'],
-      ['2', 'The plane', 'Every plane has its own effect: fire, poison, madness, time breaking apart.'],
-      ['3', 'Encounter', 'One card: a fight, a test, a merchant or a reward.'],
-      ['4', 'Growth', 'Every <b>5 jumps</b>: +1 to a stat and a new class power.'],
-    ],
-    diceH: 'The die',
-    diceRule: 'Every test uses <b>one d6</b>: it succeeds if the roll is <b>equal to or lower than your value</b>, or on a <b>6</b>, always.',
-    fight: '<b>Fight:</b> everyone rolls on the same stat; each hit takes 1 from the enemy.',
-    statsH: 'Six stats',
-    stats: [['#c9573d', 'Strength', 'physical fights'], ['#4d8fc9', 'Intellect', 'magic and lore'], ['#5fb36a', 'Dexterity', 'dodging and fleeing'], ['#d8506b', 'Hit Points', 'at 0 you pass out'], ['#a37bd6', 'Sanity', 'if it drops, Madness'], ['#e0b04a', 'Soul', 'if it drops, Corruption']],
-    famH: 'Seven plane families',
-    fams: [['🔥', 'Elemental', 'Fire, Water, Poison, Storm…'], ['🌋', 'Terrestrial', 'Ancient Earth Age, Alien Flora'], ['👹', 'Demonic', 'Three infernal circles, ever harsher'], ['☠️', 'Undead', 'The Negative Plane, wearing down the mind'], ['🌙', 'Ethereal', 'Dream, Mirrors, Light, Darkness…'], ['✨', 'Harmony', 'Order, Law, Logic, Truth…'], ['🌀', 'Entropy', 'Chaos, Time, Void, Oblivion…']],
-    classes: '13 classes: Warrior, Mage, Rogue, Druid, Monk…',
-    winH: 'How to win',
-    win: 'You do not go home by choice: you need the luck to <b>draw the Way Home</b> among the legendary Earthly Plane destinations. Leave the group? All the loot is yours, but you are alone.',
-    demo: 'TRY THE DEMO',
-    foot1: 'Planar Escape · prototype in playtest',
     foot2: 'Instagram / TikTok @planar.escape',
   },
 };

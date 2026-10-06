@@ -30,8 +30,8 @@ const BLOCKS_LEFT = [
     '<b>Check di gruppo:</b> un solo tiro per tutti, col valore <b>più alto</b> presente. I reroll personali non si usano mai sui check di gruppo.',
   ]],
   ['Scontro (Contesa)', [
-    'Tutti i personaggi tirano sulla <b>stessa caratteristica</b> indicata dalla carta; ogni nemico tira per sé. Un colpo a segno del team infligge <b>1 danno</b> (un 6 naturale è sempre a segno); per i nemici un 6 è sempre un fallimento.',
-    'Ogni nemico ha tanti <b>PV quanto il suo valore</b> e, se colpisce, fa altrettanto danno. Il danno del team si scarica per intero sui nemici; il danno dei nemici passa a voi <b>solo per l\'eccedenza</b>, su un bersaglio a caso.',
+    'Tutti i personaggi tirano sulla <b>stessa caratteristica</b> indicata dalla carta; ogni nemico tira per sé. Un colpo a segno di un personaggio infligge <b>1 danno</b> (alcune armi e capacità di più) e un 6 naturale è sempre a segno. Un nemico colpisce se tira ≤ al suo valore (per lui un 6 è sempre un fallimento) e fa tanto danno quant\'è il suo valore, che è anche il suo numero di <b>PV</b>.',
+    'A fine giro si <b>sommano i danni</b> delle due parti: se il team ne ha fatti di più, i nemici incassano la differenza; se ne hanno fatti di più i nemici, la differenza passa a un solo personaggio, a caso. A <b>pareggio</b> (almeno 1 danno) i nemici incassano tutto il danno del team.',
     'A fine giro si può <b>ritirarsi</b> nel portale (check di Destrezza di gruppo, vale il valore più basso). Un nemico <b>persistente</b> sconfitto va anche seminato: check di Destrezza di gruppo (valore più alto), se fallisce lo stesso Incontro torna.',
   ]],
 ];
@@ -90,8 +90,8 @@ function html() {
     .cols{ margin-top:4.5mm; display:grid; grid-template-columns:1fr 1fr; gap:6mm; }
     .col{ display:flex; flex-direction:column; gap:3.6mm; }
     .blk{ background:#fffaf0; border:.3mm solid #cdb98f; border-radius:2mm; padding:3mm 3.6mm 3.2mm; }
-    .blk h2{ font-family:'Cinzel',serif; font-weight:700; font-size:4.7mm; letter-spacing:.06em; text-transform:uppercase; color:#8a5a1f; margin-bottom:1.6mm; }
-    .blk p{ font-size:3.8mm; line-height:1.33; margin-top:1.3mm; }
+    .blk h2{ font-family:'Cinzel',serif; font-weight:700; font-size:4.4mm; letter-spacing:.06em; text-transform:uppercase; color:#8a5a1f; margin-bottom:1.6mm; }
+    .blk p{ font-size:3.5mm; line-height:1.32; margin-top:1.3mm; }
     .blk p:first-of-type{ margin-top:0; }
     .blk b{ color:#3a2347; }
     .foot{ position:absolute; left:12mm; right:12mm; bottom:6mm; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:2.6mm; color:#8a7a5c; }
