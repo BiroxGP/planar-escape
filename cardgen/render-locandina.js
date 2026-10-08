@@ -181,10 +181,67 @@ async function html(lang) {
   </div></body></html>`;
 }
 
+// Retro spartano: titolo, frase, e i contatti con i QR (demo, Instagram, TikTok).
+async function retroHtml() {
+  const qr = async (url) => QRCode.toDataURL(url, { margin: 1, width: 500, color: { dark: '#1c1524', light: '#f4ecdc' } });
+  const links = [
+    ['PROVA LA DEMO', 'planar-escape.vercel.app/gioco', await qr(DEMO_URL)],
+    ['INSTAGRAM', '@planar.escape', await qr('https://www.instagram.com/planar.escape/')],
+    ['TIKTOK', '@planar.escape', await qr('https://www.tiktok.com/@planar.escape')],
+  ];
+  return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
+    @page{ size:210mm 297mm; margin:0; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{ background:#140f1a; }
+    body{ font-family:'Source Serif 4',Georgia,serif; color:#f4ecdc; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .sheet{ position:relative; width:210mm; height:297mm; overflow:hidden; text-align:center;
+      background: radial-gradient(ellipse 150mm 110mm at 50% 38%, rgba(184,135,74,.16), transparent 65%), linear-gradient(160deg,#241a2e 0%,#1a1322 55%,#140f1a 100%); }
+    .frame{ position:absolute; inset:9mm; border:.35mm solid #c9a15a; opacity:.7; }
+    .dial{ position:absolute; left:50%; top:62mm; transform:translateX(-50%); }
+    .title{ position:absolute; left:0; right:0; top:112mm; font-family:'Cinzel',serif; font-weight:700; font-size:17mm; letter-spacing:.07em; line-height:1;
+      background:linear-gradient(90deg,#f1d9a0,#c9954f); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .tag{ position:absolute; left:0; right:0; top:136mm; font-style:italic; font-size:5.4mm; color:#e6d7b2; }
+    .rule{ position:absolute; left:50%; top:150mm; width:60mm; height:.3mm; margin-left:-30mm; background:#c9a15a; opacity:.6; }
+    .links{ position:absolute; left:0; right:0; bottom:44mm; display:flex; justify-content:center; gap:2mm; }
+    .lk{ width:56mm; }
+    .lk .img{ width:40mm; height:40mm; margin:0 auto; border-radius:2mm; display:block; box-shadow:0 .8mm 2.4mm rgba(0,0,0,.5); }
+    .lk .l{ margin-top:3mm; font-family:'Cinzel',serif; font-weight:700; font-size:4mm; letter-spacing:.1em; color:#f9f3e6; }
+    .lk .s{ margin-top:1mm; font-family:'JetBrains Mono',monospace; font-weight:500; font-size:2.9mm; color:#f2d18f; }
+    .who{ position:absolute; left:0; right:0; bottom:20mm; font-size:4mm; line-height:1.5; color:#d6c9b8; }
+    .who b{ color:#f9f3e6; font-weight:600; }
+    .who span{ font-family:'JetBrains Mono',monospace; font-size:3.3mm; color:#f2d18f; }
+  </style></head><body>
+  <div class="sheet">
+    <div class="frame"></div>
+    <svg class="dial" width="40mm" height="40mm" viewBox="0 0 116 116">
+      <circle cx="58" cy="58" r="50" fill="none" stroke="#c9a15a" stroke-width="1.5"/>
+      <circle cx="58" cy="58" r="3" fill="#c9a15a"/>
+      ${Array.from({ length: 8 }).map((_, i) => { const a = (i * Math.PI) / 4; return `<line x1="${58 + Math.cos(a) * 44}" y1="${58 + Math.sin(a) * 44}" x2="${58 + Math.cos(a) * 50}" y2="${58 + Math.sin(a) * 50}" stroke="#c9a15a" stroke-width="1.5"/>`; }).join('')}
+    </svg>
+    <div class="title">PLANAR ESCAPE</div>
+    <div class="tag">La fuga non è mai la fine della storia.</div>
+    <div class="rule"></div>
+    <div class="links">${links.map(l => `<div class="lk"><img class="img" src="${l[2]}"><div class="l">${l[0]}</div><div class="s">${l[1]}</div></div>`).join('')}</div>
+    <div class="who"><b>Gabriele Pieralli</b> · ideatore e game designer<br><span>planarescape@gmail.com</span></div>
+  </div></body></html>`;
+}
+
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
+  {
+    const tmp = path.join(__dirname, '_tmp-locandina-retro-' + Date.now() + '.html');
+    fs.writeFileSync(tmp, await retroHtml());
+    const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 2.5 });
+    await page.goto('file://' + tmp);
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: path.join(OUT_DIR, 'locandina_retro.png'), clip: { x: 0, y: 0, width: 794, height: 1123 } });
+    await page.pdf({ path: path.join(PRINT_DIR, 'locandina_retro.pdf'), printBackground: true, preferCSSPageSize: true });
+    await page.close();
+    fs.unlinkSync(tmp);
+    console.log('Fatto: locandina_retro');
+  }
   for (const lang of Object.keys(T)) {
     const tmp = path.join(__dirname, '_tmp-locandina-' + lang + '-' + Date.now() + '.html');
     fs.writeFileSync(tmp, await html(lang));
