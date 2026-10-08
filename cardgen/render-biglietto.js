@@ -73,7 +73,8 @@ async function frontHtml() {
     .contact .name{ font-size:24px; font-weight:600; color:#f9f3e6; }
     .contact .role{ font-style:italic; font-size:16px; font-weight:500; color:#d6c9b8; margin-top:6px; }
     .contact .mono{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:16px; letter-spacing:.015em; color:#f2d18f; margin-top:12px; text-shadow:0 1px 2px rgba(0,0,0,.35); }
-    .dial{ position:absolute; left:64px; top:410px; }
+    .igrow{ position:absolute; left:58px; top:436px; display:flex; align-items:center; gap:16px; }
+    .igrow span{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:19px; letter-spacing:.02em; color:#f2d18f; text-shadow:0 1px 2px rgba(0,0,0,.35); }
     .qrblock{ position:absolute; right:40px; top:70px; text-align:center; display:flex; gap:22px; }
     .qrcol{ width:114px; }
     .qrcol .lbl{ font-family:'Cinzel',serif; font-weight:500; font-size:13px; letter-spacing:.1em; color:#f9f3e6; margin-bottom:8px; }
@@ -92,16 +93,7 @@ async function frontHtml() {
         <div class="mono">planarescape@gmail.com</div>
         <div class="mono">planar-escape.vercel.app</div>
       </div>
-      <svg class="dial" width="116" height="116" viewBox="0 0 116 116">
-        <circle cx="58" cy="58" r="50" fill="none" stroke="#c9a15a" stroke-width="1.5"/>
-        <circle cx="58" cy="58" r="3" fill="#c9a15a"/>
-        ${Array.from({ length: 8 }).map((_, i) => {
-          const a = (i * Math.PI) / 4;
-          const x1 = 58 + Math.cos(a) * 44, y1 = 58 + Math.sin(a) * 44;
-          const x2 = 58 + Math.cos(a) * 50, y2 = 58 + Math.sin(a) * 50;
-          return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c9a15a" stroke-width="1.5"/>`;
-        }).join('')}
-      </svg>
+      <div class="igrow"><svg  width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c9a15a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#c9a15a" stroke="none"/></svg><span>@planar.escape</span></div>
       <div class="qrblock">
         <div class="qrcol"><div class="lbl">INSTAGRAM</div><img src="${igQr}"></div>
         <div class="qrcol"><div class="lbl">TIKTOK</div><img src="${ttQr}"></div>

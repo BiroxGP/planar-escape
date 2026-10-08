@@ -197,7 +197,7 @@ async function retroHtml() {
     .sheet{ position:relative; width:210mm; height:297mm; overflow:hidden; text-align:center;
       background: radial-gradient(ellipse 150mm 110mm at 50% 38%, rgba(184,135,74,.16), transparent 65%), linear-gradient(160deg,#241a2e 0%,#1a1322 55%,#140f1a 100%); }
     .frame{ position:absolute; inset:9mm; border:.35mm solid #c9a15a; opacity:.7; }
-    .dial{ position:absolute; left:50%; top:62mm; transform:translateX(-50%); }
+    .dial{ position:absolute; left:50%; top:70mm; transform:translateX(-50%); }
     .title{ position:absolute; left:0; right:0; top:112mm; font-family:'Cinzel',serif; font-weight:700; font-size:17mm; letter-spacing:.07em; line-height:1;
       background:linear-gradient(90deg,#f1d9a0,#c9954f); -webkit-background-clip:text; background-clip:text; color:transparent; }
     .tag{ position:absolute; left:0; right:0; top:136mm; font-style:italic; font-size:5.4mm; color:#e6d7b2; }
@@ -213,11 +213,7 @@ async function retroHtml() {
   </style></head><body>
   <div class="sheet">
     <div class="frame"></div>
-    <svg class="dial" width="40mm" height="40mm" viewBox="0 0 116 116">
-      <circle cx="58" cy="58" r="50" fill="none" stroke="#c9a15a" stroke-width="1.5"/>
-      <circle cx="58" cy="58" r="3" fill="#c9a15a"/>
-      ${Array.from({ length: 8 }).map((_, i) => { const a = (i * Math.PI) / 4; return `<line x1="${58 + Math.cos(a) * 44}" y1="${58 + Math.sin(a) * 44}" x2="${58 + Math.cos(a) * 50}" y2="${58 + Math.sin(a) * 50}" stroke="#c9a15a" stroke-width="1.5"/>`; }).join('')}
-    </svg>
+    <div class="dial"><svg  width="28mm" height="28mm" viewBox="0 0 24 24" fill="none" stroke="#c9a15a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#c9a15a" stroke="none"/></svg></div>
     <div class="title">PLANAR ESCAPE</div>
     <div class="tag">La fuga non è mai la fine della storia.</div>
     <div class="rule"></div>
