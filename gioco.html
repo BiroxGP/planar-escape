@@ -661,7 +661,7 @@ const INCONTRI = {
   nonmorti:[
     C("nm_nessuno","Nessun evento","nessun","Il piano è insolitamente silenzioso. Nessun effetto."),
     C("nm_appestato","Appestato","incontro","Un cadavere ambulante cosparge languore e pustole a ogni contatto. Scontro di Forza (valore nemico pari al girone: 1°, 2° o 3°).",{check:"for",gravity:"level"}),
-    C("nm_spettro","Spettro","incontro","Risucchia la mente, svuotandola. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°; danno passante a Intelletto, non a Punti Vita).",{check:"int",gravity:"level",damageStat:"int"}),
+    C("nm_spettro","Spettro","incontro","Risucchia la mente, svuotandola. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°; danno passante: oltre ai PV, anche -1 temporaneo a Intelletto).",{check:"int",gravity:"level",onLoseExtra:"tempDebuffInt"}),
     C("nm_nugolo","Nugolo necrotico","incontro","Uno sciame di ratti e insetti in decomposizione assale in massa. Scontro di Destrezza: 3 creature di valore 1 (2 di valore 2 nel 3° girone).",{check:"des",gravity:"level-1",swarm:"auto"}),
     C("nm_tomba","Tomba saccheggiabile","check","Una tomba intatta. Check di Destrezza: se superato, trovi un oggetto; se fallito, una trappola ti ferisce (-1 PV).",{check:"des",onFail:{type:"damage",n:1},onSuccess:{type:"item"}}),
     C("nm_nebbia","Nebbia di decomposizione","check","L'aria stessa marcisce e appesantisce i polmoni. Check di Forza: se fallito, -1 PV.",{check:"for",onFail:{type:"damage",n:1,group:true}}),

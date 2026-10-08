@@ -22,7 +22,7 @@ const POKER = { w: 63.5, h: 88 }, TAROCCO = { w: 120, h: 70 };
 const RISTAMPE = [
   { id: 'o_bacchettarinvio', back: 'retro_oggetto', ...POKER },      // Bacchetta del Rinvio: annulla l'Incontro per tutti
   { id: 'veggente', back: 'retro_classi', ...POKER },                // Veggente: Intelletto 3, abilita' passiva
-  { id: 'en_spettro', back: 'retro_incontro_entropia', ...POKER },   // Spettro del Tempo: da verificare (testo con "oltre ai PV")
+  { id: 'nm_spettro', back: 'retro_incontro_nonmorti', ...POKER },   // Spettro (Non-morti): passante = PV + -1 temporaneo a Intelletto
   { id: 'antro_creatura', back: 'retro_piani', ...TAROCCO },         // L'Antro della Creatura: statistica a scelta
 ];
 

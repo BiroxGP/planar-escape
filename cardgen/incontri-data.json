@@ -324,7 +324,7 @@
     "deck": "nonmorti",
     "family": "nonmorti",
     "type": "incontro",
-    "text": "Risucchia la mente, svuotandola. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°; danno passante a Intelletto, non a Punti Vita).",
+    "text": "Risucchia la mente, svuotandola. Scontro di Intelletto (valore nemico pari al girone: 1°, 2° o 3°; danno passante: oltre ai PV, anche -1 temporaneo a Intelletto).",
     "manual": false,
     "forte": false,
     "persistent": false
