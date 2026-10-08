@@ -16,8 +16,12 @@ sé stesso, vedi il bug del 24/09 sotto). Il risultato va poi copiato su `assets
 
 ## Da ristampare (non ancora confermato)
 
+| Data | Carta | Tipo | Cosa è cambiato |
+|---|---|---|---|
+| 2026-10-08 | Bacchetta del Rinvio (Oggetto oneshot, `o_bacchettarinvio`) | Testo | Non è più "come la Furtività" (una sola persona nascosta): annulla l'Incontro ostile per tutto il gruppo presente, senza rischio né ricompensa, anche contro non-morti e demoni. Rigenerata da `assets/cards_raw/` con `render-oggetti.js`, copiata su `assets/cards/o_bacchettarinvio.png`. |
+| 2026-10-08 | L'Antro della Creatura (Piano Terreno, Finale B, `antro_creatura`) | Testo | La caratteristica dello scontro contro il Drago Antico non è più casuale (d6: 1-2 Forza, 3-4 Intelletto, 5-6 Destrezza) ma a scelta del gruppo fra Forza, Intelletto e Destrezza. Rigenerata da `assets/cards_raw/` con `render-piano-terreno.js` (formato orizzontale), copiata su `assets/cards/antro_creatura.png`. |
 
-_(nessuna carta in attesa di ristampa)_
+Da verificare: lo Spettro del Tempo (`en_spettro`) e le altre carte con danno passante hanno già nel file "oltre ai PV, anche -1 temporaneo…" dal 2026-10-05; se la copia stampata non riporta "oltre ai PV" è una stampa vecchia e va rifatta.
 
 ## Già ristampate / in attesa di conferma stampa
 

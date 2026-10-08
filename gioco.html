@@ -791,7 +791,7 @@ const OGGETTI = [
   O("o_auraassorbente","Aura Assorbente","protezione","Il primo danno subito in Contesa da chi la indossa è sempre parato (si ricarica a ogni nuovo piano).",{blockFirstHitCombatAlways:true}),
   O("o_reliquiafredda","Reliquia Fredda","protezione","Annulla il malus d'ingresso di Tenebre o Luce (permanente).",{blockPlane:["tenebre","luce"]}),
   O("o_bacchettafulmine","Bacchetta del Fulmine","oneshot","One-shot: 1 danno diretto a tutte le entità presenti, senza tirare.",{oneUse:true,combatDamageAll:1}),
-  O("o_bacchettarinvio","Bacchetta del Rinvio","oneshot","Annulla un Incontro ostile, come la Furtività.",{oneUse:true,stealthLikeItem:true}),
+  O("o_bacchettarinvio","Bacchetta del Rinvio","oneshot","Annulla un Incontro ostile per tutto il gruppo presente: nessun rischio né ricompensa.",{oneUse:true,dismissGroupItem:true}),
   O("o_vergascambio","Verga dello Scambio","oneshot","One-shot (Caos): scambia i risultati di un giro già tirato.",{oneUse:true,manualUse:true}),
   O("o_bastonerifugio","Bastone del Rifugio","oneshot","Trasforma il piano corrente in Recupero per un turno, solo per chi lo usa.",{oneUse:true,selfRecupero:true}),
   O("o_scettrocongelamento","Scettro di Congelamento","oneshot","Un'entità persistente non mette a segno colpi in quel giro.",{oneUse:true,freezeEntityItem:true}),
@@ -854,7 +854,7 @@ const SPELLS_BY_ID = Object.fromEntries(Object.values(SPELLS).flat().map(s=>[s.i
 /* ---------------- PIANO TERRENO (12, senza reinserimento) ---------------- */
 const PIANO_TERRENO = [
   {id:"via_di_casa",name:"La Via di Casa",text:"Si torna a casa incolumi — Finale A.",kind:"finaleA"},
-  {id:"antro_creatura",name:"L'Antro della Creatura",text:"Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",kind:"boss",finale:true,boss:{name:"Drago Antico",statRandom:true,value:5}},
+  {id:"antro_creatura",name:"L'Antro della Creatura",text:"Finale B: scontro contro il Drago Antico (valore 5, statistica a scelta del gruppo: Forza, Intelletto o Destrezza).",kind:"boss",finale:true,boss:{name:"Drago Antico",statChoice:["for","int","des"],value:5}},
   {id:"finale_c",name:"L'Eden Alieno",text:"Un mondo alieno che sembra un paradiso terrestre: cieli tersi, foreste rigogliose, acque pure. Lo abita un popolo dalla tecnologia arretrata ma intelligente e pacifico, che accoglie il gruppo a braccia aperte — Finale C.",kind:"finaleA"},
   {id:"cuore_montagna",name:"Il Cuore della Montagna",text:"Ogni presente recupera 1 oggetto e 1 risorsa planare, senza rischi.",kind:"bonus"},
   {id:"fondo_mare",name:"Il Fondo del Mare",text:"Scontro contro il Leviatano Ancestrale (Forza 5) per risalire in superficie.",kind:"boss",boss:{name:"Leviatano Ancestrale",stat:"for",value:5}},
@@ -2504,12 +2504,16 @@ function resolveContesaDamage({teamDmg, entityDmg, entities, targets, dmgStat, c
       e.hp-=take; remaining-=take;
     });
   }
+  lastPassthrough = null;
   if(passThrough>0 && targets.length){
     const target = targets[Math.floor(Math.random()*targets.length)];
+    const before = target.stats[dmgStat];
     for(let i=0;i<passThrough;i++) applyCombatPassthrough(target, dmgStat, ctx);
+    lastPassthrough = { target, lost: target.stats[dmgStat] < before }; // chi ha incassato il passante, e se ha perso davvero qualcosa
   }
   return passThrough;
 }
+let lastPassthrough = null;
 function reshuffleMazzoPiani(){
   if(inStasi()){ logMsg('⏳ Qui nulla può cambiare: il mazzo Piani non è manipolabile (Stasi).', 'warn'); return; }
   state.mazzoPiani = shuffle(state.mazzoPiani);
@@ -3131,7 +3135,8 @@ function grantHidden(c, sourceName, opts){
   logMsg(`🥷 ${c.name} evita l'Incontro grazie a ${sourceName}.`);
   return true;
 }
-function dismissEncounterForGroup(sourceName){
+function dismissEncounterForGroup(sourceName, opts){
+  opts = opts||{};
   const card = currentIncontro();
   if(!state.currentDraw || state.currentDraw.phase!=='incontro' || !card || card.type!=='incontro'){
     logMsg(`⚠️ ${sourceName}: si usa solo di fronte a un Incontro ostile in corso.`,'warn');
@@ -3140,7 +3145,7 @@ function dismissEncounterForGroup(sourceName){
   const deckKey = state.currentDraw.incontroDeck;
   const combatEntities = state.currentDraw.combat && state.currentDraw.combat.entities || [];
   const isUndeadOrDemon = deckKey==='demoni' || deckKey==='nonmorti' || combatEntities.some(e=>e.undead||e.demon);
-  if(isUndeadOrDemon){
+  if(isUndeadOrDemon && !opts.anyEntity){
     logMsg(`⚠️ ${sourceName}: non funziona su non-morti o demoni.`,'warn');
     return false;
   }
@@ -3150,7 +3155,9 @@ function dismissEncounterForGroup(sourceName){
     state.currentDraw.stealthDecided[m.id]=true;
     if(!state.currentDraw.hidden.includes(m.id)) state.currentDraw.hidden.push(m.id);
   });
-  logMsg(`💬 ${sourceName}: l'entità desiste dallo scontro, per tutto il gruppo presente — nessun rischio né ricompensa.`,'good');
+  logMsg(opts.anyEntity
+    ? `✨ ${sourceName}: l'Incontro è annullato per tutto il gruppo presente — nessun rischio né ricompensa.`
+    : `💬 ${sourceName}: l'entità desiste dallo scontro, per tutto il gruppo presente — nessun rischio né ricompensa.`,'good');
   return true;
 }
 function renderStealthCheckPanel(chars){
@@ -3327,13 +3334,14 @@ function fightRound(plane, card, acts, cb){
     const surpriseTag = l.surprise?' 🥷':'';
     logMsg(`　 ${l.isEntity?'👹':'🙂'} ${l.who}${surpriseTag}: ${rollLabel} ${l.hit?'✔':'✘'}${l.dmg?` (${l.dmg} dmg${l.surprise && l.dmg===2?', sorpresa critica!':''})`:''}`);
   });
-  if(card.onLoseExtra && passThrough>0){
-    acts.filter(c=>!stillHidden(c)).forEach(c=>{
-      if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
-      if(card.onLoseExtra==='tempDebuffDes') applyTempDebuff(c,'des');
-      if(card.onLoseExtra==='tempDebuffInt') applyTempDebuff(c,'int');
-      if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
-    });
+  // "danno passante: oltre ai PV, anche -1 temporaneo a ...": colpisce SOLO chi ha subito il danno
+  // passante (il bersaglio scelto a caso), e solo se il danno è davvero andato a segno (non parato).
+  if(card.onLoseExtra && passThrough>0 && lastPassthrough && lastPassthrough.lost){
+    const c = lastPassthrough.target;
+    if(card.onLoseExtra==='tempDebuffSan') applyTempDebuff(c,'san');
+    if(card.onLoseExtra==='tempDebuffDes') applyTempDebuff(c,'des');
+    if(card.onLoseExtra==='tempDebuffInt') applyTempDebuff(c,'int');
+    if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
   }
   // chi ha attaccato di sorpresa questo giro è scoperto da ora in poi (niente più scelta per
   // lui, combatte come tutti); tutti gli altri ancora nascosti ridecidono al prossimo giro.
@@ -4115,11 +4123,27 @@ function bindPianoTerrenoModal(dest){
   if(bossBtn) bossBtn.onclick=()=>{
     closeModal();
     const boss=dest.boss;
+    const startBoss = (stat)=>{
+      state.currentDraw = { planeId:null, phase:'boss', incontroDeck:null, incontroId:null, targets: activeChars().map(c=>c.id), bossCard:{name:boss.name,check:stat,gravity:boss.value-2,text:`Scontro finale contro ${boss.name}.`,type:'incontro',persistent:false} };
+      state.currentDraw.bossMode=true;
+      render();
+      renderBossFight(dest, boss, stat);
+    };
+    if(boss.statChoice){
+      // la caratteristica dello scontro la sceglie il gruppo, una volta sola, prima di cominciare
+      openModal(`<h3>🐉 ${escapeHtml(dest.name)}</h3>
+        <p>Il gruppo sceglie su quale caratteristica affrontare <strong>${escapeHtml(boss.name)}</strong> (valore ${boss.value}): vale per tutti, per tutto lo scontro.</p>
+        <div class="row">${boss.statChoice.map(s=>`<button class="primary" data-bossstat="${s}">${STAT_LABEL[s]}</button>`).join('')}</div>`);
+      document.querySelectorAll('[data-bossstat]').forEach(b=>b.onclick=()=>{
+        const s=b.dataset.bossstat;
+        logMsg(`🐉 Il gruppo sceglie di affrontare ${boss.name} su ${STAT_LABEL[s]}.`);
+        closeModal();
+        startBoss(s);
+      });
+      return;
+    }
     let stat=boss.stat; if(boss.statRandom){ const r=d6(); stat = r<=2?'for':(r<=4?'int':'des'); }
-    state.currentDraw = { planeId:null, phase:'boss', incontroDeck:null, incontroId:null, targets: activeChars().map(c=>c.id), bossCard:{name:boss.name,check:stat,gravity:boss.value-2,text:`Scontro finale contro ${boss.name}.`,type:'incontro',persistent:false} };
-    state.currentDraw.bossMode=true;
-    render();
-    renderBossFight(dest, boss, stat);
+    startBoss(stat);
   };
   const bossPBtn=document.getElementById('btnStartBossP');
   if(bossPBtn) bossPBtn.onclick=()=>{
@@ -4573,8 +4597,8 @@ function useItem(c, idx){
     c.inventory.splice(idx,1);
     return;
   }
-  if(it.stealthLikeItem){
-    if(grantHidden(c, it.name)) c.inventory.splice(idx,1);
+  if(it.dismissGroupItem){
+    if(dismissEncounterForGroup(it.name, {anyEntity:true})) c.inventory.splice(idx,1);
     return;
   }
   if(it.personalReunionItem){

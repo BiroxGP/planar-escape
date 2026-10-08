@@ -9,7 +9,7 @@
   {
     "id": "antro_creatura",
     "name": "L'Antro della Creatura",
-    "text": "Finale B: scontro contro il Drago Antico (valore 5, statistica casuale For/Int/Des).",
+    "text": "Finale B: scontro contro il Drago Antico (valore 5, statistica a scelta del gruppo: Forza, Intelletto o Destrezza).",
     "finale": true,
     "personalExit": false
   },

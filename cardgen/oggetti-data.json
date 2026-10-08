@@ -371,7 +371,7 @@
     "id": "o_bacchettarinvio",
     "name": "Bacchetta del Rinvio",
     "cat": "oneshot",
-    "text": "Annulla un Incontro ostile, come la Furtività.",
+    "text": "Annulla un Incontro ostile per tutto il gruppo presente: nessun rischio né ricompensa.",
     "tier": null,
     "slot": null
   },
