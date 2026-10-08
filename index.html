@@ -188,7 +188,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
   </div>
   <div class="panel">
     <h2 id="classesTitle">Le classi</h2>
-    <p class="hint" id="classesHint" style="margin-bottom:0;">Le prime quattro, già protagoniste dei video qui sotto:</p>
+    <p class="hint" id="classesHint" style="margin-bottom:0;">Sette classi giocabili nella demo, le prime quattro già protagoniste dei video qui sotto:</p>
     <div class="class-showcase">
       <div class="class-showcase-card">
         <div class="head"><span class="ic">⚔️</span><h4>Guerriero</h4></div>
@@ -206,8 +206,20 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
         <div class="head"><span class="ic">🙏</span><h4>Chierico</h4></div>
         <p id="classDescChierico">Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.</p>
       </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">🔮</span><h4>Veggente</h4></div>
+        <p id="classDescVeggente">Sa sempre quale carta è in cima al mazzo Piani prima di ogni salto: nessun incantesimo da lanciare, la sua vista oltre il portale è sempre accesa.</p>
+      </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">🏔️</span><h4>Sciamano</h4></div>
+        <p id="classDescSciamano">Il generalista: un piede in ogni scuola di magia, a proprio agio in acqua e con un'uscita personale dall'Età della Terra Antica.</p>
+      </div>
+      <div class="class-showcase-card">
+        <div class="head"><span class="ic">👊</span><h4>Monaco</h4></div>
+        <p id="classDescMonaco">Disciplina mentale: parte con più Sanità e Anima, ha un reroll fisso e una volta per sosta annulla del tutto un danno, su qualsiasi caratteristica.</p>
+      </div>
     </div>
-    <div class="class-showcase-teaser" id="classesTeaser">🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
+    <div class="class-showcase-teaser" id="classesTeaser">🔒 Altre sei classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.</div>
   </div>
   <div class="panel center landing-cta">
     <h2 id="ctaTitle">Vuoi provare il gioco vero?</h2>
@@ -246,6 +258,18 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
       <p class="hint" id="vidCaption4">Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.</p>
     </div>
   </div>
+  <div class="grid cols-2">
+    <div class="panel landing-video">
+      <h3><span id="vidTitle5">🪞 Il Piano degli Specchi</span></h3>
+      <video controls preload="none" poster="assets/video/piano_specchi1_poster.jpg" src="assets/video/piano_specchi1.mp4"></video>
+      <p class="hint" id="vidCaption5">Un piano della seconda onda, già nella demo: il tuo riflesso ti sfida in una Contesa su una caratteristica a scelta.</p>
+    </div>
+    <div class="panel landing-video">
+      <h3><span id="vidTitle6">✨ Il Piano Sacro</span> <span class="badge" id="spoilerBadge2" style="font-family:'JetBrains Mono',monospace; font-size:.6rem; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .5rem; border-radius:99px; background:var(--ember-soft); color:var(--ember); border:1px solid var(--ember); vertical-align:middle;">⚠️ Spoiler</span></h3>
+      <video controls preload="none" poster="assets/video/piano_sacro_poster.jpg" src="assets/video/piano_sacro.mp4"></video>
+      <p class="hint" id="vidCaption6">Un assaggio di un piano ancora da rivelare: qui la luce sacra è nemica di non-morti e demoni.</p>
+    </div>
+  </div>
   <div class="panel center">
     <p class="hint" id="videosCtaFooter">Convinto? <a href="/gioco">Entra nella demo</a> — è gratis e aperta a tutti — oppure <a href="mailto:planarescape@gmail.com">scrivimi</a> per la password admin e sbloccare tutto.</p>
   </div>
@@ -272,6 +296,15 @@ const I18N_EN = {
   "Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.": "Everything is resolved with dice rolls on six stats — Strength, Intellect, Dexterity, Hit Points, Sanity, Soul — with Madness and Corruption always lurking if Sanity or Soul drop too low.",
   "L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.": "The goal: find a way out before the group is wiped out for good.",
   "Le classi": "The classes",
+  "Sette classi giocabili nella demo, le prime quattro già protagoniste dei video qui sotto:": "Seven classes playable in the demo, the first four already starring in the videos below:",
+  "Sa sempre quale carta è in cima al mazzo Piani prima di ogni salto: nessun incantesimo da lanciare, la sua vista oltre il portale è sempre accesa.": "Always knows which card is on top of the Planes deck before every jump: no spell to cast, its sight beyond the portal is always on.",
+  "Il generalista: un piede in ogni scuola di magia, a proprio agio in acqua e con un'uscita personale dall'Età della Terra Antica.": "The generalist: a foot in every school of magic, at home in water, with a personal exit from the Ancient Earth Age.",
+  "Disciplina mentale: parte con più Sanità e Anima, ha un reroll fisso e una volta per sosta annulla del tutto un danno, su qualsiasi caratteristica.": "Mental discipline: starts with higher Sanity and Soul, has a fixed reroll, and once per rest fully cancels a hit to any stat.",
+  "🔒 Altre sei classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.": "🔒 Six more classes are coming with the reveal, one at a time — follow us on social to not miss them.",
+  "🪞 Il Piano degli Specchi": "🪞 The Plane of Mirrors",
+  "Un piano della seconda onda, già nella demo: il tuo riflesso ti sfida in una Contesa su una caratteristica a scelta.": "A second-wave plane, already in the demo: your reflection challenges you to a Contest on a stat of your choice.",
+  "✨ Il Piano Sacro": "✨ The Sacred Plane",
+  "Un assaggio di un piano ancora da rivelare: qui la luce sacra è nemica di non-morti e demoni.": "A glimpse of a plane yet to be revealed: here sacred light is the enemy of the undead and demons.",
   "Le prime quattro, già protagoniste dei video qui sopra:": "The first four, already starring in the videos above:",
   "Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.": "No magic, but heavy weapons and armor: withstands everything the physical planes can throw at it.",
   "Si muove nell'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.": "Moves in the shadows: can stay hidden instead of facing an Encounter, and always has a backup attempt.",
@@ -312,12 +345,15 @@ function applyLang(){
     howto4: 'Tutto si risolve con tiri di dado su sei caratteristiche — Forza, Intelletto, Destrezza, Punti Vita, Sanità Mentale, Anima — con Follia e Corruzione sempre in agguato se Sanità o Anima scendono troppo.',
     howto5: "L'obiettivo: trovare una via d'uscita prima che il gruppo venga spazzato via per sempre.",
     classesTitle: 'Le classi',
-    classesHint: 'Le prime quattro, già protagoniste dei video qui sotto:',
+    classesHint: 'Sette classi giocabili nella demo, le prime quattro già protagoniste dei video qui sotto:',
     classDescGuerriero: 'Nessuna magia, ma armi e armature pesanti: resiste a tutto ciò che i piani fisici possono scagliargli contro.',
     classDescLadro: 'Si muove nell\'ombra: può restare nascosto invece di affrontare un Incontro, e ha sempre un tentativo di riserva.',
     classDescMago: 'Il suo Dardo Incantato non fallisce mai: un colpo sicuro quando serve di più, pronto di nuovo dopo ogni sosta.',
     classDescChierico: 'Cura con un tocco e porta più Anima di chiunque altro: la spina dorsale spirituale del gruppo.',
-    classesTeaser: '🔒 Altre nove classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.',
+    classesTeaser: '🔒 Altre sei classi arrivano col reveal, una alla volta — seguici sui social per non perdertele.',
+    classDescVeggente: "Sa sempre quale carta è in cima al mazzo Piani prima di ogni salto: nessun incantesimo da lanciare, la sua vista oltre il portale è sempre accesa.",
+    classDescSciamano: "Il generalista: un piede in ogni scuola di magia, a proprio agio in acqua e con un'uscita personale dall'Età della Terra Antica.",
+    classDescMonaco: "Disciplina mentale: parte con più Sanità e Anima, ha un reroll fisso e una volta per sosta annulla del tutto un danno, su qualsiasi caratteristica.",
     vidTitle1: '⚔️ Uno scontro, una fuga',
     vidCaption1: "Uno scontro contro un mostro leggendario, risolto con una ritirata all'ultimo respiro.",
     vidTitle2: '🤝 Tutti per la manina',
@@ -327,6 +363,11 @@ function applyLang(){
     vidCaption3: 'Un assaggio di un piano ancora da rivelare — il gruppo salta via prima che il turno finisca.',
     vidTitle4: '⚡ Fuga dalla Tempesta',
     vidCaption4: "Fulmini a fine turno: l'unico modo per non pagarne il prezzo è saltare via prima che il turno finisca.",
+    vidTitle5: "🪞 Il Piano degli Specchi",
+    vidCaption5: "Un piano della seconda onda, già nella demo: il tuo riflesso ti sfida in una Contesa su una caratteristica a scelta.",
+    vidTitle6: "✨ Il Piano Sacro",
+    spoilerBadge2: '⚠️ Spoiler',
+    vidCaption6: "Un assaggio di un piano ancora da rivelare: qui la luce sacra è nemica di non-morti e demoni.",
     ctaTitle: 'Vuoi provare il gioco vero?',
     ctaBody: "La demo del simulatore di playtest è aperta a tutti, nessuna password richiesta:",
     ctaButtonLabel: 'Entra nella demo',

@@ -13,10 +13,10 @@ const { chromium } = require('playwright');
 const VIDEO_DIR = path.join(__dirname, '..', 'assets', 'video');
 const QUALITY = 0.85;
 
-const VIDEOS = ['drago_scontro', 'salto_manina', 'fuga_baratro', 'fuga_tempesta'];
+const VIDEOS = ['drago_scontro', 'salto_manina', 'fuga_baratro', 'fuga_tempesta', 'piano_specchi1', 'piano_sacro'];
 
 async function run() {
-  const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined, args: ['--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage();
   const harnessPath = path.join(__dirname, '_video-poster.html');
   fs.writeFileSync(harnessPath, '<video id="v" muted playsinline></video><canvas id="c"></canvas>');
