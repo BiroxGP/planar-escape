@@ -68,6 +68,7 @@ const TOKENS = {
     diameterPx: 1461,
     diameterMm: 40,
     renderPx: 900,
+    centerText: ['ABILITÀ', 'PRONTA'], ink: '#4a3412',
   },
   abilita_retro: {
     src: path.join(UI_DIR, 'pedina_abilita_retro.jpg'),
@@ -76,6 +77,7 @@ const TOKENS = {
     diameterPx: 1461,
     diameterMm: 40,
     renderPx: 900,
+    centerText: ['ABILITÀ', 'USATA'], ink: '#55555c',
   },
 };
 
@@ -124,15 +126,22 @@ function tokenHtml(key) {
   const bgPosX = -(t.center[0] - t.diameterPx / 2) * scale;
   const bgPosY = -(t.center[1] - t.diameterPx / 2) * scale;
   const url = pathToFileURL(t.src).href;
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
+  const txt = t.centerText ? `<div class="ct"><div class="l1">${t.centerText[0]}</div><div class="rule"></div><div class="l2">${t.centerText[1]}</div></div>` : '';
+  return `<!doctype html><html><head><meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap">
+  <style>
     *{margin:0;padding:0;}
     body{ background:transparent; }
     .token{
-      width:${renderPx}px; height:${renderPx}px; border-radius:50%; overflow:hidden;
+      position:relative; width:${renderPx}px; height:${renderPx}px; border-radius:50%; overflow:hidden;
       background-image:url(${url}); background-repeat:no-repeat;
       background-size:${bgSizeW}px ${bgSizeH}px; background-position:${bgPosX}px ${bgPosY}px;
     }
-  </style></head><body><div class="token"></div></body></html>`;
+    .ct{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; color:${t.ink||'#222'}; text-align:center; }
+    .ct .l1{ font-size:${Math.round(renderPx*0.088)}px; letter-spacing:.05em; line-height:1; }
+    .ct .rule{ width:${Math.round(renderPx*0.26)}px; height:${Math.max(2, Math.round(renderPx*0.004))}px; background:${t.ink||'#222'}; opacity:.55; margin:${Math.round(renderPx*0.022)}px 0; }
+    .ct .l2{ font-size:${Math.round(renderPx*0.064)}px; letter-spacing:.14em; line-height:1; }
+  </style></head><body><div class="token">${txt}</div></body></html>`;
 }
 
 const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 12, GAP_MM = 5;
@@ -196,7 +205,7 @@ async function renderPng(browser, html, outPath, sizePx) {
   const tmp = path.join(__dirname, '_tmp-pedine-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.html');
   fs.writeFileSync(tmp, html);
   await page.goto('file://' + tmp + '?t=' + Date.now());
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(700);
   await page.screenshot({ path: outPath, omitBackground: true });
   fs.unlinkSync(tmp);
   await page.close();
@@ -215,42 +224,53 @@ async function renderPdf(browser, html, outPath) {
 // Foglio misto: le 5 pedine abilità (40mm) in testa, le pedine risorsa (20mm) a riempire
 // il resto della pagina. Fronte e retro hanno disegni DIVERSI, quindi il retro si stampa con
 // le posizioni specchiate in orizzontale (fronte/retro lungo il lato lungo), come le carte.
-const ABILITA_COUNT = 5;
+const MIX = { abilita: 5, risorsa: 15, reroll: 15, mod: 20 };
+const ABILITA_COUNT = MIX.abilita;
 function mixedLayout() {
-  const AB = 40, RS = 20;
+  const AB = 40, RS = 20, SQ = 10, G = GAP_MM, GSQ = 4;
   const usableW = PAGE_W_MM - 2 * MARGIN_MM;
-  const abCols = Math.max(1, Math.floor((usableW + GAP_MM) / (AB + GAP_MM)));   // 4
+  const abCols = Math.max(1, Math.floor((usableW + G) / (AB + G)));   // 4
   const items = [];
-  // blocco abilità: file da abCols, in alto a sinistra
-  for (let i = 0; i < ABILITA_COUNT; i++) {
-    items.push({ kind: 'abilita', d: AB, x: MARGIN_MM + (i % abCols) * (AB + GAP_MM), y: MARGIN_MM + Math.floor(i / abCols) * (AB + GAP_MM) });
+  // 1) pedine abilità (40mm) in testa, a file da abCols
+  for (let i = 0; i < MIX.abilita; i++) {
+    items.push({ kind: 'abilita', d: AB, x: MARGIN_MM + (i % abCols) * (AB + G), y: MARGIN_MM + Math.floor(i / abCols) * (AB + G) });
   }
-  const abRows = Math.ceil(ABILITA_COUNT / abCols);
-  // accanto all'ultima fila (se non piena) risorse, centrate in verticale nella fascia da 40mm
-  const lastRowCount = ABILITA_COUNT - (abRows - 1) * abCols;
-  const lastRowY = MARGIN_MM + (abRows - 1) * (AB + GAP_MM);
+  const abRows = Math.ceil(MIX.abilita / abCols);
+  // 2) pedine da 20mm (prima le risorse, poi i reroll): prima accanto all'ultima fila delle
+  //    abilità (se non è piena), poi in una griglia piena sotto
+  const small = [];
+  for (let i = 0; i < MIX.risorsa; i++) small.push('risorsa');
+  for (let i = 0; i < MIX.reroll; i++) small.push('reroll');
+  let n = 0;
+  const lastRowCount = MIX.abilita - (abRows - 1) * abCols;
+  const lastRowY = MARGIN_MM + (abRows - 1) * (AB + G);
   if (lastRowCount < abCols) {
-    const x0 = MARGIN_MM + lastRowCount * (AB + GAP_MM);
-    const rowsFit = Math.max(1, Math.floor((AB + GAP_MM) / (RS + GAP_MM)));
-    const bandH = rowsFit * RS + (rowsFit - 1) * GAP_MM;
-    const yOff = (AB - bandH) / 2;
-    for (let r = 0; r < rowsFit; r++) {
-      for (let x = x0; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01; x += RS + GAP_MM) {
-        items.push({ kind: 'risorsa', d: RS, x, y: lastRowY + yOff + r * (RS + GAP_MM) });
-      }
+    const x0 = MARGIN_MM + lastRowCount * (AB + G);
+    const yOff = (AB - RS) / 2;
+    for (let x = x0; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01 && n < small.length; x += RS + G) {
+      items.push({ kind: small[n++], d: RS, x, y: lastRowY + yOff });
     }
   }
-  // resto della pagina: griglia piena di risorse
-  const y0 = MARGIN_MM + abRows * (AB + GAP_MM);
-  for (let y = y0; y + RS <= PAGE_H_MM - MARGIN_MM + 0.01; y += RS + GAP_MM) {
-    for (let x = MARGIN_MM; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01; x += RS + GAP_MM) {
-      items.push({ kind: 'risorsa', d: RS, x, y });
-    }
+  let y = MARGIN_MM + abRows * (AB + G);
+  const cols = Math.max(1, Math.floor((usableW + G) / (RS + G)));
+  while (n < small.length) {
+    for (let c = 0; c < cols && n < small.length; c++) items.push({ kind: small[n++], d: RS, x: MARGIN_MM + c * (RS + G), y });
+    y += RS + G;
   }
-  // centra orizzontalmente il blocco usato (le colonne coprono solo parte della larghezza utile)
+  // 3) segnalini potenziamento/depotenziamento (quadrati da 10mm), file fitte sotto
+  const sqCols = Math.max(1, Math.floor((usableW + GSQ) / (SQ + GSQ)));
+  let m = 0;
+  while (m < MIX.mod) {
+    for (let c = 0; c < sqCols && m < MIX.mod; c++, m++) items.push({ kind: 'mod', d: SQ, square: true, x: MARGIN_MM + c * (SQ + GSQ), y });
+    y += SQ + GSQ;
+  }
+  // centra orizzontalmente tutto il blocco nel margine utile
+  const minLeft = Math.min(...items.map(it => it.x));
   const maxRight = Math.max(...items.map(it => it.x + it.d));
-  const free = (PAGE_W_MM - MARGIN_MM) - maxRight;
-  items.forEach(it => { it.x += free / 2; });
+  const shift = ((PAGE_W_MM - 2 * MARGIN_MM) - (maxRight - minLeft)) / 2 - (minLeft - MARGIN_MM);
+  items.forEach(it => { it.x += shift; });
+  const bottom = Math.max(...items.map(it => it.y + it.d));
+  if (bottom > PAGE_H_MM - MARGIN_MM) throw new Error('il foglio misto non entra in una pagina: ' + bottom.toFixed(1) + 'mm');
   return items;
 }
 
@@ -259,7 +279,7 @@ function mixedSheetHtml(side, pngs, label) {
   const cells = items.map(it => {
     const x = side === 'retro' ? PAGE_W_MM - it.x - it.d : it.x;
     const src = pathToFileURL(pngs[it.kind][side]).href;
-    return `<div class="tok" style="left:${x}mm; top:${it.y}mm; width:${it.d}mm; height:${it.d}mm;"><img src="${src}"></div>`;
+    return `<div class="tok${it.square ? ' sq' : ''}" style="left:${x}mm; top:${it.y}mm; width:${it.d}mm; height:${it.d}mm;"><img src="${src}"></div>`;
   });
   const ticks = []; for (let m = 0; m <= RULER_MM; m += 10) ticks.push(m);
   const rulerX = (PAGE_W_MM - RULER_MM) / 2;
@@ -269,6 +289,7 @@ function mixedSheetHtml(side, pngs, label) {
     .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
     .tok{ position:absolute; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
     .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
+    .tok.sq, .tok.sq img{ border-radius:0; }
     .ruler{ position:absolute; bottom:${MARGIN_MM - 8}mm; width:${RULER_MM}mm; left:${rulerX}mm; }
     .ruler-bar{ width:${RULER_MM}mm; height:.3mm; background:#000; }
     .ruler .tick{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
@@ -292,8 +313,12 @@ async function mainAbilita() {
   const rsR = path.join(OUT_DIR, 'pedina_risorsa_planare_retro.png');
   if (!fs.existsSync(rsF)) await renderPng(browser, tokenHtml('risorsa'), rsF, TOKENS.risorsa.renderPx);
   if (!fs.existsSync(rsR)) await renderPng(browser, tokenBackHtml('risorsa'), rsR, TOKENS.risorsa.renderPx);
-  const pngs = { abilita: { fronte: abF, retro: abR }, risorsa: { fronte: rsF, retro: rsR } };
-  const label = `Pedine abilità 40mm (${ABILITA_COUNT}) + risorsa planare 20mm`;
+  const rerollPng = path.join(OUT_DIR, 'pedina_reroll.png');
+  const modF = path.join(__dirname, '..', 'cards_final', 'plancia', 'segnalino_modificatore.png');
+  const modR = path.join(__dirname, '..', 'cards_final', 'plancia', 'segnalino_modificatore_retro.png');
+  for (const f of [rerollPng, modF, modR]) if (!fs.existsSync(f)) throw new Error('manca ' + f + ': rigenera prima render-reroll-icon.js / render-plancia.js');
+  const pngs = { abilita: { fronte: abF, retro: abR }, risorsa: { fronte: rsF, retro: rsR }, reroll: { fronte: rerollPng, retro: rerollPng }, mod: { fronte: modF, retro: modR } };
+  const label = `Pedine: ${MIX.abilita} abilità 40mm, ${MIX.risorsa} risorsa planare 20mm, ${MIX.reroll} reroll 20mm, ${MIX.mod} potenziamento/depotenziamento 10mm`;
   await renderPdf(browser, mixedSheetHtml('fronte', pngs, label + ' — fronte'), path.join(PRINT_DIR, 'pedine_abilita_fronte.pdf'));
   await renderPdf(browser, mixedSheetHtml('retro', pngs, label + ' — retro'), path.join(PRINT_DIR, 'pedine_abilita_retro.pdf'));
   // anteprima PNG del foglio fronte e retro affiancati, per un controllo a colpo d'occhio
@@ -307,7 +332,7 @@ async function mainAbilita() {
     fs.unlinkSync(tmp); await pg.close();
   }
   await browser.close();
-  console.log(`Fatto: pedine_abilita_fronte/retro.pdf (${ABILITA_COUNT} abilità 40mm + risorse 20mm a riempire) in ${PRINT_DIR}`);
+  console.log(`Fatto: pedine_abilita_fronte/retro.pdf (${MIX.abilita} abilità, ${MIX.risorsa} risorse, ${MIX.reroll} reroll, ${MIX.mod} segnalini) in ${PRINT_DIR}`);
 }
 
 async function main() {
