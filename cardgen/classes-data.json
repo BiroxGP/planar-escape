@@ -74,7 +74,7 @@
     "icon": "🔮",
     "stats": {
       "for": 1,
-      "int": 4,
+      "int": 3,
       "des": 2,
       "pv": 3,
       "san": 5,
@@ -93,7 +93,7 @@
       "essenza": 1
     },
     "exitPlane": null,
-    "desc": "Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza Entropia."
+    "desc": "Passivo: sa sempre quale carta Piano è in cima al mazzo prima di ogni salto, senza lanciare nulla. Resistenza Entropia."
   },
   {
     "id": "mago",

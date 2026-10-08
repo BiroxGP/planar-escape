@@ -476,8 +476,8 @@ const CLASSES = {
     desc:"Furia brutale: un 6 naturale in qualsiasi Contesa infligge 2 danni invece di 1. A 0 PV non sviene, resta attivo."},
   ladro:{name:"Ladro",icon:"🗡️",for:2,int:2,des:4,pv:3,san:5,anima:5,affinity:{},reroll:1,rerollLvl:0,weapons:"light",resistance:[],stealth:true,
     desc:"Furtività: può tentare di restare nascosto da un Incontro (check Destrezza). Classe ibrida: 1 reroll fisso."},
-  veggente:{name:"Veggente",icon:"🔮",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{divinazione:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["entropia"],stealth:false,special:"vista_piani",
-    desc:"Conosce la carta in cima al mazzo Piani prima di ogni salto (si ricarica trovando un piano di Recupero). Resistenza Entropia."},
+  veggente:{name:"Veggente",icon:"🔮",for:1,int:3,des:2,pv:3,san:5,anima:5,affinity:{divinazione:2,essenza:1},reroll:0,rerollLvl:0,weapons:"none",resistance:["entropia"],stealth:false,special:"vista_piani",
+    desc:"Passivo: sa sempre quale carta Piano è in cima al mazzo prima di ogni salto, senza lanciare nulla. Resistenza Entropia."},
   mago:{name:"Mago",icon:"🪄",for:1,int:4,des:2,pv:3,san:5,anima:5,affinity:{essenza:3},reroll:0,rerollLvl:0,weapons:"none",resistance:["eterei"],special:"dardo",
     desc:"Dardo Incantato: una volta per carica, 2 danni sicuri in una Contesa di Forza/Intelletto/Destrezza (ricarica a Recupero). Resistenza Eterei."},
   chierico:{name:"Chierico",icon:"🙏",for:2,int:3,des:2,pv:4,san:5,anima:6,affinity:{flusso:3},reroll:0,rerollLvl:0,weapons:"light",resistance:["armonia"],special:"cura_diretta",
@@ -500,12 +500,13 @@ const CLASSES = {
 // cls.special non è sempre un'abilità a carica attivabile a piacere: furia (Barbaro) e
 // resurrezione (Negromante) sono automatiche (vedi useDamage/checkRoll più sotto),
 // paladino_extra è passiva alla progressione di livello (vedi checkLevelUp/openLevelUpModal).
-// Solo queste sei sono davvero "usa l'abilità, poi si scarica finché non trovi un Recupero":
+// Solo queste cinque sono davvero "usa l'abilità, poi si scarica finché non trovi un Recupero"
+// (il Veggente no: la sua vista dei Piani è passiva, vedi startJump):
 // da qui la distinzione, altrimenti Barbaro/Negromante/Paladino mostrerebbero un pulsante
 // "Usa abilità di classe" che non fa nulla di concreto (finisce nel case di default di
 // useClassSpecial), e potrebbero anche "perdere" quell'abilità alla Voragine del Vuoto senza
 // che perderla abbia un vero effetto meccanico.
-const ACTIVE_SPECIALS = new Set(['dardo','forma_selvatica','evocazione','resistenza_universale','vista_piani','cura_diretta']);
+const ACTIVE_SPECIALS = new Set(['dardo','forma_selvatica','evocazione','resistenza_universale','cura_diretta']);
 
 /* ---------------- FAMILIES ---------------- */
 const FAMILIES = {
@@ -1986,18 +1987,24 @@ function openPrePlaneProtectionModal(plane, jumpers){
 function startJump(){
   // "Party al completo, tutti per la manina": SOLO se il gruppo che salta comprende
   // tutti i personaggi attivi, l'unità del gruppo rivela la carta Piano in cima al
-  // mazzo prima di saltare. Un sottogruppo o un solitario saltano alla cieca (a meno
-  // che non abbiano un Veggente, la cui abilità di classe funziona comunque a parte).
+  // mazzo prima di saltare. Un sottogruppo o un solitario saltano alla cieca, a meno che
+  // non ci sia un Veggente: la sua abilità è PASSIVA, sa sempre qual è la carta in cima
+  // (qualunque gruppo o solitario lo comprenda), senza lanciare nulla.
+  const seer = activeChars().find(c=>c.cls==='veggente');
   const isFullParty = activeChars().length>0 && activeChars().length===allActiveChars().length;
-  if(!isFullParty){ doJump(); return; }
+  if(!isFullParty && !seer){ doJump(); return; }
   refillMazzoPianiIfNeeded(); // altrimenti l'anteprima può mostrare una carta che poi il salto cambia
   skipTerrenoIfFlagged();
   const nextId = state.mazzoPiani[0];
   const isPT = nextId==='__PT__';
   const nextPlane = isPT ? null : PIANI_BY_ID[nextId];
   const label = isPT ? 'Una destinazione leggendaria del Piano Terreno' : (nextPlane?.name || '?');
-  openModal(`<h3>🤝 Il gruppo si tiene per mano</h3>
-    <p>Uniti, vedete la carta in cima al mazzo Piani prima di saltare — resta quella la destinazione, non è una scelta:</p>
+  const intro = seer
+    ? `<h3>🔮 ${escapeHtml(seer.name)} conosce la strada</h3>
+    <p>Il Veggente sa sempre quale carta è in cima al mazzo Piani — resta quella la destinazione, non è una scelta:</p>`
+    : `<h3>🤝 Il gruppo si tiene per mano</h3>
+    <p>Uniti, vedete la carta in cima al mazzo Piani prima di saltare — resta quella la destinazione, non è una scelta:</p>`;
+  openModal(intro + `
     ${nextPlane ? planeHeroArt(nextPlane) : ''}
     <p style="font-size:1.3rem;font-family:'Cinzel',serif;text-align:center;margin:1rem 0;">${escapeHtml(label)}</p>
     <div class="row mt1"><button class="primary" id="btnConfirmJump">🌀 Salta</button></div>`);
@@ -4456,7 +4463,6 @@ function useClassSpecial(c){
       c.charges.special=false; c.monkShieldReady=true;
       logMsg(`🧘 ${c.name} è pronto ad annullare del tutto il prossimo danno subito, su qualunque caratteristica.`);
       break;
-    case 'vista_piani': logMsg(`🔮 ${c.name} conosce già la carta in cima al mazzo Piani.`); showPeekModal({type:'peek',n:1}, false, render); break;
     case 'cura_diretta':
       c.charges.special=false;
       openCuraDirettaModal(c);
