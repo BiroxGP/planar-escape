@@ -57,6 +57,26 @@ const TOKENS = {
     backAccent: '#8b5fbf', // viola, coerente col vortice del fronte
     backFontSize: 110,
   },
+  // Pedina abilità di classe: due facce disegnate dall'utente (2752x1536 entrambe). Fronte =
+  // abilità disponibile (moneta che brilla), retro = abilità usata (stessa moneta spenta).
+  // Doppia delle pedine risorsa planare (40mm contro 20mm). Centro e diametro misurati sui
+  // bordi della moneta (identici nelle due immagini).
+  abilita_fronte: {
+    src: path.join(UI_DIR, 'pedina_abilita_fronte.jpg'),
+    srcW: 2752, srcH: 1536,
+    center: [1371, 762],
+    diameterPx: 1461,
+    diameterMm: 40,
+    renderPx: 900,
+  },
+  abilita_retro: {
+    src: path.join(UI_DIR, 'pedina_abilita_retro.jpg'),
+    srcW: 2752, srcH: 1536,
+    center: [1371, 762],
+    diameterPx: 1461,
+    diameterMm: 40,
+    renderPx: 900,
+  },
 };
 
 // Dorso: nessuna arte fornita per il retro (a differenza delle altre carte, che hanno
@@ -100,7 +120,7 @@ function tokenHtml(key) {
   // (2816x1536, a differenza di segnalini.jpg che era 2048x2048) — usare un solo
   // bgSize per width e height qui stirerebbe l'immagine verticalmente.
   const scale = renderPx / t.diameterPx;
-  const bgSizeW = SRC_W * scale, bgSizeH = SRC_H * scale;
+  const bgSizeW = (t.srcW || SRC_W) * scale, bgSizeH = (t.srcH || SRC_H) * scale;
   const bgPosX = -(t.center[0] - t.diameterPx / 2) * scale;
   const bgPosY = -(t.center[1] - t.diameterPx / 2) * scale;
   const url = pathToFileURL(t.src).href;
@@ -192,7 +212,106 @@ async function renderPdf(browser, html, outPath) {
   await page.close();
 }
 
+// Foglio misto: le 5 pedine abilità (40mm) in testa, le pedine risorsa (20mm) a riempire
+// il resto della pagina. Fronte e retro hanno disegni DIVERSI, quindi il retro si stampa con
+// le posizioni specchiate in orizzontale (fronte/retro lungo il lato lungo), come le carte.
+const ABILITA_COUNT = 5;
+function mixedLayout() {
+  const AB = 40, RS = 20;
+  const usableW = PAGE_W_MM - 2 * MARGIN_MM;
+  const abCols = Math.max(1, Math.floor((usableW + GAP_MM) / (AB + GAP_MM)));   // 4
+  const items = [];
+  // blocco abilità: file da abCols, in alto a sinistra
+  for (let i = 0; i < ABILITA_COUNT; i++) {
+    items.push({ kind: 'abilita', d: AB, x: MARGIN_MM + (i % abCols) * (AB + GAP_MM), y: MARGIN_MM + Math.floor(i / abCols) * (AB + GAP_MM) });
+  }
+  const abRows = Math.ceil(ABILITA_COUNT / abCols);
+  // accanto all'ultima fila (se non piena) risorse, centrate in verticale nella fascia da 40mm
+  const lastRowCount = ABILITA_COUNT - (abRows - 1) * abCols;
+  const lastRowY = MARGIN_MM + (abRows - 1) * (AB + GAP_MM);
+  if (lastRowCount < abCols) {
+    const x0 = MARGIN_MM + lastRowCount * (AB + GAP_MM);
+    const rowsFit = Math.max(1, Math.floor((AB + GAP_MM) / (RS + GAP_MM)));
+    const bandH = rowsFit * RS + (rowsFit - 1) * GAP_MM;
+    const yOff = (AB - bandH) / 2;
+    for (let r = 0; r < rowsFit; r++) {
+      for (let x = x0; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01; x += RS + GAP_MM) {
+        items.push({ kind: 'risorsa', d: RS, x, y: lastRowY + yOff + r * (RS + GAP_MM) });
+      }
+    }
+  }
+  // resto della pagina: griglia piena di risorse
+  const y0 = MARGIN_MM + abRows * (AB + GAP_MM);
+  for (let y = y0; y + RS <= PAGE_H_MM - MARGIN_MM + 0.01; y += RS + GAP_MM) {
+    for (let x = MARGIN_MM; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01; x += RS + GAP_MM) {
+      items.push({ kind: 'risorsa', d: RS, x, y });
+    }
+  }
+  // centra orizzontalmente il blocco usato (le colonne coprono solo parte della larghezza utile)
+  const maxRight = Math.max(...items.map(it => it.x + it.d));
+  const free = (PAGE_W_MM - MARGIN_MM) - maxRight;
+  items.forEach(it => { it.x += free / 2; });
+  return items;
+}
+
+function mixedSheetHtml(side, pngs, label) {
+  const items = mixedLayout();
+  const cells = items.map(it => {
+    const x = side === 'retro' ? PAGE_W_MM - it.x - it.d : it.x;
+    const src = pathToFileURL(pngs[it.kind][side]).href;
+    return `<div class="tok" style="left:${x}mm; top:${it.y}mm; width:${it.d}mm; height:${it.d}mm;"><img src="${src}"></div>`;
+  });
+  const ticks = []; for (let m = 0; m <= RULER_MM; m += 10) ticks.push(m);
+  const rulerX = (PAGE_W_MM - RULER_MM) / 2;
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{ background:#fff; }
+    .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
+    .tok{ position:absolute; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
+    .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
+    .ruler{ position:absolute; bottom:${MARGIN_MM - 8}mm; width:${RULER_MM}mm; left:${rulerX}mm; }
+    .ruler-bar{ width:${RULER_MM}mm; height:.3mm; background:#000; }
+    .ruler .tick{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
+    .ruler-label{ margin-top:1.5mm; width:130mm; margin-left:${(RULER_MM - 130) / 2}mm; text-align:center; font-family:sans-serif; font-size:2.6mm; line-height:1.35; color:#333; }
+  </style></head><body><div class="sheet">
+    ${cells.join('\n')}
+    <div class="ruler"><div class="ruler-bar"></div>${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}<div class="ruler-label">${esc(label)} — righello di calibrazione: deve misurare esattamente ${RULER_MM}mm. Se non combacia, stampa a dimensione reale (100%), non "adatta alla pagina".</div></div>
+  </div></body></html>`;
+}
+
+async function mainAbilita() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(PRINT_DIR, { recursive: true });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
+  const abF = path.join(OUT_DIR, 'pedina_abilita.png');
+  const abR = path.join(OUT_DIR, 'pedina_abilita_retro.png');
+  await renderPng(browser, tokenHtml('abilita_fronte'), abF, TOKENS.abilita_fronte.renderPx);
+  await renderPng(browser, tokenHtml('abilita_retro'), abR, TOKENS.abilita_retro.renderPx);
+  // le risorse servono come riempimento: stessi PNG già prodotti dal run completo, se mancano si rifanno
+  const rsF = path.join(OUT_DIR, 'pedina_risorsa_planare.png');
+  const rsR = path.join(OUT_DIR, 'pedina_risorsa_planare_retro.png');
+  if (!fs.existsSync(rsF)) await renderPng(browser, tokenHtml('risorsa'), rsF, TOKENS.risorsa.renderPx);
+  if (!fs.existsSync(rsR)) await renderPng(browser, tokenBackHtml('risorsa'), rsR, TOKENS.risorsa.renderPx);
+  const pngs = { abilita: { fronte: abF, retro: abR }, risorsa: { fronte: rsF, retro: rsR } };
+  const label = `Pedine abilità 40mm (${ABILITA_COUNT}) + risorsa planare 20mm`;
+  await renderPdf(browser, mixedSheetHtml('fronte', pngs, label + ' — fronte'), path.join(PRINT_DIR, 'pedine_abilita_fronte.pdf'));
+  await renderPdf(browser, mixedSheetHtml('retro', pngs, label + ' — retro'), path.join(PRINT_DIR, 'pedine_abilita_retro.pdf'));
+  // anteprima PNG del foglio fronte e retro affiancati, per un controllo a colpo d'occhio
+  for (const side of ['fronte', 'retro']) {
+    const pg = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 1.5 });
+    const tmp = path.join(__dirname, '_tmp-abilita-' + side + '-' + Date.now() + '.html');
+    fs.writeFileSync(tmp, mixedSheetHtml(side, pngs, label + ' — ' + side));
+    await pg.goto('file://' + tmp);
+    await pg.waitForTimeout(300);
+    await pg.screenshot({ path: path.join(OUT_DIR, 'pedine_abilita_anteprima_' + side + '.png'), clip: { x: 0, y: 0, width: 794, height: 1123 } });
+    fs.unlinkSync(tmp); await pg.close();
+  }
+  await browser.close();
+  console.log(`Fatto: pedine_abilita_fronte/retro.pdf (${ABILITA_COUNT} abilità 40mm + risorse 20mm a riempire) in ${PRINT_DIR}`);
+}
+
 async function main() {
+  if (process.argv[2] === 'abilita') return mainAbilita();
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
