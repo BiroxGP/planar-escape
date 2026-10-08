@@ -19,11 +19,12 @@ const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 8;
 const POKER = { w: 63.5, h: 88 }, TAROCCO = { w: 120, h: 70 };
 
+const PEDINE_DIR = path.join(__dirname, '..', 'cards_final', 'pedine');
+const ABILITA = { w: 40, h: 40, round: true, pad: 5 };
 const RISTAMPE = [
-  { id: 'o_bacchettarinvio', back: 'retro_oggetto', ...POKER },      // Bacchetta del Rinvio: annulla l'Incontro per tutti
-  { id: 'veggente', back: 'retro_classi', ...POKER },                // Veggente: Intelletto 3, abilita' passiva
-  { id: 'nm_spettro', back: 'retro_incontro_nonmorti', ...POKER },   // Spettro (Non-morti): passante = PV + -1 temporaneo a Intelletto
-  { id: 'antro_creatura', back: 'retro_piani', ...TAROCCO },         // L'Antro della Creatura: statistica a scelta
+  { id: 'nm_spettro', back: 'retro_incontro_nonmorti', ...POKER, pad: 5 },   // Spettro (Non-morti): passante = PV + -1 temporaneo a Intelletto
+  // 5 pedine abilità (40mm, tonde): fronte "ABILITÀ PRONTA", retro "ABILITÀ USATA"
+  ...Array.from({ length: 5 }, () => ({ id: 'pedina_abilita', back: 'pedina_abilita_retro', src: PEDINE_DIR, ...ABILITA })),
 ];
 
 // impaginazione "a righe": le carte si affiancano finche' c'e' spazio in larghezza, poi si va a capo
@@ -33,15 +34,15 @@ function layout() {
   let page = [], rows = [], row = [], rowW = 0, rowH = 0, y = 0;
   const flushRow = () => {
     if (!row.length) return;
-    const x0 = (PAGE_W_MM - rowW) / 2;
+    const x0 = (PAGE_W_MM - (rowW - (row[row.length - 1].pad || 0))) / 2;
     let x = x0;
-    for (const it of row) { page.push({ ...it, x, y: MARGIN_MM + y }); x += it.w; }
+    for (const it of row) { page.push({ ...it, x, y: MARGIN_MM + y }); x += it.w + (it.pad || 0); }
     y += rowH; row = []; rowW = 0; rowH = 0;
   };
   for (const it of RISTAMPE) {
-    if (rowW + it.w > usableW) flushRow();
+    if (rowW + it.w > usableW + 0.01) flushRow();
     if (y + Math.max(rowH, it.h) > usableH) { flushRow(); if (page.length) { pages.push(page); page = []; y = 0; } }
-    row.push(it); rowW += it.w; rowH = Math.max(rowH, it.h);
+    row.push(it); rowW += it.w + (it.pad || 0); rowH = Math.max(rowH, it.h);
   }
   flushRow();
   if (page.length) pages.push(page);
@@ -55,7 +56,8 @@ function sheetHtml(pages) {
       const body = cells.map(c => {
         const x = side === 'retro' ? PAGE_W_MM - c.x - c.w : c.x;
         const file = side === 'retro' ? c.back : c.id;
-        const src = pathToFileURL(path.join(JPG_CACHE_DIR, file + '.jpg')).href;
+        const src = c.src ? pathToFileURL(path.join(c.src, file + '.png')).href : pathToFileURL(path.join(JPG_CACHE_DIR, file + '.jpg')).href;
+        if (c.round) return `<div class="cell round" style="left:${x}mm; top:${c.y}mm; width:${c.w}mm; height:${c.h}mm;"><img src="${src}"></div>`;
         return `<div class="cell" style="left:${x}mm; top:${c.y}mm; width:${c.w}mm; height:${c.h}mm;"><img src="${src}"><i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i></div>`;
       }).join('\n');
       sheets.push(`<div class="sheet">${body}<div class="note">Ristampe — foglio ${i + 1} — ${side}${side === 'retro' ? ' (specchiato: stampa fronte/retro sul lato lungo)' : ''}</div></div>`);
@@ -68,6 +70,8 @@ function sheetHtml(pages) {
     .sheet + .sheet{ page-break-before:always; }
     .cell{ position:absolute; }
     .cell img{ display:block; width:100%; height:100%; }
+    .cell.round, .cell.round img{ border-radius:50%; }
+    .cell.round{ box-shadow:0 0 0 .2mm #999; }
     .note{ position:absolute; left:0; right:0; bottom:3mm; text-align:center; font-family:sans-serif; font-size:2.6mm; color:#666; }
     .crop{ position:absolute; display:block; }
     .crop.tl{ left:-3.5mm; top:0; width:3mm; height:.25mm; background:#999; }
@@ -86,6 +90,7 @@ async function main() {
   const pairs = [];
   const seen = new Set();
   for (const it of RISTAMPE) {
+    if (it.src) continue;
     if (!seen.has(it.id)) { seen.add(it.id); pairs.push({ id: it.id, srcDir: CARDS_DIR, outDir: JPG_CACHE_DIR }); }
     if (!seen.has(it.back)) { seen.add(it.back); pairs.push({ id: it.back, srcDir: RETRO_DIR, outDir: JPG_CACHE_DIR }); }
   }
