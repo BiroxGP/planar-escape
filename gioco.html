@@ -1984,7 +1984,44 @@ function openPrePlaneProtectionModal(plane, jumpers){
   });
   document.getElementById('btnPreplaneContinue').onclick=()=>{ closeModal(); applyPlaneIntrinsic(plane); render(); };
 }
+// Corruzione "fa il contrario del gruppo": davanti al portale non entra con il team. Un compagno può
+// trascinarlo dentro (Contesa di Forza) e a quel punto rinsavisce; se non ci riesce, o se il gruppo
+// preferisce non provarci, resta lì da solo (diventa un gruppo a sé).
+function resolveCorruptRefusal(refusers, then){
+  if(!refusers.length){ then(); return; }
+  const c = refusers[0];
+  const others = activeChars().filter(x=>x.id!==c.id);
+  const done = ()=>{ closeModal(); resolveCorruptRefusal(refusers.slice(1), then); };
+  if(others.length===0){
+    c.pendingCorruzione = null;
+    logMsg(`👹 ${c.name} (Corruzione) è da solo davanti al portale: nessuno da cui separarsi, rinsavisce.`,'warn');
+    resolveCorruptRefusal(refusers.slice(1), then); return;
+  }
+  openModal(`<h3>👹 ${escapeHtml(c.name)} rifiuta di entrare nel portale</h3>
+    <p>La Corruzione lo fa agire al contrario del gruppo: non vuole entrare con il team. Un compagno può <strong>trascinarlo dentro</strong> (Contesa di Forza): se ci riesce rinsavisce e salta con tutti; altrimenti, o se lo lasciate, <strong>resta lì da solo</strong>.</p>
+    <div class="row">${others.map(o=>`<button class="small" data-corruptdrag="${o.id}">Trascina (${escapeHtml(o.name)}, Forza ${effectiveStat(o,'for')})</button>`).join('')}<button class="small" id="btnCorruptLeave">Lascialo lì da solo</button></div>`);
+  const leave = (why)=>{
+    c.pendingCorruzione = null;
+    splitIntoNewGroup([c.id]);
+    logMsg(`👹 ${c.name} resta lì da solo (${why}).`,'warn');
+    done();
+  };
+  document.querySelectorAll('[data-corruptdrag]').forEach(b=>b.onclick=()=>{
+    const dragger = others.find(o=>o.id===b.dataset.corruptdrag);
+    const winner = resolveForceContest(dragger, c);
+    if(winner===dragger){
+      c.pendingCorruzione = null;
+      logMsg(`👹 ${dragger.name} trascina ${c.name} dentro il portale (Contesa di Forza vinta): ${c.name} rinsavisce.`,'good');
+      done();
+    } else {
+      leave(`${dragger.name} non riesce a trascinarlo`);
+    }
+  });
+  document.getElementById('btnCorruptLeave').onclick=()=>leave('il gruppo lo lascia');
+}
 function startJump(){
+  const refusers = activeChars().filter(c=>c.pendingCorruzione==='contrario');
+  if(refusers.length){ resolveCorruptRefusal(refusers, startJump); return; }
   // "Party al completo, tutti per la manina": SOLO se il gruppo che salta comprende
   // tutti i personaggi attivi, l'unità del gruppo rivela la carta Piano in cima al
   // mazzo prima di saltare. Un sottogruppo o un solitario saltano alla cieca, a meno che
@@ -2569,8 +2606,8 @@ function triggerFollia(c){
   let outcome;
   // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
   if(r>=5) outcome = 'nulla, nonostante il campanello d\'allarme';
-  else if(r>=3){ c.pendingFollia='salto'; outcome = 'al prossimo turno si lancerà da solo in un portale casuale'; }
-  else { c.pendingFollia='trascina'; outcome = 'al prossimo turno tenterà di trascinare con sé un compagno (Contesa di Forza)'; }
+  else if(r>=3){ c.pendingFollia='salto'; outcome = 'a fine Incontro, davanti al portale, si lancerà da solo in un portale casuale'; }
+  else { c.pendingFollia='trascina'; outcome = 'a fine Incontro, davanti al portale, tenterà di trascinare con sé un compagno (Contesa di Forza)'; }
   logMsg(`🎲 Tiro di Follia per ${c.name} (${r}): ${outcome}.`, 'warn');
   queueMadnessPopup(c, 'follia', `Check di Sanità fallito (${check.roll} vs ${check.val}): ${outcome}.`, r<5);
 }
@@ -2582,8 +2619,8 @@ function triggerCorruzione(c){
   let outcome;
   // tabella di gravità: 6 è sempre il miglior risultato possibile, come ovunque nel gioco.
   if(r>=5) outcome = 'nulla, nonostante il campanello d\'allarme';
-  else if(r>=3){ c.pendingCorruzione='contrario'; outcome = 'al prossimo turno farà il contrario del resto del gruppo'; }
-  else { c.pendingCorruzione='ostile'; outcome = 'al prossimo turno agirà contro il team'; }
+  else if(r>=3){ c.pendingCorruzione='contrario'; outcome = 'a fine Incontro, davanti al portale, non entrerà con il gruppo: va trascinato dentro (poi rinsavisce), altrimenti resta lì da solo'; }
+  else { c.pendingCorruzione='ostile'; outcome = 'a fine Incontro, davanti al portale, attaccherà con Forza un compagno a caso (un solo attacco), poi rinsavisce'; }
   logMsg(`🎲 Tiro di Corruzione per ${c.name} (${r}): ${outcome}.`, c.pendingCorruzione==='ostile'||c.pendingCorruzione==='contrario'?'warn':'good');
   queueMadnessPopup(c, 'corruzione', `Check di Anima fallito (${check.roll} vs ${check.val}): ${outcome}.`, r<5);
 }
@@ -2653,21 +2690,14 @@ function applyPendingMadnessActions(){
       const action = c.pendingCorruzione; c.pendingCorruzione=null;
       if(action==='contrario') logMsg(`👹 ${c.name} (Corruzione): in questo turno fa esattamente il contrario di quello che fa il resto del gruppo — il tavolo interpreta l'azione.`, 'warn');
       else {
-        // agire ostile reale: attacca chi ha la statistica più bassa fra i presenti (il più
-        // vulnerabile relativo) nella caratteristica migliore del corrotto — non più "solo se
-        // qualcuno è strettamente più debole DI LUI": con party di classi simili o statistiche
-        // pari, quel confronto non trovava mai un bersaglio e l'esito restava senza alcun
-        // effetto concreto, nonostante il messaggio di log.
-        const topStat = ['for','int','des'].reduce((best,s)=>effectiveStat(c,s)>effectiveStat(c,best)?s:best,'for');
+        // agire contro il team: UN solo attacco di Forza su un compagno a caso, poi rinsavisce
         const others = activeChars().filter(x=>x.id!==c.id);
         if(others.length===0){
-          logMsg(`👹 ${c.name} (Corruzione): agisce contro il team, ma è solo — l'aggressione non trova bersaglio.`, 'warn');
+          logMsg(`👹 ${c.name} (Corruzione): agisce contro il team, ma è solo — l'aggressione non trova bersaglio, poi rinsavisce.`, 'warn');
         } else {
-          const minVal = Math.min(...others.map(x=>effectiveStat(x,topStat)));
-          const targets = others.filter(x=>effectiveStat(x,topStat)===minVal);
-          const target = targets[Math.floor(Math.random()*targets.length)];
-          const r = checkRoll(c, topStat);
-          logMsg(`👹 ${c.name} (Corruzione) attacca ${target.name} su ${STAT_LABEL[topStat]}: ${r.roll} vs ${r.val} → ${r.success?'colpito':'mancato'}.`, 'warn');
+          const target = others[Math.floor(Math.random()*others.length)];
+          const r = checkRoll(c, 'for');
+          logMsg(`👹 ${c.name} (Corruzione) attacca ${target.name} con la Forza: ${r.roll} vs ${r.val} → ${r.success?'colpito':'mancato'}. Poi rinsavisce.`, 'warn');
           if(r.success) applyDamage(target,'pv',1,{ignoreResistance:true});
         }
       }

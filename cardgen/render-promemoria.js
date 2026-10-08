@@ -20,7 +20,7 @@ const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 // ogni blocco: titolo, righe (stringhe con <b> ammesso)
 const BLOCKS_LEFT = [
   ['Il turno', [
-    '<b>1 · Salto.</b> Si pesca la carta Piano in cima al mazzo. Il gruppo salta unito: nel portale è un\'unica entità, quindi la meta è la stessa per tutti. Chi è staccato salta per conto suo.',
+    '<b>1 · Salto.</b> Si pesca la carta Piano in cima al mazzo. Il gruppo salta unito: nel portale è un\'unica entità, quindi la meta è la stessa per tutti. I gruppi possono anche essere <b>separati</b>: ognuno ha il proprio turno (salto, piano, Incontro), e i turni si fanno <b>uno alla volta</b>.',
     '<b>2 · Il piano.</b> Si applica il suo effetto d\'ingresso. Alcuni piani colpiscono a <b>fine turno</b> (Veleno, Tempesta, gironi più bassi del Piano Negativo).',
     '<b>3 · Incontro.</b> Si tira un d6: con <b>6</b> la carta arriva dal mazzo Generico, altrimenti da quello della famiglia del piano.',
     '<b>4 · Fine turno.</b> Scattano gli effetti di fine turno, poi si salta di nuovo. Ogni <b>5 salti</b>: livello, +1 a una caratteristica e un potere di classe.',
@@ -45,10 +45,10 @@ const BLOCKS_RIGHT = [
     'Chi li attraversa: <b>+1 PV</b> (mai oltre il massimo), <b>1 spell</b> a scelta della scuola se ne ha meno del numero scritto in scheda, <b>abilità di classe</b> ricaricata. Spariscono tutti i depotenziamenti <b>e</b> tutti i bonus temporanei.',
   ]],
   ['Follia e Corruzione', [
-    'Ogni punto di <b>Sanità</b> perso richiede un check di Sanità, ogni punto di <b>Anima</b> perso un check di Anima. Se il check fallisce, si tira un d6:',
+    'Ogni punto di <b>Sanità</b> perso richiede un check di Sanità, ogni punto di <b>Anima</b> perso un check di Anima. Se il check fallisce, si tira un d6. Gli effetti scattano <b>alla fine dell\'Incontro, davanti al portale</b>, prima del salto; poi il personaggio rinsavisce:',
     '<table class="tb"><thead><tr><th>d6</th><th>Follia (Sanità)</th><th>Corruzione (Anima)</th></tr></thead><tbody>' +
-      '<tr><td class="r">1–2</td><td>Al prossimo turno tenti di trascinare con te un compagno (Contesa di Forza)</td><td>Al prossimo turno agisci contro il team</td></tr>' +
-      '<tr><td class="r">3–4</td><td>Al prossimo turno salti da solo in un portale casuale</td><td>Al prossimo turno fai il contrario del resto del gruppo</td></tr>' +
+      '<tr><td class="r">1–2</td><td>Tenti di trascinare con te un compagno (Contesa di Forza)</td><td>Attacchi con la Forza un compagno a caso: un solo attacco, poi rinsavisci</td></tr>' +
+      '<tr><td class="r">3–4</td><td>Salti da solo in un portale casuale</td><td>Non entri nel portale con il team: devi essere trascinato dentro (poi rinsavisci), altrimenti resti lì da solo</td></tr>' +
       '<tr><td class="r">5–6</td><td colspan="2">Nulla: solo un brivido</td></tr>' +
     '</tbody></table>',
   ]],
@@ -98,12 +98,12 @@ function html() {
     .col{ display:flex; flex-direction:column; gap:3mm; }
     .blk{ background:#fffaf0; border:.3mm solid #cdb98f; border-radius:2mm; padding:3mm 3.6mm 3.2mm; }
     .blk h2{ font-family:'Cinzel',serif; font-weight:700; font-size:4.2mm; letter-spacing:.06em; text-transform:uppercase; color:#8a5a1f; margin-bottom:1.6mm; }
-    .blk p{ font-size:3.3mm; line-height:1.3; margin-top:1.3mm; }
+    .blk p{ font-size:3.12mm; line-height:1.29; margin-top:1.3mm; }
     .blk p:first-of-type{ margin-top:0; }
     .blk b{ color:#3a2347; }
     .tb{ margin-top:1.8mm; width:100%; border-collapse:collapse; }
     .tb th{ font-family:'JetBrains Mono',monospace; font-size:2.7mm; letter-spacing:.03em; text-transform:uppercase; color:#8a6a35; text-align:left; padding:0 1.4mm 1.2mm; border-bottom:.35mm solid #b8874a; }
-    .tb td{ font-size:3.1mm; line-height:1.25; padding:1.4mm 1.4mm; border-bottom:.2mm solid #d8c9a6; vertical-align:top; }
+    .tb td{ font-size:2.95mm; line-height:1.25; padding:1.4mm 1.4mm; border-bottom:.2mm solid #d8c9a6; vertical-align:top; }
     .tb tr:last-child td{ border-bottom:none; }
     .tb td.r{ font-family:'JetBrains Mono',monospace; font-weight:700; color:#3a2347; white-space:nowrap; width:11mm; }
     .foot{ position:absolute; left:12mm; right:12mm; bottom:6mm; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:2.6mm; color:#8a7a5c; }
