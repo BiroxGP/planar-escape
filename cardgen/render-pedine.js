@@ -230,18 +230,24 @@ async function renderPdf(browser, html, outPath) {
 // le posizioni specchiate in orizzontale (fronte/retro lungo il lato lungo), come le carte.
 const MIX = { abilita: 5, risorsa: 15, reroll: 15, mod: 20 };
 const ABILITA_COUNT = MIX.abilita;
+// Scala delle Ricompense (63,5x88mm, carta singola): stampata di taglio (88x63,5mm) nello spazio
+// sotto le pedine, così non serve una pagina a parte. Il retro è ruotato al contrario (-90°) perché
+// il foglio si gira lungo il lato lungo: la carta deve restare dritta fronte e retro.
+const SCALA_FRONT = path.join(__dirname, '..', 'cards_final', 'altro', 'scala_ricompense.png');
+const SCALA_BACK = path.join(__dirname, '..', 'cards_final', 'altro', 'scala_ricompense_retro.png');
+const SCALA_W_MM = 63.5, SCALA_H_MM = 88;
+
+// UNA sola pagina con tutto: 5 abilità (40mm) in testa, 15 risorse + 15 reroll (20mm), poi la carta
+// Scala (di taglio) con a destra i 20 segnalini potenziamento/depotenziamento (quadrati da 10mm).
 function mixedLayout() {
   const AB = 40, RS = 20, SQ = 10, G = GAP_MM, GSQ = 4;
   const usableW = PAGE_W_MM - 2 * MARGIN_MM;
   const abCols = Math.max(1, Math.floor((usableW + G) / (AB + G)));   // 4
   const items = [];
-  // 1) pedine abilità (40mm) in testa, a file da abCols
   for (let i = 0; i < MIX.abilita; i++) {
-    items.push({ kind: 'abilita', d: AB, x: MARGIN_MM + (i % abCols) * (AB + G), y: MARGIN_MM + Math.floor(i / abCols) * (AB + G) });
+    items.push({ kind: 'abilita', w: AB, h: AB, round: true, x: MARGIN_MM + (i % abCols) * (AB + G), y: MARGIN_MM + Math.floor(i / abCols) * (AB + G) });
   }
   const abRows = Math.ceil(MIX.abilita / abCols);
-  // 2) pedine da 20mm (prima le risorse, poi i reroll): prima accanto all'ultima fila delle
-  //    abilità (se non è piena), poi in una griglia piena sotto
   const small = [];
   for (let i = 0; i < MIX.risorsa; i++) small.push('risorsa');
   for (let i = 0; i < MIX.reroll; i++) small.push('reroll');
@@ -250,58 +256,71 @@ function mixedLayout() {
   const lastRowY = MARGIN_MM + (abRows - 1) * (AB + G);
   if (lastRowCount < abCols) {
     const x0 = MARGIN_MM + lastRowCount * (AB + G);
-    const yOff = (AB - RS) / 2;
     for (let x = x0; x + RS <= PAGE_W_MM - MARGIN_MM + 0.01 && n < small.length; x += RS + G) {
-      items.push({ kind: small[n++], d: RS, x, y: lastRowY + yOff });
+      items.push({ kind: small[n++], w: RS, h: RS, round: true, x, y: lastRowY + (AB - RS) / 2 });
     }
   }
   let y = MARGIN_MM + abRows * (AB + G);
   const cols = Math.max(1, Math.floor((usableW + G) / (RS + G)));
   while (n < small.length) {
-    for (let c = 0; c < cols && n < small.length; c++) items.push({ kind: small[n++], d: RS, x: MARGIN_MM + c * (RS + G), y });
+    for (let c = 0; c < cols && n < small.length; c++) items.push({ kind: small[n++], w: RS, h: RS, round: true, x: MARGIN_MM + c * (RS + G), y });
     y += RS + G;
   }
-  // 3) segnalini potenziamento/depotenziamento (quadrati da 10mm), file fitte sotto
-  const sqCols = Math.max(1, Math.floor((usableW + GSQ) / (SQ + GSQ)));
-  let m = 0;
-  while (m < MIX.mod) {
-    for (let c = 0; c < sqCols && m < MIX.mod; c++, m++) items.push({ kind: 'mod', d: SQ, square: true, x: MARGIN_MM + c * (SQ + GSQ), y });
-    y += SQ + GSQ;
+  // carta Scala di taglio a sinistra, segnalini quadrati a destra (a file da sqCols)
+  const cardW = SCALA_H_MM, cardH = SCALA_W_MM; // ruotata: 88 largo x 63,5 alto
+  items.push({ kind: 'scala', w: cardW, h: cardH, card: true, x: MARGIN_MM, y });
+  const sqX0 = MARGIN_MM + cardW + 8;
+  const sqCols = Math.max(1, Math.floor((PAGE_W_MM - MARGIN_MM - sqX0 + GSQ) / (SQ + GSQ)));
+  for (let m = 0; m < MIX.mod; m++) {
+    items.push({ kind: 'mod', w: SQ, h: SQ, x: sqX0 + (m % sqCols) * (SQ + GSQ), y: y + Math.floor(m / sqCols) * (SQ + GSQ) });
   }
-  // centra orizzontalmente tutto il blocco nel margine utile
+  // centra orizzontalmente il blocco usato nei margini
   const minLeft = Math.min(...items.map(it => it.x));
-  const maxRight = Math.max(...items.map(it => it.x + it.d));
+  const maxRight = Math.max(...items.map(it => it.x + it.w));
   const shift = ((PAGE_W_MM - 2 * MARGIN_MM) - (maxRight - minLeft)) / 2 - (minLeft - MARGIN_MM);
   items.forEach(it => { it.x += shift; });
-  const bottom = Math.max(...items.map(it => it.y + it.d));
+  const bottom = Math.max(...items.map(it => it.y + it.h));
   if (bottom > PAGE_H_MM - MARGIN_MM) throw new Error('il foglio misto non entra in una pagina: ' + bottom.toFixed(1) + 'mm');
   return items;
 }
 
-function mixedSheetHtml(side, pngs, label) {
+function mixedSheetBody(side, pngs, label) {
   const items = mixedLayout();
   const cells = items.map(it => {
-    const x = side === 'retro' ? PAGE_W_MM - it.x - it.d : it.x;
+    const x = side === 'retro' ? PAGE_W_MM - it.x - it.w : it.x;
     const src = pathToFileURL(pngs[it.kind][side]).href;
-    return `<div class="tok${it.square ? ' sq' : ''}" style="left:${x}mm; top:${it.y}mm; width:${it.d}mm; height:${it.d}mm;"><img src="${src}"></div>`;
+    if (it.card) {
+      const deg = side === 'retro' ? -90 : 90;
+      return `<div class="tok card" style="left:${x}mm; top:${it.y}mm; width:${it.w}mm; height:${it.h}mm;"><img src="${src}" style="position:absolute; width:${SCALA_W_MM}mm; height:${SCALA_H_MM}mm; left:${(it.w - SCALA_W_MM) / 2}mm; top:${(it.h - SCALA_H_MM) / 2}mm; transform:rotate(${deg}deg);"></div>`;
+    }
+    return `<div class="tok${it.round ? '' : ' sq'}" style="left:${x}mm; top:${it.y}mm; width:${it.w}mm; height:${it.h}mm;"><img src="${src}"></div>`;
   });
   const ticks = []; for (let m = 0; m <= RULER_MM; m += 10) ticks.push(m);
   const rulerX = (PAGE_W_MM - RULER_MM) / 2;
+  return `<div class="sheet">
+    ${cells.join('\n')}
+    <div class="ruler"><div class="ruler-bar"></div>${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}<div class="ruler-label">${esc(label)} — righello di calibrazione: deve misurare esattamente ${RULER_MM}mm. Se non combacia, stampa a dimensione reale (100%), non "adatta alla pagina".</div></div>
+  </div>`;
+}
+
+function mixedSheetHtml(sides, pngs, label) {
+  const rulerX = (PAGE_W_MM - RULER_MM) / 2;
+  const body = sides.map(s => mixedSheetBody(s, pngs, `${label} — ${s}`)).join('\n');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{ background:#fff; }
-    .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; }
+    .sheet{ position:relative; width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; overflow:hidden; }
+    .sheet + .sheet{ page-break-before:always; }
     .tok{ position:absolute; border-radius:50%; box-shadow:0 0 0 .2mm #999; }
     .tok img{ display:block; width:100%; height:100%; border-radius:50%; }
     .tok.sq, .tok.sq img{ border-radius:0; }
+    .tok.card{ border-radius:0; overflow:hidden; }
+    .tok.card img{ border-radius:0; max-width:none; }
     .ruler{ position:absolute; bottom:${MARGIN_MM - 8}mm; width:${RULER_MM}mm; left:${rulerX}mm; }
     .ruler-bar{ width:${RULER_MM}mm; height:.3mm; background:#000; }
     .ruler .tick{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
     .ruler-label{ margin-top:1.5mm; width:130mm; margin-left:${(RULER_MM - 130) / 2}mm; text-align:center; font-family:sans-serif; font-size:2.6mm; line-height:1.35; color:#333; }
-  </style></head><body><div class="sheet">
-    ${cells.join('\n')}
-    <div class="ruler"><div class="ruler-bar"></div>${ticks.map(m => `<i class="tick" style="left:${m}mm;"></i>`).join('')}<div class="ruler-label">${esc(label)} — righello di calibrazione: deve misurare esattamente ${RULER_MM}mm. Se non combacia, stampa a dimensione reale (100%), non "adatta alla pagina".</div></div>
-  </div></body></html>`;
+  </style></head><body>${body}</body></html>`;
 }
 
 async function mainAbilita() {
@@ -320,23 +339,26 @@ async function mainAbilita() {
   const rerollPng = path.join(OUT_DIR, 'pedina_reroll.png');
   const modF = path.join(__dirname, '..', 'cards_final', 'plancia', 'segnalino_modificatore.png');
   const modR = path.join(__dirname, '..', 'cards_final', 'plancia', 'segnalino_modificatore_retro.png');
-  for (const f of [rerollPng, modF, modR]) if (!fs.existsSync(f)) throw new Error('manca ' + f + ': rigenera prima render-reroll-icon.js / render-plancia.js');
-  const pngs = { abilita: { fronte: abF, retro: abR }, risorsa: { fronte: rsF, retro: rsR }, reroll: { fronte: rerollPng, retro: rerollPng }, mod: { fronte: modF, retro: modR } };
-  const label = `Pedine: ${MIX.abilita} abilità 40mm, ${MIX.risorsa} risorsa planare 20mm, ${MIX.reroll} reroll 20mm, ${MIX.mod} potenziamento/depotenziamento 10mm`;
-  await renderPdf(browser, mixedSheetHtml('fronte', pngs, label + ' — fronte'), path.join(PRINT_DIR, 'pedine_abilita_fronte.pdf'));
-  await renderPdf(browser, mixedSheetHtml('retro', pngs, label + ' — retro'), path.join(PRINT_DIR, 'pedine_abilita_retro.pdf'));
-  // anteprima PNG del foglio fronte e retro affiancati, per un controllo a colpo d'occhio
+  for (const f of [rerollPng, modF, modR, SCALA_FRONT, SCALA_BACK]) if (!fs.existsSync(f)) throw new Error('manca ' + f + ': rigenera prima render-reroll-icon.js / render-plancia.js / render-scala-ricompense.js');
+  const pngs = {
+    abilita: { fronte: abF, retro: abR }, risorsa: { fronte: rsF, retro: rsR }, reroll: { fronte: rerollPng, retro: rerollPng },
+    mod: { fronte: modF, retro: modR }, scala: { fronte: SCALA_FRONT, retro: SCALA_BACK },
+  };
+  const label = `Pedine: ${MIX.abilita} abilità 40mm, ${MIX.risorsa} risorsa 20mm, ${MIX.reroll} reroll 20mm, ${MIX.mod} potenziamento/depotenziamento 10mm, carta Scala`;
+  // un unico PDF a 2 pagine: 1 = fronte, 2 = retro (specchiato), da stampare fronte/retro sul lato lungo
+  await renderPdf(browser, mixedSheetHtml(['fronte', 'retro'], pngs, label), path.join(PRINT_DIR, 'pedine_fronte_retro.pdf'));
+  // anteprime PNG
   for (const side of ['fronte', 'retro']) {
     const pg = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 1.5 });
     const tmp = path.join(__dirname, '_tmp-abilita-' + side + '-' + Date.now() + '.html');
-    fs.writeFileSync(tmp, mixedSheetHtml(side, pngs, label + ' — ' + side));
+    fs.writeFileSync(tmp, mixedSheetHtml([side], pngs, label));
     await pg.goto('file://' + tmp);
     await pg.waitForTimeout(300);
     await pg.screenshot({ path: path.join(OUT_DIR, 'pedine_abilita_anteprima_' + side + '.png'), clip: { x: 0, y: 0, width: 794, height: 1123 } });
     fs.unlinkSync(tmp); await pg.close();
   }
   await browser.close();
-  console.log(`Fatto: pedine_abilita_fronte/retro.pdf (${MIX.abilita} abilità, ${MIX.risorsa} risorse, ${MIX.reroll} reroll, ${MIX.mod} segnalini) in ${PRINT_DIR}`);
+  console.log(`Fatto: pedine_fronte_retro.pdf (2 pagine: ${MIX.abilita} abilità, ${MIX.risorsa} risorse, ${MIX.reroll} reroll, ${MIX.mod} segnalini, carta Scala) in ${PRINT_DIR}`);
 }
 
 async function main() {
@@ -361,15 +383,14 @@ async function main() {
 
   // il dorso è identico per ogni pedina dello stesso tipo, ma la griglia del retro va comunque
   // specchiata: sulle file non piene le pedine restano a sinistra sul fronte e vanno a destra sul retro.
-  await renderPdf(browser, sheetHtml(risorsaPng, 24, TOKENS.risorsa.diameterMm, 'Pedina Risorsa Planare, 20mm — fronte'), path.join(PRINT_DIR, 'pedine_risorsa_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(risorsaBackPng, 24, TOKENS.risorsa.diameterMm, 'Pedina Risorsa Planare, 20mm — retro', true), path.join(PRINT_DIR, 'pedine_risorsa_retro.pdf'));
+  // (il foglio risorsa a sé non si fa più: le pedine risorsa stanno nel foglio unico — `node render-pedine.js abilita`)
   const compagnoMm = TOKENS.compagno.diameterMm;
-  await renderPdf(browser, sheetHtml(compagnoPng, 8, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm (finestra ${COMPAGNO_WINDOW_TARGET_MM}mm per dado 15mm) — fronte`), path.join(PRINT_DIR, 'pedine_compagno_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(compagnoBackPng, 8, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm — retro`, true), path.join(PRINT_DIR, 'pedine_compagno_retro.pdf'));
+  await renderPdf(browser, sheetHtml(compagnoPng, 6, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm (finestra ${COMPAGNO_WINDOW_TARGET_MM}mm per dado 15mm) — fronte`), path.join(PRINT_DIR, 'pedine_compagno_fronte.pdf'));
+  await renderPdf(browser, sheetHtml(compagnoBackPng, 6, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm — retro`, true), path.join(PRINT_DIR, 'pedine_compagno_retro.pdf'));
 
   await browser.close();
   console.log('Fatto: pedina_risorsa_planare.png/_retro.png/_icon.png, pedina_compagno.png/_retro.png in ' + OUT_DIR + ' / ' + UI_DIR);
-  console.log(`Fatto: pedine_risorsa_fronte/retro.pdf (20mm, 24 pedine) + pedine_compagno_fronte/retro.pdf (${compagnoMm.toFixed(1)}mm, 8 pedine) in ${PRINT_DIR}`);
+  console.log(`Fatto: pedine_risorsa_fronte/retro.pdf (20mm, 24 pedine) + pedine_compagno_fronte/retro.pdf (${compagnoMm.toFixed(1)}mm, 6 pedine, 1 pagina) in ${PRINT_DIR}`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
