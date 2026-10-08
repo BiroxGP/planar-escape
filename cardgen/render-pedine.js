@@ -159,7 +159,7 @@ function buildGrid(tokenMm) {
   return { cols, rows, offsetXmm, offsetYmm };
 }
 
-function sheetHtml(pngFile, count, tokenMm, label) {
+function sheetHtml(pngFile, count, tokenMm, label, mirror) {
   const { cols, rows, offsetXmm, offsetYmm } = buildGrid(tokenMm);
   const perPage = cols * rows;
   const url = pathToFileURL(pngFile).href;
@@ -172,7 +172,11 @@ function sheetHtml(pngFile, count, tokenMm, label) {
     const cells = [];
     for (let i = 0; i < n; i++) {
       const col = i % cols, row = Math.floor(i / cols);
-      const x = offsetXmm + col * (tokenMm + GAP_MM);
+      // il retro va specchiato in orizzontale (fronte/retro sul lato lungo): le file NON piene (le
+      // pedine rimaste da sole in fondo) stanno a sinistra sul fronte, quindi sul retro devono
+      // stare a destra, altrimenti dopo il ribaltamento il dorso non cade dietro al fronte.
+      const x0 = offsetXmm + col * (tokenMm + GAP_MM);
+      const x = mirror ? PAGE_W_MM - x0 - tokenMm : x0;
       const y = offsetYmm + row * (tokenMm + GAP_MM);
       cells.push(`<div class="tok" style="left:${x}mm; top:${y}mm; width:${tokenMm}mm; height:${tokenMm}mm;"><img src="${url}"></div>`);
     }
@@ -355,14 +359,13 @@ async function main() {
   const compagnoBackPng = path.join(OUT_DIR, 'pedina_compagno_retro.png');
   await renderPng(browser, tokenBackHtml('compagno'), compagnoBackPng, TOKENS.compagno.renderPx);
 
-  // il dorso è identico per ogni pedina dello stesso tipo (non c'è un fronte specifico da
-  // far combaciare, a differenza delle carte): fronte e retro usano la stessa griglia, non
-  // serve nessuna colonna specchiata, si accoppiano a caso in fase di taglio/incollaggio.
+  // il dorso è identico per ogni pedina dello stesso tipo, ma la griglia del retro va comunque
+  // specchiata: sulle file non piene le pedine restano a sinistra sul fronte e vanno a destra sul retro.
   await renderPdf(browser, sheetHtml(risorsaPng, 24, TOKENS.risorsa.diameterMm, 'Pedina Risorsa Planare, 20mm — fronte'), path.join(PRINT_DIR, 'pedine_risorsa_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(risorsaBackPng, 24, TOKENS.risorsa.diameterMm, 'Pedina Risorsa Planare, 20mm — retro'), path.join(PRINT_DIR, 'pedine_risorsa_retro.pdf'));
+  await renderPdf(browser, sheetHtml(risorsaBackPng, 24, TOKENS.risorsa.diameterMm, 'Pedina Risorsa Planare, 20mm — retro', true), path.join(PRINT_DIR, 'pedine_risorsa_retro.pdf'));
   const compagnoMm = TOKENS.compagno.diameterMm;
   await renderPdf(browser, sheetHtml(compagnoPng, 8, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm (finestra ${COMPAGNO_WINDOW_TARGET_MM}mm per dado 15mm) — fronte`), path.join(PRINT_DIR, 'pedine_compagno_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(compagnoBackPng, 8, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm — retro`), path.join(PRINT_DIR, 'pedine_compagno_retro.pdf'));
+  await renderPdf(browser, sheetHtml(compagnoBackPng, 8, compagnoMm, `Pedina Compagno, ${compagnoMm.toFixed(1)}mm — retro`, true), path.join(PRINT_DIR, 'pedine_compagno_retro.pdf'));
 
   await browser.close();
   console.log('Fatto: pedina_risorsa_planare.png/_retro.png/_icon.png, pedina_compagno.png/_retro.png in ' + OUT_DIR + ' / ' + UI_DIR);

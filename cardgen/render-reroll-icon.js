@@ -66,7 +66,7 @@ function buildGrid(tokenMm) {
   return { cols, rows, offsetXmm, offsetYmm };
 }
 
-function sheetHtml(pngFile, count, tokenMm, label, extraCard) {
+function sheetHtml(pngFile, count, tokenMm, label, extraCard, mirror) {
   const { cols, rows, offsetXmm, offsetYmm } = buildGrid(tokenMm);
   const perPage = cols * rows;
   const url = pathToFileURL(pngFile).href;
@@ -79,7 +79,9 @@ function sheetHtml(pngFile, count, tokenMm, label, extraCard) {
     const cells = [];
     for (let i = 0; i < n; i++) {
       const col = i % cols, row = Math.floor(i / cols);
-      const x = offsetXmm + col * (tokenMm + GAP_MM);
+      // retro specchiato in orizzontale: le pedine rimaste da sole in fondo (file non piene) vanno a destra sul retro
+      const x0 = offsetXmm + col * (tokenMm + GAP_MM);
+      const x = mirror ? PAGE_W_MM - x0 - tokenMm : x0;
       const y = offsetYmm + row * (tokenMm + GAP_MM);
       cells.push(`<div class="tok" style="left:${x}mm; top:${y}mm; width:${tokenMm}mm; height:${tokenMm}mm;"><img src="${url}"></div>`);
     }
@@ -170,7 +172,7 @@ async function main() {
   if (!hasScala) console.log('ATTENZIONE: cards_final/altro/scala_ricompense.png non trovato — esegui prima node render-scala-ricompense.js. Procedo senza.');
 
   await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — fronte`, extraCardFront), path.join(PRINT_DIR, 'pedine_reroll_fronte.pdf'));
-  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — retro (stessa icona del fronte)`, extraCardBack), path.join(PRINT_DIR, 'pedine_reroll_retro.pdf'));
+  await renderPdf(browser, sheetHtml(printPng, 24, TOKEN_MM, `${label} — retro (stessa icona del fronte)`, extraCardBack, true), path.join(PRINT_DIR, 'pedine_reroll_retro.pdf'));
 
   await browser.close();
   console.log('Fatto: assets/ui/reroll_icon.png, ' + printPng);
