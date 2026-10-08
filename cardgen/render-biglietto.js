@@ -16,6 +16,7 @@ const CARD_W = 1004, CARD_H = 650; // 85x55mm a ~11.81px/mm (300dpi equivalente)
 const OUT_DIR = path.join(__dirname, '..', 'cards_final', 'altro');
 const PRINT_DIR = path.join(__dirname, '..', 'cards_final', 'print');
 const COVER = path.join(__dirname, '..', 'assets', 'ui', 'copertina.jpg');
+const AVATAR = path.join(__dirname, '..', 'assets', 'ui', 'avatar_instagram.jpg'); // foto profilo Instagram @planar.escape
 
 const IG_URL = 'https://www.instagram.com/planar.escape/';
 const TT_URL = 'https://www.tiktok.com/@planar.escape';
@@ -73,7 +74,8 @@ async function frontHtml() {
     .contact .name{ font-size:24px; font-weight:600; color:#f9f3e6; }
     .contact .role{ font-style:italic; font-size:16px; font-weight:500; color:#d6c9b8; margin-top:6px; }
     .contact .mono{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:16px; letter-spacing:.015em; color:#f2d18f; margin-top:12px; text-shadow:0 1px 2px rgba(0,0,0,.35); }
-    .igrow{ position:absolute; left:58px; top:436px; display:flex; align-items:center; gap:16px; }
+    .igrow{ position:absolute; left:58px; top:428px; display:flex; align-items:center; gap:18px; }
+    .igrow .av{ width:84px; height:84px; border-radius:50%; object-fit:cover; transform:scale(1.04); box-shadow:0 0 0 1.5px #c9a15a; }
     .igrow span{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:19px; letter-spacing:.02em; color:#f2d18f; text-shadow:0 1px 2px rgba(0,0,0,.35); }
     .qrblock{ position:absolute; right:40px; top:70px; text-align:center; display:flex; gap:22px; }
     .qrcol{ width:114px; }
@@ -93,7 +95,7 @@ async function frontHtml() {
         <div class="mono">planarescape@gmail.com</div>
         <div class="mono">planar-escape.vercel.app</div>
       </div>
-      <div class="igrow"><svg  width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c9a15a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="#c9a15a" stroke="none"/></svg><span>@planar.escape</span></div>
+      <div class="igrow"><img class="av" src="${pathToFileURL(AVATAR).href}"><span>@planar.escape</span></div>
       <div class="qrblock">
         <div class="qrcol"><div class="lbl">INSTAGRAM</div><img src="${igQr}"></div>
         <div class="qrcol"><div class="lbl">TIKTOK</div><img src="${ttQr}"></div>
