@@ -226,6 +226,14 @@ async function main() {
   const label = 'Biglietto da visita, 85x55mm';
   await renderPdf(browser, printSheetHtml(frontPng, false, `${label} — fronte`), path.join(PRINT_DIR, 'biglietto_fronte.pdf'));
   await renderPdf(browser, printSheetHtml(backPng, true, `${label} — retro`), path.join(PRINT_DIR, 'biglietto_retro.pdf'));
+  // un unico PDF a 2 pagine (1 = fronti, 2 = retri specchiati) da stampare fronte/retro in un colpo solo
+  {
+    const f = printSheetHtml(frontPng, false, `${label} — fronte (pagina 1)`);
+    const r = printSheetHtml(backPng, true, `${label} — retro (pagina 2)`);
+    const sheetR = r.slice(r.indexOf('<div class="sheet">'), r.lastIndexOf('</div></body>') + '</div>'.length);
+    const both = f.replace('</style>', '.sheet + .sheet{ page-break-before:always; }</style>').replace('</div></body>', '</div>' + sheetR + '</body>');
+    await renderPdf(browser, both, path.join(PRINT_DIR, 'biglietti_fronte_retro.pdf'));
+  }
 
   await browser.close();
   console.log('Fatto:', frontPng);
