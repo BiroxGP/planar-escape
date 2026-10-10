@@ -32,7 +32,7 @@ const SX = {
   slots: [
     { r: [0.2427, 0.0980, 0.8140, 0.3180], t: 'MAZZO PIANI', s: 'Carte Piano coperte, si pesca dalla cima.<br>La destinazione è sempre casuale.' },
     { r: [0.2427, 0.3420, 0.8140, 0.5670], t: 'PIANO ATTUALE', s: 'Il Piano appena pescato: applica subito il suo effetto. Sotto, i piani già visitati (scarti).' },
-    { r: [0.3743, 0.5940, 0.6817, 0.8480], t: 'INCONTRO', s: 'La carta Incontro del turno.<br>d6 = 6: si pesca dal Generico.' },
+    { r: [0.3741, 0.5933, 0.6852, 0.8631], t: 'INCONTRO', s: 'La carta Incontro del turno.<br>d6 = 6: si pesca dal Generico.' },
   ],
   gaps: [
     { r: [0.2427, 0.3180, 0.8140, 0.3420], t: '▼ si salta' },
@@ -43,6 +43,8 @@ const SX = {
     { r: [0.7000, 0.6150, 0.9600, 0.8300], h: 'IL TURNO', body: '<b>1</b> Salta<br><b>2</b> Effetto del piano<br><b>3</b> Incontro<br><b>4</b> Fine turno<br><br>Ogni <b>5 salti</b>: livello.' },
   ],
   plaque: { r: [0.3550, 0.9000, 0.7050, 0.9550], t: 'IL VIAGGIO' },
+  // cornici poker (mm reali, solo versione A3): centro in frazione della metà, misure della carta + ~0,4mm di gioco
+  pokerFrames: [{ c: [849 / 1604, 1839 / 2528], w: 64.2, h: 89.4 }],
 };
 const DX = {
   img: 'tabellone_dx.jpg',
@@ -65,6 +67,7 @@ const DX = {
   gaps: [],
   boxes: [],
   plaque: { r: [0.3000, 0.9000, 0.6500, 0.9550], t: 'I MAZZI' },
+  pokerFrames: [],
 };
 
 function pct(v) { return (v * 100).toFixed(3) + '%'; }
@@ -95,6 +98,7 @@ function pageHtml(cfg, fmt, side) {
   const slots = cfg.slots.map(s => `<div class="slot${DEBUG ? ' dbg' : ''}" style="${box(s.r)}"><div class="st">${s.t}</div><div class="ss">${s.s}</div></div>`).join('');
   const gaps = cfg.gaps.map(g => `<div class="gap${DEBUG ? ' dbg' : ''}" style="${box(g.r)}">${g.t}</div>`).join('');
   const boxes = cfg.boxes.map(b => `<div class="bx${DEBUG ? ' dbg' : ''}" style="${box(b.r)}"><div class="bh">${b.h}</div><div class="bb">${b.body}</div></div>`).join('');
+  const pf = fmt === 'a3' ? (cfg.pokerFrames || []).map(f => `<div class="pf" style="left:${pct(f.c[0] - f.w / 2 / B.w)}; top:${pct(f.c[1] - f.h / 2 / B.h)}; width:${pct(f.w / B.w)}; height:${pct(f.h / B.h)};"></div>`).join('') : '';
   const pl = `<div class="plq${DEBUG ? ' dbg' : ''}" style="${box(cfg.plaque.r)}">${cfg.plaque.t}</div>`;
   const overlayCss = scaleMm(`
     .slot{ position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 7%; color:#e9dcc0; }
@@ -116,7 +120,8 @@ function pageHtml(cfg, fmt, side) {
     .board{ position:absolute; left:${B.x}mm; top:${B.y}mm; width:${B.w}mm; height:${B.h}mm; --k:${k}; }
     .board img.bg{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
     ${overlayCss}
-  </style></head><body><div class="page"><div class="board"><img class="bg" src="${pathToFileURL(path.join(UI, cfg.img)).href}">${slots}${gaps}${boxes}${pl}</div></div></body></html>`;
+    .pf{ position:absolute; border:.5mm solid #b9bfce; border-radius:2.2mm; background:rgba(3,5,16,.45); box-shadow:0 0 1.6mm rgba(185,191,206,.35), inset 0 0 1.2mm rgba(0,0,0,.6); }
+  </style></head><body><div class="page"><div class="board"><img class="bg" src="${pathToFileURL(path.join(UI, cfg.img)).href}">${pf}${slots}${gaps}${boxes}${pl}</div></div></body></html>`;
 }
 
 async function main() {
