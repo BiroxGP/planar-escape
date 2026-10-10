@@ -8,7 +8,9 @@
 //
 // Uso: node render-tabellone.js          -> cards_final/print/tabellone_sx.pdf / tabellone_dx.pdf
 //                                           (+ anteprime in cards_final/altro/)
-//      node render-tabellone.js debug    -> disegna anche i riquadri misurati, per ritoccarli
+//      node render-tabellone.js a3       -> versione a scala vera (carte Poker esatte) su due A3: tabellone_sx_A3.pdf / tabellone_dx_A3.pdf
+//      node render-tabellone.js tutti    -> A4 e A3
+//      ... debug                         -> disegna anche i riquadri misurati, per ritoccarli
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -17,7 +19,8 @@ const { chromium } = require('playwright');
 const UI = path.join(__dirname, '..', 'assets', 'ui');
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
-const DEBUG = process.argv[2] === 'debug';
+const DEBUG = process.argv.includes('debug');
+const FMT_LIST = process.argv.includes('a3') ? ['a3'] : (process.argv.includes('tutti') ? ['a4', 'a3'] : ['a4']);
 
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,18 +70,33 @@ const DX = {
 function pct(v) { return (v * 100).toFixed(3) + '%'; }
 function box(r) { return `left:${pct(r[0])}; top:${pct(r[1])}; width:${pct(r[2] - r[0])}; height:${pct(r[3] - r[1])};`; }
 
-function pageHtml(cfg) {
+// Misure per formato carta.
+//  a4: ogni metà riempie un A4 verticale (210x297mm). Le slot restano pero' PIU' PICCOLE di una carta Poker
+//      (63,5x88mm): a questa scala i riquadri di destra misurano circa 54x70mm.
+//  a3: scala "vera" (0,151 mm per pixel dell'immagine destra): i riquadri di destra diventano esattamente
+//      Poker (63,5x88mm) e quelli di sinistra (Tarocco 120x70, Poker) hanno tutti un po' di margine in piu'.
+//      Ogni metà e' su un A3 verticale (297x420mm), con le due metà accostate al CENTRO (la sinistra a filo
+//      del bordo destro del suo foglio, la destra a filo del bordo sinistro del suo).
+const MM_PER_PX = 0.151;
+const A3_BOARD_H = 377; // altezza comune alle due metà, cosi' le cornici combaciano al centro
+const FORMATS = {
+  a4: { pageW: 210, pageH: 297, board: { sx: { x: 0, y: 0, w: 210, h: 297 }, dx: { x: 0, y: 0, w: 210, h: 297 } } },
+  a3: { pageW: 297, pageH: 420, board: {
+    sx: { w: 1604 * MM_PER_PX, h: A3_BOARD_H, x: 297 - 1604 * MM_PER_PX, y: (420 - A3_BOARD_H) / 2 },
+    dx: { w: 1637 * MM_PER_PX, h: A3_BOARD_H, x: 0, y: (420 - A3_BOARD_H) / 2 },
+  } },
+};
+// le misure in mm dei testi si moltiplicano per k (larghezza della metà / 210mm), cosi' le scritte crescono con l'immagine
+function scaleMm(css) { return css.replace(/(\d*\.?\d+)mm/g, (m, n) => `calc(${n}mm * var(--k))`); }
+
+function pageHtml(cfg, fmt, side) {
+  const F = FORMATS[fmt], B = F.board[side];
+  const k = B.w / 210;
   const slots = cfg.slots.map(s => `<div class="slot${DEBUG ? ' dbg' : ''}" style="${box(s.r)}"><div class="st">${s.t}</div><div class="ss">${s.s}</div></div>`).join('');
   const gaps = cfg.gaps.map(g => `<div class="gap${DEBUG ? ' dbg' : ''}" style="${box(g.r)}">${g.t}</div>`).join('');
   const boxes = cfg.boxes.map(b => `<div class="bx${DEBUG ? ' dbg' : ''}" style="${box(b.r)}"><div class="bh">${b.h}</div><div class="bb">${b.body}</div></div>`).join('');
   const pl = `<div class="plq${DEBUG ? ' dbg' : ''}" style="${box(cfg.plaque.r)}">${cfg.plaque.t}</div>`;
-  return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
-    @page{ size:210mm 297mm; margin:0; }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html,body{ width:210mm; height:297mm; background:#0b1020; }
-    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .page{ position:relative; width:210mm; height:297mm; overflow:hidden; }
-    .page img.bg{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
+  const overlayCss = scaleMm(`
     .slot{ position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 7%; color:#e9dcc0; }
     .st{ font-family:'Cinzel',serif; font-weight:700; font-size:4.8mm; letter-spacing:.07em; white-space:nowrap; text-shadow:0 .3mm .8mm rgba(0,0,0,.9); }
     .ss{ margin-top:2mm; font-family:'Source Serif 4',serif; font-style:italic; font-size:3.1mm; line-height:1.3; color:#cdbf9f; text-shadow:0 .3mm .6mm rgba(0,0,0,.9); }
@@ -88,24 +106,39 @@ function pageHtml(cfg) {
     .bx b{ color:#f1d9a0; font-weight:600; }
     .plq{ position:absolute; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; font-size:5.4mm; letter-spacing:.14em; color:#3b2f1c; text-shadow:0 .25mm 0 rgba(255,244,214,.55); }
     .dbg{ outline:.4mm dashed rgba(255,60,60,.9); background:rgba(255,60,60,.08); }
-  </style></head><body><div class="page"><img class="bg" src="${pathToFileURL(path.join(UI, cfg.img)).href}">${slots}${gaps}${boxes}${pl}</div></body></html>`;
+  `);
+  return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
+    @page{ size:${F.pageW}mm ${F.pageH}mm; margin:0; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{ width:${F.pageW}mm; height:${F.pageH}mm; background:#fff; }
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .page{ position:relative; width:${F.pageW}mm; height:${F.pageH}mm; overflow:hidden; background:#fff; }
+    .board{ position:absolute; left:${B.x}mm; top:${B.y}mm; width:${B.w}mm; height:${B.h}mm; --k:${k}; }
+    .board img.bg{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
+    ${overlayCss}
+  </style></head><body><div class="page"><div class="board"><img class="bg" src="${pathToFileURL(path.join(UI, cfg.img)).href}">${slots}${gaps}${boxes}${pl}</div></div></body></html>`;
 }
 
 async function main() {
   fs.mkdirSync(OUT_PRINT, { recursive: true });
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
-  for (const [name, cfg] of [['sx', SX], ['dx', DX]]) {
-    const tmp = path.join(__dirname, '_tmp-tabellone-' + name + '-' + Date.now() + '.html');
-    fs.writeFileSync(tmp, pageHtml(cfg));
-    const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 2 });
-    await page.goto('file://' + tmp);
-    await page.waitForTimeout(1500);
-    await page.screenshot({ path: path.join(OUT_ALTRO, `tabellone_${name}${DEBUG ? '_debug' : ''}.png`), clip: { x: 0, y: 0, width: 794, height: 1123 } });
-    if (!DEBUG) await page.pdf({ path: path.join(OUT_PRINT, `tabellone_${name}.pdf`), printBackground: true, preferCSSPageSize: true });
-    await page.close();
-    fs.unlinkSync(tmp);
-    console.log('Fatto: tabellone_' + name);
+  for (const fmt of FMT_LIST) {
+    for (const [name, cfg] of [['sx', SX], ['dx', DX]]) {
+      const F = FORMATS[fmt];
+      const px = 3.7795; // px per mm (96dpi)
+      const tmp = path.join(__dirname, '_tmp-tabellone-' + name + '-' + Date.now() + '.html');
+      fs.writeFileSync(tmp, pageHtml(cfg, fmt, name));
+      const page = await browser.newPage({ viewport: { width: Math.round(F.pageW * px), height: Math.round(F.pageH * px) }, deviceScaleFactor: 1.5 });
+      await page.goto('file://' + tmp);
+      await page.waitForTimeout(1500);
+      const base = `tabellone_${name}${fmt === 'a3' ? '_A3' : ''}`;
+      await page.screenshot({ path: path.join(OUT_ALTRO, base + (DEBUG ? '_debug' : '') + '.png'), clip: { x: 0, y: 0, width: Math.round(F.pageW * px), height: Math.round(F.pageH * px) } });
+      if (!DEBUG) await page.pdf({ path: path.join(OUT_PRINT, base + '.pdf'), printBackground: true, preferCSSPageSize: true });
+      await page.close();
+      fs.unlinkSync(tmp);
+      console.log('Fatto:', base);
+    }
   }
   await browser.close();
 }
