@@ -11,6 +11,8 @@
 // Uso: node render-tabellone.js            -> cards_final/print/tabellone_A4_sx.pdf / tabellone_A4_dx.pdf
 //      node render-tabellone.js debug      -> disegna i riquadri misurati (controllo della sovrapposizione)
 //      node render-tabellone.js misure     -> tabella delle dimensioni reali degli slot
+//      node render-tabellone.js scala      -> versione A SCALA VERA su 6 fogli A4 (3 colonne x 2 righe) da unire:
+//                                             Tarocco esatto 120x70mm, Poker 68x94mm (la carta 63,5x88 ci sta con ~2,5mm di gioco)
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -21,6 +23,7 @@ const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 const DEBUG = process.argv.includes('debug');
 const MISURE = process.argv.includes('misure');
+const SCALA = process.argv.includes('scala');
 
 const IMG_W = 2464, IMG_H = 1728;
 const MM_PER_PX = 420 / IMG_W;                 // larghezza immagine = 2 x A4 = 420mm
@@ -113,6 +116,59 @@ function pageHtml(side) {
   </style></head><body><div class="page"><div class="board">${boardHtml()}</div></div></body></html>`;
 }
 
+// ---- versione a scala vera: lo slot Tarocco (511px) diventa esattamente 120mm => 0,2348 mm/px, immagine 579x406mm
+const REAL_MM_PER_PX = 120 / TAROCCO_PX.w;
+const R_W = IMG_W * REAL_MM_PER_PX, R_H = IMG_H * REAL_MM_PER_PX;
+const R_COLS = 3, R_ROWS = 2, R_M = 5, R_FLAP = 6;
+function scalaHtml() {
+  const k = REAL_MM_PER_PX * 96 / 25.4;
+  const sw = R_W / R_COLS, sh = R_H / R_ROWS;
+  const pages = [];
+  for (let r = 0; r < R_ROWS; r++) for (let c = 0; c < R_COLS; c++) {
+    const fx = c < R_COLS - 1 ? R_FLAP : 0, fy = r < R_ROWS - 1 ? R_FLAP : 0;
+    const cw = sw + fx, ch = sh + fy;
+    const tick = (x, y, w, h) => `<i class="tk" style="left:${x}mm; top:${y}mm; width:${w}mm; height:${h}mm;"></i>`;
+    const marks = [tick(R_M + sw, R_M - 4, .3, 3), tick(R_M + sw, R_M + ch + 1, .3, 3), tick(R_M - 4, R_M + sh, 3, .3), tick(R_M + cw + 1, R_M + sh, 3, .3)].join('');
+    const map = [0, 1].map(rr => [0, 1, 2].map(cc => `<i class="mp${rr === r && cc === c ? ' on' : ''}" style="left:${cc * 5}mm; top:${rr * 7}mm;"></i>`).join('')).join('');
+    pages.push(`<div class="tile">
+      <div class="clip" style="left:${R_M}mm; top:${R_M}mm; width:${cw}mm; height:${ch}mm;"><div class="board" style="left:${-c * sw}mm; top:${-r * sh}mm; transform:scale(${k});">${boardHtml()}</div></div>
+      ${marks}
+      <div class="lab" style="left:${R_M}mm; top:${R_M + ch + 8}mm;"><b>Tabellone a scala vera</b> — foglio ${r * R_COLS + c + 1} di ${R_COLS * R_ROWS} (riga ${r + 1}, colonna ${c + 1})<br>Stampa al 100% (non "adatta alla pagina"). Unisci i fogli lungo i segni sovrapponendo il lembo di ${R_FLAP}mm (a destra / in basso) alla tessera vicina, facendo combaciare il disegno. A montaggio finito misura ${R_W.toFixed(0)}x${R_H.toFixed(0)}mm.</div>
+      <div class="map" style="left:${R_M + 150}mm; top:${R_M + ch + 8}mm;">${map}</div>
+    </div>`);
+  }
+  return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
+    @page{ size:210mm 297mm; margin:0; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{ background:#fff; }
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .tile{ position:relative; width:210mm; height:297mm; overflow:hidden; page-break-after:always; }
+    .clip{ position:absolute; overflow:hidden; background:#0a0d1c; }
+    ${BOARD_CSS}
+    .tk{ position:absolute; display:block; background:#000; }
+    .lab{ position:absolute; width:140mm; font-family:sans-serif; font-size:2.8mm; line-height:1.4; color:#333; }
+    .map{ position:absolute; width:16mm; height:16mm; }
+    .mp{ position:absolute; width:4mm; height:6mm; border:.25mm solid #666; }
+    .mp.on{ background:#666; }
+  </style></head><body>${pages.join('')}</body></html>`;
+}
+async function mainScala() {
+  fs.mkdirSync(OUT_PRINT, { recursive: true });
+  fs.mkdirSync(OUT_ALTRO, { recursive: true });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
+  const tmp = path.join(__dirname, '_tmp-tabellone-scala-' + Date.now() + '.html');
+  fs.writeFileSync(tmp, scalaHtml());
+  const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
+  await page.goto(pathToFileURL(tmp).href);
+  await page.waitForTimeout(3000);
+  await page.pdf({ path: path.join(OUT_PRINT, 'tabellone_scala_reale_6fogli.pdf'), printBackground: true, preferCSSPageSize: true });
+  await page.setViewportSize({ width: 794, height: 1123 * 6 });
+  await page.screenshot({ path: path.join(OUT_ALTRO, 'tabellone_scala_reale_anteprima.png'), fullPage: true });
+  await page.close(); fs.unlinkSync(tmp);
+  await browser.close();
+  console.log(`Fatto: tabellone_scala_reale_6fogli.pdf (${R_W.toFixed(0)}x${R_H.toFixed(0)}mm, slot Tarocco ${(TAROCCO_PX.w * REAL_MM_PER_PX).toFixed(1)}x${(TAROCCO_PX.h * REAL_MM_PER_PX).toFixed(1)}mm, Poker ${(POKER_PX.w * REAL_MM_PER_PX).toFixed(1)}x${(POKER_PX.h * REAL_MM_PER_PX).toFixed(1)}mm)`);
+}
+
 function misure() {
   console.log(`Scala di stampa: ${MM_PER_PX.toFixed(4)} mm/px (immagine ${IMG_W}px = 420mm, 2 x A4)`);
   console.log('slot'.padEnd(24), 'px'.padEnd(10), 'mm (a 2xA4)'.padEnd(16), 'carta vera'.padEnd(12), 'scala'.padEnd(8), 'larghezza immagine per misura reale');
@@ -126,6 +182,7 @@ function misure() {
 
 async function main() {
   if (MISURE) return misure();
+  if (SCALA) return mainScala();
   fs.mkdirSync(OUT_PRINT, { recursive: true });
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
