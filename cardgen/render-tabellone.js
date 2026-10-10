@@ -135,6 +135,7 @@ function scalaHtml() {
       ${marks}
       <div class="lab" style="left:${R_M}mm; top:${R_M + ch + 8}mm;"><b>Tabellone a scala vera</b> — foglio ${r * R_COLS + c + 1} di ${R_COLS * R_ROWS} (riga ${r + 1}, colonna ${c + 1})<br>Stampa al 100% (non "adatta alla pagina"). Unisci i fogli lungo i segni sovrapponendo il lembo di ${R_FLAP}mm (a destra / in basso) alla tessera vicina, facendo combaciare il disegno. A montaggio finito misura ${R_W.toFixed(0)}x${R_H.toFixed(0)}mm.</div>
       <div class="map" style="left:${R_M + 150}mm; top:${R_M + ch + 8}mm;">${map}</div>
+      <div class="rul" style="left:${R_M}mm; top:${R_M + ch + 30}mm;"><div class="rb"></div>${[0, 1, 2, 3, 4].map(m => `<i class="rt" style="left:${m * 10}mm;"></i>`).join('')}<div class="rl">Righello di calibrazione: deve misurare esattamente 40mm. Se non combacia, la stampante ha ridimensionato il foglio: stampa al 100%.</div></div>
     </div>`);
   }
   return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
@@ -150,6 +151,10 @@ function scalaHtml() {
     .map{ position:absolute; width:16mm; height:16mm; }
     .mp{ position:absolute; width:4mm; height:6mm; border:.25mm solid #666; }
     .mp.on{ background:#666; }
+    .rul{ position:absolute; width:40mm; }
+    .rb{ width:40mm; height:.3mm; background:#000; }
+    .rul .rt{ position:absolute; top:-1mm; width:.3mm; height:2.3mm; background:#000; }
+    .rl{ margin-top:1.5mm; width:120mm; font-family:sans-serif; font-size:2.6mm; color:#333; }
   </style></head><body>${pages.join('')}</body></html>`;
 }
 async function mainScala() {
