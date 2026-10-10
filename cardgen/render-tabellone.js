@@ -9,6 +9,8 @@
 // Uso: node render-tabellone.js          -> cards_final/print/tabellone_sx.pdf / tabellone_dx.pdf
 //                                           (+ anteprime in cards_final/altro/)
 //      node render-tabellone.js a3       -> versione a scala vera (carte Poker esatte) su due A3: tabellone_sx_A3.pdf / tabellone_dx_A3.pdf
+//      node render-tabellone.js tessere  -> la versione A3 a scala vera spezzata in 4 fogli A4 per metà (stampante A4):
+//                                           tabellone_sx_tessere_A4.pdf / tabellone_dx_tessere_A4.pdf, da unire
 //      node render-tabellone.js tutti    -> A4 e A3
 //      ... debug                         -> disegna anche i riquadri misurati, per ritoccarli
 const fs = require('fs');
@@ -20,7 +22,8 @@ const UI = path.join(__dirname, '..', 'assets', 'ui');
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 const DEBUG = process.argv.includes('debug');
-const FMT_LIST = process.argv.includes('a3') ? ['a3'] : (process.argv.includes('tutti') ? ['a4', 'a3'] : ['a4']);
+const TESSERE = process.argv.includes('tessere');
+const FMT_LIST = TESSERE ? [] : (process.argv.includes('a3') ? ['a3'] : (process.argv.includes('tutti') ? ['a4', 'a3'] : ['a4']));
 
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,7 +127,74 @@ function pageHtml(cfg, fmt, side) {
   </style></head><body><div class="page"><div class="board"><img class="bg" src="${pathToFileURL(path.join(UI, cfg.img)).href}">${pf}${slots}${gaps}${boxes}${pl}</div></div></body></html>`;
 }
 
+// ---- tessere A4: ogni metà A3 divisa in 2 colonne x 2 righe, con un lembo di sovrapposizione di 8mm
+const TILE_M = 12, FLAP = 8, T_COLS = 2, T_ROWS = 2;
+function tilesHtml(side, boardFile, label) {
+  const F = FORMATS.a3, B = F.board[side];
+  const sw = B.w / T_COLS, sh = B.h / T_ROWS;
+  const pages = [];
+  for (let r = 0; r < T_ROWS; r++) for (let c = 0; c < T_COLS; c++) {
+    const fx = c < T_COLS - 1 ? FLAP : 0, fy = r < T_ROWS - 1 ? FLAP : 0;
+    const ox = B.x + c * sw, oy = B.y + r * sh;
+    const cw = sw + fx, ch = sh + fy;
+    const tick = (x, y, w, h) => `<i class="tk" style="left:${x}mm; top:${y}mm; width:${w}mm; height:${h}mm;"></i>`;
+    const marks = [
+      // limiti della "tessera pulita" (senza lembo): segni nel margine bianco, in alto e in basso / a sinistra e a destra
+      tick(TILE_M, TILE_M - 6, .3, 4), tick(TILE_M + sw, TILE_M - 6, .3, 4),
+      tick(TILE_M, TILE_M + ch + 2, .3, 4), tick(TILE_M + sw, TILE_M + ch + 2, .3, 4),
+      tick(TILE_M - 6, TILE_M, 4, .3), tick(TILE_M - 6, TILE_M + sh, 4, .3),
+      tick(TILE_M + cw + 2, TILE_M, 4, .3), tick(TILE_M + cw + 2, TILE_M + sh, 4, .3),
+    ].join('');
+    const map = [0, 1].map(rr => [0, 1].map(cc => `<i class="mp${rr === r && cc === c ? ' on' : ''}" style="left:${cc * 5}mm; top:${rr * 7}mm;"></i>`).join('')).join('');
+    pages.push(`<div class="tile">
+      <div class="clip" style="left:${TILE_M}mm; top:${TILE_M}mm; width:${cw}mm; height:${ch}mm;"><iframe src="${pathToFileURL(boardFile).href}" style="left:${-ox}mm; top:${-oy}mm; width:${F.pageW}mm; height:${F.pageH}mm;"></iframe></div>
+      ${marks}
+      <div class="lab" style="left:${TILE_M}mm; top:${TILE_M + ch + 8}mm;">
+        <b>${label}</b> — tessera ${r * T_COLS + c + 1} di ${T_COLS * T_ROWS} (riga ${r + 1}, colonna ${c + 1})<br>
+        Stampa al 100% (non "adatta alla pagina"). Taglia lungo i segni; il lembo di ${FLAP}mm (a destra / in basso) si sovrappone alla tessera vicina: fai combaciare il disegno e incolla.
+      </div>
+      <div class="map" style="left:${TILE_M + 140}mm; top:${TILE_M + ch + 8}mm;">${map}</div>
+    </div>`);
+  }
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    @page{ size:210mm 297mm; margin:0; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{ background:#fff; }
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .tile{ position:relative; width:210mm; height:297mm; overflow:hidden; page-break-after:always; }
+    .clip{ position:absolute; overflow:hidden; background:#fff; }
+    .clip iframe{ position:absolute; border:0; }
+    .tk{ position:absolute; display:block; background:#000; }
+    .lab{ position:absolute; width:130mm; font-family:sans-serif; font-size:2.8mm; line-height:1.4; color:#333; }
+    .map{ position:absolute; width:12mm; height:16mm; }
+    .mp{ position:absolute; width:4mm; height:6mm; border:.25mm solid #666; }
+    .mp.on{ background:#666; }
+  </style></head><body>${pages.join('')}</body></html>`;
+}
+
+async function mainTessere() {
+  fs.mkdirSync(OUT_PRINT, { recursive: true });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
+  for (const [name, cfg] of [['sx', SX], ['dx', DX]]) {
+    const boardFile = path.join(__dirname, '_tmp-board-' + name + '-' + Date.now() + '.html');
+    fs.writeFileSync(boardFile, pageHtml(cfg, 'a3', name));
+    const tilesFile = path.join(__dirname, '_tmp-tessere-' + name + '-' + Date.now() + '.html');
+    fs.writeFileSync(tilesFile, tilesHtml(name, boardFile, name === 'sx' ? 'Tabellone SINISTRO' : 'Tabellone DESTRO'));
+    const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
+    await page.goto(pathToFileURL(tilesFile).href);
+    await page.waitForTimeout(3500);
+    await page.pdf({ path: path.join(OUT_PRINT, `tabellone_${name}_tessere_A4.pdf`), printBackground: true, preferCSSPageSize: true });
+    await page.setViewportSize({ width: 794, height: 1123 * 4 });
+    await page.screenshot({ path: path.join(OUT_ALTRO, `tabellone_${name}_tessere_anteprima.png`), fullPage: true });
+    await page.close();
+    fs.unlinkSync(boardFile); fs.unlinkSync(tilesFile);
+    console.log('Fatto: tabellone_' + name + '_tessere_A4');
+  }
+  await browser.close();
+}
+
 async function main() {
+  if (TESSERE) return mainTessere();
   fs.mkdirSync(OUT_PRINT, { recursive: true });
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
