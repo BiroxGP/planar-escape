@@ -2,8 +2,8 @@
 // (assets/ui/tabellone_vuoto.jpg, 2464x1728) e' dell'utente; qui sopra si disegnano gli slot A MISURA REALE DELLA CARTA
 // (Poker 63,5x88mm, Tarocco 120x70mm), i dorsi dei mazzi, i testi e i promemoria. Nessuna icona, nessun conteggio di carte.
 // GIUNZIONE: la stampante non stampa i 5mm di bordo, quindi il foglio sinistro riproduce il tabellone da x=0 a 210 e il
-// destro da x=200 a 410 (10mm in comune): ritagliando i 5mm bianchi sul lato del taglio (sinistro: x>205, destro: x<5) e
-// accostando i fogli i disegni si toccano senza perdere nulla. Il tabellone montato e' largo 410mm; gli slot del centro
+// destro da x=196 a 406 (14mm in comune, tollera margini di stampa fino a 7mm): ritagliando il bordo bianco sul lato del taglio (sinistro: x>203, destro: x<7) e
+// accostando i fogli i disegni si toccano senza perdere nulla. Il tabellone montato e' largo 406mm; gli slot del centro
 // (Oggetti e Spell) stanno a cavallo della giunzione.
 //
 // Uso: node render-tabellone.js   -> cards_final/print/tabellone_A4_sx.pdf, tabellone_A4_dx.pdf
@@ -20,10 +20,10 @@ const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 const BG = path.join(UI, 'tabellone_vuoto.jpg');
 
 const IMG_W = 2464, IMG_H = 1728;
-const BOARD_W = 410;                           // larghezza del tabellone montato (mm)
-const SEAM = 205;                              // x della giunzione (centro del tabellone)
-const SHEET_DX = 200;                          // il foglio destro parte da x=200 (10mm in comune col sinistro)
-const BG_H_MM = IMG_H * BOARD_W / IMG_W;       // 287,5mm
+const BOARD_W = 406;                           // larghezza del tabellone montato (mm)
+const SEAM = 203;                              // x della giunzione (centro del tabellone)
+const SHEET_DX = 196;                          // il foglio destro parte da x=196: 14mm in comune col sinistro (tollera margini di stampa fino a 7mm)
+const BG_H_MM = IMG_H * BOARD_W / IMG_W;       // 284,7mm
 const BG_TOP = (297 - BG_H_MM) / 2;            // l'immagine e' centrata in verticale
 const PRINT_MARGIN = 5;                        // margine non stampabile tipico di una stampante A4
 
@@ -33,12 +33,12 @@ const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 // righe: Tarocco y19..89, Poker y95..183 e y189..277 (la linea interna della cornice e' a ~17mm in alto e ~281mm in basso)
-const ROW = { A: 19, B: 95, C: 189 };
-const LX = [26, 100], RX = [246.5, 320.5];     // colonne Poker: simmetriche rispetto alla giunzione (x=205)
+const ROW = { A: 20, B: 95.5, C: 189 };
+const LX = [26, 100], RX = [242.5, 316.5];     // colonne Poker: simmetriche rispetto alla giunzione (x=203)
 const CX = SEAM - P.w / 2;                     // colonna centrale (a cavallo della giunzione): 173,25
 const SLOTS = [
   { n: 'MAZZO PIANI', x: 26, y: ROW.A, ...T, col: '#c9a15a', retro: ['retro_piani'] },
-  { n: 'PIANO ATTUALE', x: 264, y: ROW.A, ...T, col: '#c9a15a', txt: 'Effetto subito.<br>Sotto, i piani già visitati.' },
+  { n: 'PIANO ATTUALE', x: 260, y: ROW.A, ...T, col: '#c9a15a', txt: 'Effetto subito.<br>Sotto, i piani già visitati.' },
   { n: 'GENERICO', x: LX[0], y: ROW.B, ...P, col: '#b9bdc8', retro: ['retro_incontro_generico'] },
   { n: 'ARMONIA', x: LX[1], y: ROW.B, ...P, col: '#c9a15a', retro: ['retro_incontro_armonia'] },
   { n: 'NON-MORTI', x: LX[0], y: ROW.C, ...P, col: '#4f8a68', retro: ['retro_incontro_nonmorti'] },
@@ -52,8 +52,8 @@ const SLOTS = [
 ];
 // promemoria in alto al centro
 const BOXES = [
-  { x: 152, y: ROW.A, w: 51, h: 70, h1: 'CHECK', body: 'Tira <b>1d6</b>: riesce se il risultato è <b>≤ al tuo valore</b>, oppure con un <b>6</b>.<br><br>Check di gruppo: un solo tiro, vale il valore più alto.' },
-  { x: 207, y: ROW.A, w: 51, h: 70, h1: 'IL TURNO', body: '<b>1</b> · Salta nel portale<br><b>2</b> · Effetto del piano<br><b>3</b> · Incontro<br><b>4</b> · Fine turno<br><br>Ogni <b>5 salti</b>: livello.' },
+  { x: 150, y: ROW.A, w: 50, h: 70, h1: 'CHECK', body: 'Tira <b>1d6</b>: riesce se il risultato è <b>≤ al tuo valore</b>, oppure con un <b>6</b>.<br><br>Check di gruppo: un solo tiro, vale il valore più alto.' },
+  { x: 206, y: ROW.A, w: 50, h: 70, h1: 'IL TURNO', body: '<b>1</b> · Salta nel portale<br><b>2</b> · Effetto del piano<br><b>3</b> · Incontro<br><b>4</b> · Fine turno<br><br>Ogni <b>5 salti</b>: livello.' },
 ];
 
 const CSS = `
@@ -95,6 +95,7 @@ const bgHtml = () => `<img class="bg" src="${pathToFileURL(BG).href}">`;
 function pageHtml(shift, inner, trimX) {
   // segni di taglio (chiari) sul lato della giunzione: si taglia lungo trimX, dalla parte del bordo bianco
   const tk = y => `<i style="position:absolute; left:${trimX - 0.15}mm; top:${y}mm; width:.3mm; height:6mm; background:#9aa;"></i>`;
+  const rul = `<div style="position:absolute; left:${trimX === 203 ? 30 : 40}mm; top:288mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:1mm; width:110mm; font:2.4mm sans-serif; color:#bbb;">righello: 40mm — se non misura 40mm stampa al 100%</div></div>`;
   return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
     @page{ size:210mm 297mm; margin:0; }
     html,body{ width:210mm; height:297mm; background:#0a0d1c; }
@@ -102,18 +103,18 @@ function pageHtml(shift, inner, trimX) {
     .page{ position:relative; width:210mm; height:297mm; overflow:hidden; background:#0a0d1c; }
     ${CSS}
     .mat{ left:${shift}mm; }
-  </style></head><body><div class="page"><div class="mat">${inner}</div>${tk(8)}${tk(283)}</div></body></html>`;
+  </style></head><body><div class="page"><div class="mat">${inner}</div>${tk(8)}${tk(283)}${rul}</div></body></html>`;
 }
 
 function misure() {
   console.log('Verifica: gli slot devono stare dentro la cornice dello sfondo e nei margini di stampa (5mm per foglio)');
-  const FR = { l: 13.0, r: 396.5, t: 16.9, b: 281.0 };   // linea interna della cornice misurata sull'immagine (scala 410mm)
+  const FR = { l: 12.9, r: 392.6, t: 18.2, b: 279.7 };   // linea interna della cornice misurata sull'immagine (scala 410mm)
   let ok = true;
   for (const s of SLOTS) {
     const x0 = s.x - 1.7, y0 = s.y - 1.7, x1 = s.x + s.w + 1.7, y1 = s.y + s.h + 1.7;
     const inFrame = x0 >= FR.l && x1 <= FR.r && y0 >= FR.t && y1 <= FR.b;
-    // area stampabile: foglio sinistro board x 5..205, foglio destro board x 205..405
-    const inPrint = x0 >= 5 && x1 <= 405 && y0 >= 5 && y1 <= 292;
+    // area stampabile (margine fino a 7mm): foglio sinistro board x 7..203, foglio destro board x 203..399
+    const inPrint = x0 >= 7 && x1 <= 399 && y0 >= 7 && y1 <= 290;
     const straddle = x0 < SEAM && x1 > SEAM;
     if (!inFrame || !inPrint) ok = false;
     console.log(s.n.padEnd(14), `${s.w}x${s.h}mm`.padEnd(11), `x ${s.x}..${(s.x + s.w).toFixed(1)}  y ${s.y}..${s.y + s.h}`.padEnd(30), straddle ? 'a cavallo della giunzione' : (x0 < SEAM ? 'foglio sx' : 'foglio dx'), inFrame ? '' : ' FUORI CORNICE', inPrint ? '' : ' FUORI AREA STAMPABILE');
@@ -127,7 +128,7 @@ async function main() {
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
   const mat = bgHtml() + SLOTS.map(slotHtml).join('') + BOXES.map(boxHtml).join('');
-  const jobs = [['sx', pageHtml(0, mat, 205)], ['dx', pageHtml(-SHEET_DX, mat, 5)]];
+  const jobs = [['sx', pageHtml(0, mat, 203)], ['dx', pageHtml(-SHEET_DX, mat, 7)]];
   for (const [name, html] of jobs) {
     const tmp = path.join(__dirname, '_tmp-tabellone-' + name + '-' + Date.now() + '.html');
     fs.writeFileSync(tmp, html);
