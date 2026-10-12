@@ -25,6 +25,8 @@ const UI = path.join(__dirname, '..', 'assets', 'ui');
 const RETRO = path.join(__dirname, '..', 'cards_final', 'retro');
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
+const { convertAll } = require('./png-to-jpg-cache.js');
+const JPG_CACHE = path.join(__dirname, '..', 'cards_final', 'print', '_jpgcache');
 const BG_TOP = path.join(UI, 'tabellone_a2_alto.jpg');
 const BG_BOT = path.join(UI, 'tabellone_a2_basso.jpg');
 
@@ -119,11 +121,11 @@ const CSS = `
 function deckHtml(s) {
   const G = 1.0;
   const frame = `<div class="fr" style="left:${s.x - G}mm; top:${s.y - G}mm; width:${s.w + 2 * G}mm; height:${s.h + 2 * G}mm; border:.7mm solid ${s.col}; box-shadow:0 0 2.2mm ${s.col}88;"></div>`;
-  if (s.retro && s.retro.length === 1) return frame + `<div class="cd" style="left:${s.x}mm; top:${s.y}mm; width:${s.w}mm; height:${s.h}mm;"><img src="${pathToFileURL(path.join(RETRO, s.retro[0] + '.png')).href}"></div>`;
+  if (s.retro && s.retro.length === 1) return frame + `<div class="cd" style="left:${s.x}mm; top:${s.y}mm; width:${s.w}mm; height:${s.h}mm;"><img src="${pathToFileURL(path.join(JPG_CACHE, s.retro[0] + '.jpg')).href}"></div>`;
   const n = s.retro.length;
   const imgs = s.retro.map((r, i) => {
     const rot = (i - (n - 1) / 2) * 8, dx = (i - (n - 1) / 2) * 8;
-    return `<img src="${pathToFileURL(path.join(RETRO, r + '.png')).href}" style="position:absolute; left:${(s.w - s.w * 0.74) / 2 + dx}mm; top:${(s.h - s.h * 0.74) / 2}mm; width:${s.w * 0.74}mm; height:${s.h * 0.74}mm; object-fit:cover; transform:rotate(${rot}deg);">`;
+    return `<img src="${pathToFileURL(path.join(JPG_CACHE, r + '.jpg')).href}" style="position:absolute; left:${(s.w - s.w * 0.74) / 2 + dx}mm; top:${(s.h - s.h * 0.74) / 2}mm; width:${s.w * 0.74}mm; height:${s.h * 0.74}mm; object-fit:cover; transform:rotate(${rot}deg);">`;
   }).join('');
   return frame + `<div class="fan" style="position:absolute; left:${s.x}mm; top:${s.y}mm; width:${s.w}mm; height:${s.h}mm;">${imgs}</div>`;
 }
@@ -161,8 +163,10 @@ function ladderHtml() {
 const noteHtml = () => `<div class="bx" style="left:${NOTE.x}mm; top:${NOTE.y}mm; width:${NOTE.w}mm; height:${NOTE.h}mm;"><div class="bh">IN BREVE</div>
   <b>Check:</b> 1d6 ≤ al tuo valore, o un 6.<br>Di gruppo: un tiro, vale il valore più alto.<br><br><b>Turno:</b><br>1 Salta · 2 Piano<br>3 Incontro · 4 Fine turno</div>`;
 
-function boardHtml() {
-  return `<img class="bg" style="top:0" src="${pathToFileURL(BG_TOP).href}"><img class="bg" style="top:${HALF}mm" src="${pathToFileURL(BG_BOT).href}">`
+function boardHtml(only) {
+  // only: 'top' | 'bot' per i fogli (la parte dell'altro sfondo che cade nel foglio e' zona di sovrapposizione, scartata al taglio)
+  const bgs = (only !== 'bot' ? `<img class="bg" style="top:0" src="${pathToFileURL(BG_TOP).href}">` : '') + (only !== 'top' ? `<img class="bg" style="top:${HALF}mm" src="${pathToFileURL(BG_BOT).href}">` : '');
+  return bgs
     + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + noteHtml() + starHtml() + ladderHtml();
 }
 
@@ -175,7 +179,7 @@ function sheetHtml(col, row, label) {
     <div style="position:absolute; top:${cutY - .15}mm; left:0; height:.3mm; width:210mm; background:${dash.replace('%DIR%', '90deg')};"></div>`;
   const rulY = row === 0 ? 9 : 285;
   const rul = `<div style="position:absolute; left:${col === 0 ? 24 : 24}mm; top:${rulY}mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:.8mm; font:2.2mm sans-serif; color:#cfcfcf; width:100mm;">${label} · righello 40mm: se non misura 40mm stampa al 100%</div></div>`;
-  return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml()}</div>${cuts}${rul}</div>`;
+  return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml(row === 0 ? 'top' : 'bot')}</div>${cuts}${rul}</div>`;
 }
 function docHtml(sheets) {
   return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
@@ -226,6 +230,8 @@ async function main() {
   fs.mkdirSync(OUT_PRINT, { recursive: true });
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
+  const ids = [...new Set(DECKS.flatMap(d => d.retro))];
+  await convertAll(ids.map(id => ({ id, srcDir: RETRO, outDir: JPG_CACHE })));
   const labels = ['1/4 alto-sinistra', '2/4 alto-destra', '3/4 basso-sinistra', '4/4 basso-destra'];
   const parts = [];
   for (const [i, [c, r]] of [[0, 0], [1, 0], [0, 1], [1, 1]].entries()) {
