@@ -32,6 +32,10 @@ const BG_TOP = path.join(UI, 'tabellone_a2_alto.jpg');
 const BG_BOT = path.join(UI, 'tabellone_a2_basso.jpg');
 
 const BW = 406, BH = 580, HALF = 290;
+// Sfondi dell'utente: alta 2432x1728 (1,41: riempie la meta' alta, 288,5mm), bassa 2752x1536 (1,79: larga quanto il
+// tabellone ma alta solo 226,6mm). Si montano SENZA deformarli: la bassa sta in fondo (y 353,4..580) e il vuoto fra
+// le due (y 288,5..353,4) e' riempito dal colore comune dei bordi aperti, coi bordi laterali prolungati (specchio).
+const ALTO_H = BW * 1728 / 2432, BASSO_H = BW * 1536 / 2752, BASSO_Y = BH - BASSO_H;
 const SEAM_X = 203, SEAM_Y = 290;
 const SHEET_DX = 196, SHEET_DY = 283;
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
@@ -102,7 +106,9 @@ const ladderX = i => SEAM_X + (i - (LADDER_N - 1) / 2) * LADDER_PITCH;      // i
 const CSS = `
   *{box-sizing:border-box;margin:0;padding:0;}
   .board{ position:absolute; width:${BW}mm; height:${BH}mm; left:0; top:0; }
-  .bg{ position:absolute; left:0; width:${BW}mm; height:${HALF}mm; display:block; }
+  .bg{ position:absolute; left:0; width:${BW}mm; display:block; }
+  .ext{ position:absolute; top:${ALTO_H - 40}mm; width:22mm; height:${BASSO_Y - ALTO_H + 40}mm; overflow:hidden; transform:scaleY(-1); -webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent 100%); mask-image:linear-gradient(to bottom,#000 62%,transparent 100%); }
+  .ext img{ position:absolute; top:0; width:${BW}mm; height:${BASSO_H}mm; display:block; }
   .fr{ position:absolute; border-radius:3mm; }
   .cd{ position:absolute; overflow:hidden; border-radius:2.4mm; }
   .cd img{ position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; display:block; }
@@ -154,7 +160,10 @@ function ladderHtml() {
 }
 
 function boardHtml(only) {
-  const bgs = (only !== 'bot' ? `<img class="bg" style="top:0" src="${pathToFileURL(BG_TOP).href}">` : '') + (only !== 'top' ? `<img class="bg" style="top:${HALF}mm" src="${pathToFileURL(BG_BOT).href}">` : '');
+  const A = pathToFileURL(BG_TOP).href, B = pathToFileURL(BG_BOT).href;
+  const gap = `<div style="position:absolute; left:0; top:${ALTO_H - 0.5}mm; width:${BW}mm; height:${BASSO_Y - ALTO_H + 1}mm; background:linear-gradient(180deg, rgb(15,17,32), rgb(12,15,29));"></div>`;
+  const ext = `<div class="ext" style="left:0"><img src="${B}" style="left:0"></div><div class="ext" style="right:0"><img src="${B}" style="left:-${BW - 22}mm"></div>`;
+  const bgs = (only !== 'bot' ? `<img class="bg" style="top:0; height:${ALTO_H}mm" src="${A}">` : '') + gap + ext + (only !== 'top' ? `<img class="bg" style="top:${BASSO_Y}mm; height:${BASSO_H}mm" src="${B}">` : '');
   return bgs + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
 }
 
