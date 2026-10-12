@@ -16,16 +16,31 @@ const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 const PITCH = 71.5, COL = i => 203 + (i - 2) * PITCH - P.w / 2;    // 5 colonne: la centrale sta sulla giunzione
 const R1 = 20, R2 = 114, R3 = 208;                // y delle tre file (alta: Poker, Poker, Tarocco)
 
+const AX = (406 - (T.w + 8 + P.w)) / 2;          // gruppo Piano corrente + Incontro attivo centrato (107,25)
 const TOP = [
+  // fila 1: 5 mazzi Incontro (Generico al centro, sulla giunzione)
   ...['ELEMENTARE', 'ETEREI', 'GENERICO', 'ARMONIA', 'ENTROPIA'].map((n, i) => ({ n, x: COL(i), y: R1, ...P })),
-  ...['DEMONIACO', 'NON-MORTI', 'INCONTRO ATTIVO', 'OGGETTI', 'SPELL'].map((n, i) => ({ n, x: COL(i), y: R2, ...P, hot: n === 'INCONTRO ATTIVO' })),
-  { n: 'MAZZO PIANI', x: 20, y: R3, ...T },
-  { n: 'PIANO ATTIVO', x: 146, y: R3, ...T, hot: true },
-  { n: 'PROMEMORIA (testo mio)', x: 274, y: R3, w: 110, h: 70, soft: true },
+  // fila 2: Demoniaco e Non-morti ai lati del centro libero; agli estremi i due promemoria (testo mio)
+  { n: 'PROMEMORIA CHECK (testo mio)', x: COL(0), y: R2, ...P, soft: true },
+  { n: 'DEMONIACO', x: COL(1), y: R2, ...P },
+  { n: 'NON-MORTI', x: COL(3), y: R2, ...P },
+  { n: 'PROMEMORIA TURNO (testo mio)', x: COL(4), y: R2, ...P, soft: true },
+  // fila 3: il mazzo Piani dove prima stava il Piano attivo, centrato sulla giunzione
+  { n: 'MAZZO PIANI', x: 143, y: R3, ...T, hot: true },
 ];
 const BOTTOM = [
-  { n: 'MAPPA DEI 36 PIANI (nodi, linee e nebulose le disegno io)', x: 23, y: 8, w: 360, h: 246, soft: true },
-  { n: 'SCALETTA 20 TACCHE (la disegno io)', x: 23, y: 256, w: 360, h: 18, soft: true },
+  // centro in alto: Piano corrente e, accanto, Incontro attivo (ben visibili, sotto i mazzi)
+  { n: 'PIANO CORRENTE', x: AX, y: 21, ...T, hot: true },
+  { n: 'INCONTRO ATTIVO', x: AX + T.w + 8, y: 12, ...P, hot: true },
+  // ai lati: le due catene piccole (3 nodi ciascuna, le disegno io)
+  { n: 'DEMONIACO (3 nodi, li disegno io)', x: 28, y: 12, w: 70, h: 88, soft: true },
+  { n: 'NON-MORTI (3 nodi, li disegno io)', x: 308, y: 12, w: 70, h: 88, soft: true },
+  // fila di 4 cluster sotto: il taglio verticale (x=203) cade fra Elementare e Entropia
+  { n: 'ARMONIA (9 nodi)', x: 28, y: 108, w: 76, h: 146, soft: true },
+  { n: 'ELEMENTARE (7 nodi)', x: 114, y: 108, w: 76, h: 146, soft: true },
+  { n: 'ENTROPIA (9 nodi)', x: 216, y: 108, w: 76, h: 146, soft: true },
+  { n: 'ETEREI (5 nodi)', x: 304, y: 108, w: 76, h: 146, soft: true },
+  { n: 'SCALETTA 20 TACCHE (la disegno io)', x: 23, y: 258, w: 360, h: 16, soft: true },
 ];
 
 function zoneHtml(z) {
