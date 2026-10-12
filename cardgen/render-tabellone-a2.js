@@ -40,6 +40,11 @@ const SEAM_X = 203, SEAM_Y = 290;
 const SHEET_DX = 196, SHEET_DY = 283;
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 const NODE_D = 18;
+// MARGINE FISICO: una stampante A4 non stampa i primi 5-7mm del foglio. I fogli esterni (x=0 / x=406, y=0 / y=580) hanno
+// la cornice dello sfondo proprio sul bordo: per non perderla si rimpicciolisce SOLO lo sfondo (non le carte, che restano a
+// misura reale) verso il centro, lasciando 7mm di margine attorno; le zone-carta e i nodi restano dove sono.
+const PRINT_MARGIN = 7;
+const BG_SCALE = (BW - 2 * PRINT_MARGIN) / BW;      // 0,9655
 const MAPPA = path.join(__dirname, '..', 'cards_final', 'print', '_mappa');   // medaglie e nebulose pronte (node prep-mappa.js)
 const NEB_SIZE = { elementare: 124, eterei: 124, armonia: 124, entropia: 128, demoniaco: 112, nonmorti: 112 };   // mm, lato dell'immagine quadrata
 
@@ -166,7 +171,8 @@ function boardHtml(only) {
   const gap = `<div style="position:absolute; left:0; top:${ALTO_H - 0.5}mm; width:${BW}mm; height:${BASSO_Y - ALTO_H + 1}mm; background:linear-gradient(180deg, rgb(15,17,32), rgb(12,15,29));"></div>`;
   const ext = `<div class="ext" style="left:0"><img src="${B}" style="left:0"></div><div class="ext" style="right:0"><img src="${B}" style="left:-${BW - 22}mm"></div>`;
   const bgs = (only !== 'bot' ? `<img class="bg" style="top:0; height:${ALTO_H}mm" src="${A}">` : '') + gap + ext + (only !== 'top' ? `<img class="bg" style="top:${BASSO_Y}mm; height:${BASSO_H}mm" src="${B}">` : '');
-  return bgs + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
+  const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${SEAM_X}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
+  return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
 }
 
 function sheetHtml(col, row, label) {
@@ -176,7 +182,7 @@ function sheetHtml(col, row, label) {
   const dash = 'repeating-linear-gradient(%DIR%, rgba(235,235,235,.85) 0 1.2mm, transparent 1.2mm 2.4mm)';
   const cuts = `<div style="position:absolute; left:${cutX - .15}mm; top:0; width:.3mm; height:297mm; background:${dash.replace('%DIR%', '180deg')};"></div>
     <div style="position:absolute; top:${cutY - .15}mm; left:0; height:.3mm; width:210mm; background:${dash.replace('%DIR%', '90deg')};"></div>`;
-  const rulY = row === 0 ? 9 : 285;
+  const rulY = row === 0 ? 285 : 9;     // dentro il navy centrale (mai sopra la cornice)
   const rul = `<div style="position:absolute; left:24mm; top:${rulY}mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:.8mm; font:2.2mm sans-serif; color:#cfcfcf; width:100mm;">${label} · righello 40mm: se non misura 40mm stampa al 100%</div></div>`;
   return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml(row === 0 ? 'top' : 'bot')}</div>${cuts}${rul}</div>`;
 }
