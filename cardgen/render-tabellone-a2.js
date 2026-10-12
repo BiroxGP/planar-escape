@@ -40,6 +40,8 @@ const SEAM_X = 203, SEAM_Y = 290;
 const SHEET_DX = 196, SHEET_DY = 283;
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 const NODE_D = 18;
+const MAPPA = path.join(__dirname, '..', 'cards_final', 'print', '_mappa');   // medaglie e nebulose pronte (node prep-mappa.js)
+const NEB_SIZE = { elementare: 124, eterei: 124, armonia: 124, entropia: 128, demoniaco: 112, nonmorti: 112 };   // mm, lato dell'immagine quadrata
 
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,10 +117,10 @@ const CSS = `
   .tx{ position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#e9dcc0; padding:0 3mm; }
   .tn{ font-family:'Cinzel',serif; font-weight:700; font-size:4.4mm; letter-spacing:.07em; white-space:nowrap; text-shadow:0 .3mm 1mm rgba(0,0,0,.95), 0 0 2mm rgba(0,0,0,.8); }
   .ts{ margin-top:2mm; font-family:'Source Serif 4',serif; font-style:italic; font-size:3mm; line-height:1.3; color:#d8ccaa; text-shadow:0 .3mm .8mm rgba(0,0,0,.95), 0 0 2mm rgba(0,0,0,.8); }
-  .neb{ position:absolute; border-radius:50%; filter:blur(5mm); }
+  .neb{ position:absolute; mix-blend-mode:screen; opacity:.9; display:block; }
   .nd{ position:absolute; border-radius:50%; }
   .nl{ position:absolute; text-align:center; font-family:'Source Serif 4',serif; font-size:2.5mm; line-height:1.1; color:#f1e7cc; text-shadow:0 0 1mm #000, 0 0 .6mm #000; width:24mm; }
-  .ct{ position:absolute; text-align:center; font-family:'Cinzel',serif; font-weight:700; font-size:3.6mm; letter-spacing:.12em; text-shadow:0 0 1.2mm #000; }
+  .ct{ position:absolute; text-align:center; font-family:'Cinzel',serif; font-weight:700; font-size:3.7mm; letter-spacing:.12em; text-shadow:0 0 1mm #000, 0 0 2mm #000, 0 0 3.5mm #000; }
   .tk{ position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:3.3mm; color:#d9cfae; background:rgba(5,7,18,.6); }
   .tl{ position:absolute; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:2.4mm; letter-spacing:.05em; color:#f1d9a0; width:16mm; text-shadow:0 0 1mm #000; }
 `;
@@ -131,22 +133,22 @@ function activeHtml(s) {   // solo cornice luminosa e testo: nessun riempimento 
   return outline(s, s.col) + `<div class="tx" style="left:${s.x}mm; top:${s.y}mm; width:${s.w}mm; height:${s.h}mm;"><div class="tn">${s.n}</div><div class="ts">${s.sub}</div></div>`;
 }
 function starHtml() {
-  let html = '', svg = '';
+  let neb = '', html = '', svg = '';
   for (const cl of CLUSTERS) {
-    const f = FAM[cl.fam], col = light(f.c, 0.3), names = planeNames(cl.fam), abs = nodeAbs(cl);
-    // nebulosa di famiglia dietro al cluster (alone morbido, niente rettangoli)
+    const f = FAM[cl.fam], col = light(f.c, 0.5), names = planeNames(cl.fam), abs = nodeAbs(cl);
+    // nebulosa di famiglia dietro al cluster: immagine dell'utente su nero, in modo 'screen' (il nero sparisce)
     const xs = abs.map(p => p[0]), ys = abs.map(p => p[1]);
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const rw = (Math.max(...xs) - Math.min(...xs)) / 2 + 20, rh = (Math.max(...ys) - Math.min(...ys)) / 2 + 20;
-    html += `<div class="neb" style="left:${cx - rw}mm; top:${cy - rh}mm; width:${rw * 2}mm; height:${rh * 2}mm; background:radial-gradient(ellipse at center, ${rgba(f.c, .5)} 0%, ${rgba(f.c, .22)} 45%, transparent 72%);"></div>`;
-    cl.links.forEach(([a, b]) => { svg += `<line x1="${abs[a][0]}" y1="${abs[a][1]}" x2="${abs[b][0]}" y2="${abs[b][1]}" stroke="${col}" stroke-opacity=".55" stroke-width=".5" stroke-linecap="round"/>`; });
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2, ns = NEB_SIZE[cl.fam];
+    neb += `<img class="neb" src="${pathToFileURL(path.join(MAPPA, 'nebulosa_' + cl.fam + '.jpg')).href}" style="left:${cx - ns / 2}mm; top:${cy - ns / 2}mm; width:${ns}mm; height:${ns}mm;">`;
+    cl.links.forEach(([a, b]) => { svg += `<line x1="${abs[a][0]}" y1="${abs[a][1]}" x2="${abs[b][0]}" y2="${abs[b][1]}" stroke="${col}" stroke-opacity=".7" stroke-width=".6" stroke-linecap="round"/>`; });
     html += `<div class="ct" style="left:${cl.ox}mm; top:${Math.min(...ys) - NODE_D / 2 - 7}mm; width:${cl.w}mm; color:${col};">${f.n}</div>`;
     abs.forEach(([x, y], i) => {
-      html += `<div class="nd" style="left:${x - NODE_D / 2}mm; top:${y - NODE_D / 2}mm; width:${NODE_D}mm; height:${NODE_D}mm; border:.8mm solid ${col}; background:radial-gradient(circle at 50% 40%, ${rgba(f.c, .28)}, rgba(5,7,18,.55) 75%); box-shadow:0 0 2.2mm ${f.c}, inset 0 0 1.6mm ${rgba(f.c, .55)};"></div>
+      const medal = pathToFileURL(path.join(MAPPA, cl.fam + '_' + i + '.jpg')).href;
+      html += `<div class="nd" style="left:${x - NODE_D / 2}mm; top:${y - NODE_D / 2}mm; width:${NODE_D}mm; height:${NODE_D}mm; background:#05070f url(${medal}) center/cover; box-shadow:0 0 2.4mm ${rgba(f.c, .8)}, 0 0 .6mm #000;"></div>
         <div class="nl" style="left:${x - 12}mm; top:${y + NODE_D / 2 + .8}mm;">${names[i] || ''}</div>`;
     });
   }
-  return `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
+  return neb + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
 }
 function ladderHtml() {
   let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 14}mm; width:130mm; text-align:left; font-size:2.8mm; margin:0;">PIANI PESCATI: ogni 5, avanzamento di livello (al massimo 3)</div>`;
@@ -221,6 +223,7 @@ async function main() {
   fs.mkdirSync(OUT_PRINT, { recursive: true });
   fs.mkdirSync(OUT_ALTRO, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium', args: ['--allow-file-access-from-files'] });
+  if (!fs.existsSync(path.join(MAPPA, 'armonia_8.jpg')) || !fs.existsSync(path.join(MAPPA, 'nebulosa_nonmorti.jpg'))) execFileSync(process.execPath, [path.join(__dirname, 'prep-mappa.js')], { stdio: 'inherit' });
   const ids = [...new Set(DECKS.flatMap(d => d.retro))];
   await convertAll(ids.map(id => ({ id, srcDir: RETRO, outDir: JPG_CACHE })));
   if (!prova) {
