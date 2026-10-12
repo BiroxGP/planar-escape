@@ -28,14 +28,10 @@ const RETRO = path.join(__dirname, '..', 'cards_final', 'retro');
 const JPG_CACHE = path.join(__dirname, '..', 'cards_final', 'print', '_jpgcache');
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
-const BG_TOP = path.join(UI, 'tabellone_a2_alto.jpg');
-const BG_BOT = path.join(UI, 'tabellone_a2_basso.jpg');
+// sfondo UNICO dell'utente (1728x2464 = 7:10): una sola immagine, una sola cornice (le due meta' precedenti sono archiviate come v1/alto/basso)
+const BG_UNICO = path.join(UI, 'tabellone_unico.jpg');
 
 const BW = 406, BH = 580, HALF = 290;
-// Sfondi dell'utente: alta 2432x1728 (1,41: riempie la meta' alta, 288,5mm), bassa 2752x1536 (1,79: larga quanto il
-// tabellone ma alta solo 226,6mm). Si montano SENZA deformarli: la bassa sta in fondo (y 353,4..580) e il vuoto fra
-// le due (y 288,5..353,4) e' riempito dal colore comune dei bordi aperti, coi bordi laterali prolungati (specchio).
-const ALTO_H = BW * 1728 / 2432, BASSO_H = BW * 1536 / 2752, BASSO_Y = BH - BASSO_H;
 const SEAM_X = 203, SEAM_Y = 290;
 const SHEET_DX = 196, SHEET_DY = 283;
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
@@ -61,7 +57,7 @@ function light(hex, k) { const n = parseInt(hex.slice(1), 16); const r = (n >> 1
 function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
 
 // ---------- META' ALTA -------------------------------------------------------------------------------
-const ROW1 = 54, ROW2 = 160;                    // file di mazzi Poker: 54..142 e 160..248
+const ROW1 = 82, ROW2 = 186;                    // file di mazzi Poker: 82..170 e 186..274 (sotto le candele agli angoli dello sfondo, che con la riduzione per il margine fisico arrivano a y~76)
 const COLX = [60, 131.5, 203, 274.5, 346];      // centri delle 5 colonne (pitch 71,5; la centrale e' sulla giunzione)
 const zx = i => COLX[i] - P.w / 2;
 const DECKS = [
@@ -105,7 +101,7 @@ const planeNames = fam => PIANI.filter(p => p.family === fam).map(p => { const n
 const nodeAbs = cl => cl.pts.map(([x, y]) => [cl.ox + x, cl.oy + y]);
 
 // scaletta dei piani pescati: 20 tacche; avanzamento di livello a 5/10/15 (3 livelli, come nel gioco)
-const LADDER_N = 20, LADDER_PITCH = 17, LADDER_Y = Y0 + 247, LADDER_D = 12;
+const LADDER_N = 20, LADDER_PITCH = 16, LADDER_Y = Y0 + 245, LADDER_D = 12;     // passo 16mm: la tacca 1 e la 20 restano fuori dai nodi d'angolo della cornice
 const LEVEL_AT = { 5: 'LIV. 2', 10: 'LIV. 3', 15: 'LIV. 4' };
 const ladderX = i => SEAM_X + (i - (LADDER_N - 1) / 2) * LADDER_PITCH;      // il taglio cade fra la tacca 10 e la 11
 
@@ -114,8 +110,6 @@ const CSS = `
   *{box-sizing:border-box;margin:0;padding:0;}
   .board{ position:absolute; width:${BW}mm; height:${BH}mm; left:0; top:0; }
   .bg{ position:absolute; left:0; width:${BW}mm; display:block; }
-  .ext{ position:absolute; top:${ALTO_H - 40}mm; width:22mm; height:${BASSO_Y - ALTO_H + 40}mm; overflow:hidden; transform:scaleY(-1); -webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent 100%); mask-image:linear-gradient(to bottom,#000 62%,transparent 100%); }
-  .ext img{ position:absolute; top:0; width:${BW}mm; height:${BASSO_H}mm; display:block; }
   .fr{ position:absolute; border-radius:3mm; }
   .cd{ position:absolute; overflow:hidden; border-radius:2.4mm; }
   .cd img{ position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; display:block; }
@@ -166,11 +160,8 @@ function ladderHtml() {
   return h;
 }
 
-function boardHtml(only) {
-  const A = pathToFileURL(BG_TOP).href, B = pathToFileURL(BG_BOT).href;
-  const gap = `<div style="position:absolute; left:0; top:${ALTO_H - 0.5}mm; width:${BW}mm; height:${BASSO_Y - ALTO_H + 1}mm; background:linear-gradient(180deg, rgb(15,17,32), rgb(12,15,29));"></div>`;
-  const ext = `<div class="ext" style="left:0"><img src="${B}" style="left:0"></div><div class="ext" style="right:0"><img src="${B}" style="left:-${BW - 22}mm"></div>`;
-  const bgs = (only !== 'bot' ? `<img class="bg" style="top:0; height:${ALTO_H}mm" src="${A}">` : '') + gap + ext + (only !== 'top' ? `<img class="bg" style="top:${BASSO_Y}mm; height:${BASSO_H}mm" src="${B}">` : '');
+function boardHtml() {
+  const bgs = `<img class="bg" style="top:0; height:${BH}mm" src="${pathToFileURL(BG_UNICO).href}">`;
   const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${SEAM_X}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
   return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
 }
@@ -184,7 +175,7 @@ function sheetHtml(col, row, label) {
     <div style="position:absolute; top:${cutY - .15}mm; left:0; height:.3mm; width:210mm; background:${dash.replace('%DIR%', '90deg')};"></div>`;
   const rulY = row === 0 ? 285 : 9;     // dentro il navy centrale (mai sopra la cornice)
   const rul = `<div style="position:absolute; left:24mm; top:${rulY}mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:.8mm; font:2.2mm sans-serif; color:#cfcfcf; width:100mm;">${label} · righello 40mm: se non misura 40mm stampa al 100%</div></div>`;
-  return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml(row === 0 ? 'top' : 'bot')}</div>${cuts}${rul}</div>`;
+  return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml()}</div>${cuts}${rul}</div>`;
 }
 function docHtml(sheets) {
   return `<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>
