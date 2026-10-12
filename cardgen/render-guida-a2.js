@@ -16,30 +16,30 @@ const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 const PITCH = 71.5, COL = i => 203 + (i - 2) * PITCH - P.w / 2;    // 5 colonne: la centrale sta sulla giunzione
 const R1 = 20, R2 = 114, R3 = 208;                // y delle tre file (alta: Poker, Poker, Tarocco)
 
-const AX = (406 - (T.w + 8 + P.w)) / 2;          // gruppo Piano corrente + Incontro attivo centrato (107,25)
+// Logica di posizionamento (poli opposti): ARMONIA (ordine) a un estremo, ENTROPIA (caos) all'estremo opposto, sia
+// in alto sia in basso; ELEMENTARE (fisico) ed ETEREI (spirito) nel mezzo, ai due lati della giunzione; GENERICO al
+// centro (la base neutra); DEMONIACO e NON-MORTI, i due "scivolamenti" oscuri, insieme sul lato di Entropia,
+// all'opposto di Armonia (che col Sacro e il Sole li annienta).
 const TOP = [
-  // fila 1: 5 mazzi Incontro (Generico al centro, sulla giunzione)
-  ...['ELEMENTARE', 'ETEREI', 'GENERICO', 'ARMONIA', 'ENTROPIA'].map((n, i) => ({ n, x: COL(i), y: R1, ...P })),
-  // fila 2: Demoniaco e Non-morti ai lati del centro libero; agli estremi i due promemoria (testo mio)
+  ...['ARMONIA', 'ELEMENTARE', 'GENERICO', 'ETEREI', 'ENTROPIA'].map((n, i) => ({ n, x: COL(i), y: R1, ...P })),
   { n: 'PROMEMORIA CHECK (testo mio)', x: COL(0), y: R2, ...P, soft: true },
-  { n: 'DEMONIACO', x: COL(1), y: R2, ...P },
+  { n: 'PROMEMORIA TURNO (testo mio)', x: COL(1), y: R2, ...P, soft: true },
   { n: 'NON-MORTI', x: COL(3), y: R2, ...P },
-  { n: 'PROMEMORIA TURNO (testo mio)', x: COL(4), y: R2, ...P, soft: true },
-  // fila 3: il mazzo Piani dove prima stava il Piano attivo, centrato sulla giunzione
+  { n: 'DEMONIACO', x: COL(4), y: R2, ...P },
   { n: 'MAZZO PIANI', x: 143, y: R3, ...T, hot: true },
 ];
 const BOTTOM = [
-  // centro in alto: Piano corrente e, accanto, Incontro attivo (ben visibili, sotto i mazzi)
-  { n: 'PIANO CORRENTE', x: AX, y: 21, ...T, hot: true },
-  { n: 'INCONTRO ATTIVO', x: AX + T.w + 8, y: 12, ...P, hot: true },
-  // ai lati: le due catene piccole (3 nodi ciascuna, le disegno io)
-  { n: 'DEMONIACO (3 nodi, li disegno io)', x: 28, y: 12, w: 70, h: 88, soft: true },
-  { n: 'NON-MORTI (3 nodi, li disegno io)', x: 308, y: 12, w: 70, h: 88, soft: true },
-  // fila di 4 cluster sotto: il taglio verticale (x=203) cade fra Elementare e Entropia
+  // Piano corrente e Incontro attivo: ai due lati della giunzione (nessuna zona-carta la attraversa), vicini e in alto al centro
+  { n: 'PIANO CORRENTE', x: 76, y: 21, ...T, hot: true },
+  { n: 'INCONTRO ATTIVO', x: 210, y: 12, ...P, hot: true },
+  // le due catene oscure insieme sul lato di Entropia (3 nodi ciascuna, le disegno io)
+  { n: 'NON-MORTI (3 nodi)', x: 296, y: 12, w: 40, h: 88, soft: true },
+  { n: 'DEMONIACO (3 nodi)', x: 342, y: 12, w: 40, h: 88, soft: true },
+  // fila di 4 cluster: Armonia e Entropia agli estremi opposti, il taglio (x=203) fra Elementare e Eterei
   { n: 'ARMONIA (9 nodi)', x: 28, y: 108, w: 76, h: 146, soft: true },
   { n: 'ELEMENTARE (7 nodi)', x: 114, y: 108, w: 76, h: 146, soft: true },
-  { n: 'ENTROPIA (9 nodi)', x: 216, y: 108, w: 76, h: 146, soft: true },
-  { n: 'ETEREI (5 nodi)', x: 304, y: 108, w: 76, h: 146, soft: true },
+  { n: 'ETEREI (5 nodi)', x: 216, y: 108, w: 76, h: 146, soft: true },
+  { n: 'ENTROPIA (9 nodi)', x: 304, y: 108, w: 76, h: 146, soft: true },
   { n: 'SCALETTA 20 TACCHE (la disegno io)', x: 23, y: 258, w: 360, h: 16, soft: true },
 ];
 
