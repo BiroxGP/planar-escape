@@ -101,9 +101,9 @@ const planeNames = fam => PIANI.filter(p => p.family === fam).map(p => { const n
 const nodeAbs = cl => cl.pts.map(([x, y]) => [cl.ox + x, cl.oy + y]);
 
 // scaletta dei piani pescati: 20 tacche; avanzamento di livello a 5/10/15 (3 livelli, come nel gioco)
-const LADDER_N = 20, LADDER_PITCH = 16, LADDER_Y = Y0 + 245, LADDER_D = 12;     // passo 16mm: la tacca 1 e la 20 restano fuori dai nodi d'angolo della cornice
+const LADDER_N = 15, LADDER_PITCH = 22, LADDER_Y = Y0 + 245, LADDER_D = 14;     // passo 16mm: la tacca 1 e la 20 restano fuori dai nodi d'angolo della cornice
 const LEVEL_AT = { 5: 'LIV. 2', 10: 'LIV. 3', 15: 'LIV. 4' };
-const ladderX = i => SEAM_X + (i - (LADDER_N - 1) / 2) * LADDER_PITCH;      // il taglio cade fra la tacca 10 e la 11
+const ladderX = i => SEAM_X + (i - (LADDER_N - 1) / 2 - 0.5) * LADDER_PITCH;      // il taglio cade fra la tacca 8 e la 9
 
 // ---------- HTML ------------------------------------------------------------------------------------
 const CSS = `
@@ -150,7 +150,7 @@ function starHtml() {
   return neb + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
 }
 function ladderHtml() {
-  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 14}mm; width:130mm; text-align:left; font-size:2.8mm; margin:0;">PIANI PESCATI: ogni 5, avanzamento di livello (al massimo 3)</div>`;
+  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 14}mm; width:130mm; text-align:left; font-size:2.8mm; margin:0;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1</div>`;
   for (let i = 0; i < LADDER_N; i++) {
     const n = i + 1, x = ladderX(i), lv = LEVEL_AT[n];
     const d = lv ? LADDER_D + 3 : LADDER_D, col = lv ? '#e7c988' : 'rgba(217,207,174,.65)';
@@ -210,7 +210,7 @@ function misure() {
   console.log(`Nodi: ${all.length} (attesi 36); distanza minima fra centri ${minD.toFixed(1)}mm (${pair}) => spazio fra nodi ${(minD - NODE_D).toFixed(1)}mm`);
   if (all.length !== 36) ok = false;
   const onSeam = all.filter(n => Math.abs(n.x - SEAM_X) < NODE_D / 2 + 1).length;
-  console.log(`Nodi sulla giunzione x=203: ${onSeam}; scaletta: taglio fra tacca 10 (${ladderX(9).toFixed(1)}) e 11 (${ladderX(10).toFixed(1)})`);
+  console.log(`Nodi sulla giunzione x=203: ${onSeam}; scaletta: taglio fra tacca 8 (${ladderX(7).toFixed(1)}) e 9 (${ladderX(8).toFixed(1)})`);
   console.log(ok ? 'OK' : 'ATTENZIONE: controlla gli avvisi sopra');
 }
 
