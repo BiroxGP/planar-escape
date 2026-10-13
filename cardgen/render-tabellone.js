@@ -45,7 +45,7 @@ const SLOTS = [
   { n: 'ENTROPIA', x: LX[1], y: ROW.C, ...P, col: '#8a7fc0', retro: ['retro_incontro_entropia'] },
   { n: 'OGGETTI', x: CX, y: ROW.B, ...P, col: '#b0674f', retro: ['retro_oggetto'] },
   { n: 'SPELL', x: CX, y: ROW.C, ...P, col: '#8a4a96', retro: ['retro_spell_flusso', 'retro_spell_essenza', 'retro_spell_divinazione'] },
-  { n: 'INCONTRO', x: RX[0], y: ROW.B, ...P, col: '#b9bdc8', txt: 'La carta del turno.<br>Con un 6 sul d6: Generico.' },
+  { n: 'INCONTRO', x: RX[0], y: ROW.B, ...P, col: '#b9bdc8', txt: 'La carta del turno.<br>Ogni 5 piani (come il livello): Generico.' },
   { n: 'ETEREI', x: RX[1], y: ROW.B, ...P, col: '#4a86c0', retro: ['retro_incontro_eterei'] },
   { n: 'ELEMENTARE', x: RX[0], y: ROW.C, ...P, col: '#d08a3d', retro: ['retro_incontro_elementare'] },
   { n: 'DEMONIACO', x: RX[1], y: ROW.C, ...P, col: '#c8504a', retro: ['retro_incontro_demoni'] },

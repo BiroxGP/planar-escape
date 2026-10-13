@@ -2722,8 +2722,12 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
     cardId = pend.cardId;
   } else {
     // "uguale per tutti i piani, senza eccezioni" — vale anche in Demoniaco e Piano Negativo (girone forzato).
-    const roll = d6();
-    if(roll===6 && deckKey!=='generico'){ logMsg('🎲 d6 = 6 → si pesca dal sotto-mazzo Generico invece che da quello tematico.'); deckKey='generico'; }
+    // Cadenza dei 5 piani (la stessa del passaggio di livello): ogni 5° salto l'Incontro arriva dal mazzo Generico, al posto
+    // del d6 (con 6) usato prima, che era macchinoso. Vale solo al turno d'arrivo (non quando si resta sul piano) e se
+    // almeno uno dei presenti ha appena fatto un salto multiplo di 5.
+    const arrivalTurn = !state.stayTurn || (state.stayTurn.count||1) <= 1;
+    const fifthJump = arrivalTurn && acts.some(c=>c.jumps>0 && c.jumps%5===0);
+    if(fifthJump && deckKey!=='generico'){ logMsg("🎴 Quinto salto (la cadenza del passaggio di livello): l'Incontro arriva dal mazzo Generico, invece che da quello tematico."); deckKey='generico'; }
     const deck = state.subdecks[deckKey];
     if(deck.length===0){
       state.subdecks[deckKey] = shuffle(state.subdecksDiscard[deckKey]);

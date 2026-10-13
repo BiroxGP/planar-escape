@@ -22,7 +22,7 @@ const BLOCKS_LEFT = [
   ['Il turno', [
     '<b>1 · Salto.</b> Si pesca la carta Piano in cima al mazzo. Il gruppo salta unito: nel portale è un\'unica entità, quindi la meta è la stessa per tutti. I gruppi possono anche essere <b>separati</b>: ognuno ha il proprio turno (salto, piano, Incontro), e i turni si fanno <b>uno alla volta</b>.',
     '<b>2 · Il piano.</b> Si applica il suo effetto d\'ingresso. Alcuni piani colpiscono a <b>fine turno</b> (Veleno, Tempesta, gironi più bassi del Piano Negativo).',
-    '<b>3 · Incontro.</b> Si tira un d6: con <b>6</b> la carta arriva dal mazzo Generico, altrimenti da quello della famiglia del piano.',
+    '<b>3 · Incontro.</b> La carta arriva dal mazzo della famiglia del piano; ogni <b>5° piano</b> (come il passaggio di livello) arriva invece dal mazzo <b>Generico</b>.',
     '<b>4 · Fine turno.</b> Scattano gli effetti di fine turno, poi si salta di nuovo. Ogni <b>5 salti</b>: livello, +1 a una caratteristica e un potere di classe.',
   ]],
   ['Check', [

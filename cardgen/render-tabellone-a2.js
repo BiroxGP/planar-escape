@@ -77,7 +77,7 @@ const Y0 = HALF;
 // Piano corrente e Incontro attivo: vicini, ai due lati della giunzione (il taglio cade fra i due)
 const ACTIVE = [
   { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 76, y: Y0 + 31, ...T },
-  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Con un 6 sul d6:<br>mazzo Generico.', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
+  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Ogni 5 piani (come il livello):<br>mazzo Generico.', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
 ];
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
 const CW = 76, CY = Y0 + 110;
