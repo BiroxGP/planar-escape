@@ -58,7 +58,7 @@ const BLOCKS_RIGHT = [
   ]],
   ['Gruppo e vittoria', [
     'Ci si può staccare dal gruppo: chi va da solo <b>viaggia per conto suo</b> (il suo turno, i suoi salti) e può trovare la via di casa anche senza gli altri.',
-    'A ogni salto una carta <b>Piano Terreno</b> si aggiunge in fondo al mazzo Piani. Pescarla porta a una destinazione leggendaria: <b>La Via di Casa</b> è una vittoria, altre sono scontri, prove o bonus.',
+    'Al <b>5°</b> e al <b>10°</b> salto 5 carte <b>Piano Terreno</b> vanno in fondo al mazzo Piani, al <b>15°</b> le restanti. Pescarne una porta a una destinazione leggendaria: <b>La Via di Casa</b> è una vittoria e torna nel mazzo, altre sono scontri, prove o bonus. Il mazzo Piani non si rimescola mai.',
     '<b>Vince chi torna a casa</b>, anche da solo: non serve che ce la facciano tutti.',
   ]],
 ];

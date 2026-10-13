@@ -880,7 +880,7 @@ function freshDeckPiani(){
 // Le 2 uscite personali (kind:'terrestre': Età della Terra Antica/Sciamano, Flora Aliena/
 // Druido) vanno sempre verso il fondo del mazzetto Piano Terreno, mai mescolate a caso con
 // le altre 10 — pescarle presto (prima che il gruppo abbia la classe giusta, o sia pronto a
-// usarle) le spreca per sempre, dato che ogni destinazione (tranne finale_c) si consuma
+// usarle) le spreca per sempre, dato che ogni destinazione (tranne la Via di Casa) si consuma
 // appena pescata. Così sono sempre le ultime 2 delle 12, garantito.
 function freshPianoTerrenoDeck(){
   const terrestri = PIANO_TERRENO.filter(p=>p.kind==='terrestre').map(p=>p.id);
@@ -898,7 +898,7 @@ function newGame(){
   state = {
     players:[],
     mazzoPiani: freshDeckPiani(),
-    mazzoPianiScarti:[], // Piani già visitati e risolti: non tornano nel mazzo, il mazzo si assottiglia mano a mano — così le uscite (segnaposto __PT__, mai scartati) diventano via via più probabili.
+    mazzoPianiScarti:[], // Piani già visitati e risolti: non tornano MAI nel mazzo (il mazzo Piani non si rimescola con gli scarti). I segnaposto Piano Terreno (__PT__) entrano a lotti, vedi addPianoTerrenoBatch().
     // Incontri della famiglia non ancora rivelata: stesso trattamento dei Piani, esclusi del
     // tutto dal sotto-mazzo. In pratica non vengono mai pescati comunque (il piano che li
     // pescherebbe non può uscire), ma restano fuori anche a scanso di equivoci.
@@ -908,6 +908,7 @@ function newGame(){
     spellDecks: Object.fromEntries(Object.entries(SPELLS).map(([k,v])=>[k, shuffle(v.map(s=>s.id))])),
     pianoTerrenoDeck: freshPianoTerrenoDeck(),
     pianoTerrenoUsed: [],
+    ptInserted: 0,      // quanti segnaposto Piano Terreno sono gia' entrati nel mazzo Piani (a lotti: 5 al 5° salto, 5 al 10°, il resto al 15°)
     jumps:0,
     log:[],
     currentDraw:null, // {planeId, incontroId, phase}
@@ -1831,20 +1832,27 @@ function discardPianoCard(id){
   // in un mazzo che non si riduce mai.
   state.mazzoPianiScarti.push(id);
 }
-// Se non restano più Piani veri in mazzo (solo segnaposto __PT__ residui, o mazzo proprio vuoto)
-// si rimescolano dentro gli scarti — non un mazzo nuovo di zecca, altrimenti si vanificherebbe
-// l'assottigliamento che rende le uscite via via più probabili. Il rimescolamento va DENTRO al
-// mazzo esistente (mischiato agli eventuali __PT__ ancora presenti), non lo sostituisce:
-// aspettare che anche i __PT__ residui si esauriscano prima di rimescolare incatenerebbe molte
-// uscite di fila garantite (bug segnalato dall'utente). Va chiamata PRIMA di guardare la carta
-// in cima (anteprima "tutti per la manina", sbirciate), non solo al salto: altrimenti la carta
-// mostrata (es. un segnaposto Piano Terreno) non è quella che poi esce davvero, perché il
-// rimescolamento al salto la cambia (bug segnalato: "destinazione leggendaria", poi usciva Terra).
+// Il mazzo Piani NON si rimescola mai con gli scarti. Non finisce mai davvero: la Via di Casa, appena uscita, ritorna nel
+// mazzo (vedi resolvePianoTerreno), quindi c'e' sempre almeno un segnaposto. Questo salvagente copre solo il caso
+// impossibile di mazzo completamente vuoto (es. dopo una scarto forzato): un segnaposto Piano Terreno e basta.
+// Va chiamata PRIMA di guardare la carta in cima (anteprime, sbirciate), non solo al salto.
 function refillMazzoPianiIfNeeded(){
-  if(state.mazzoPiani.some(x=>x!=='__PT__')) return;
-  const recycled = state.mazzoPianiScarti.length ? shuffle(state.mazzoPianiScarti) : freshDeckPiani();
-  state.mazzoPianiScarti = [];
-  state.mazzoPiani = shuffle([...state.mazzoPiani, ...recycled]);
+  if(state.mazzoPiani.length>0) return;
+  state.mazzoPiani.push('__PT__');
+  logMsg('🗺️ Il mazzo Piani è vuoto: resta solo un segnaposto Piano Terreno.','warn');
+}
+// A lotti: al 5° e al 10° salto entrano in fondo al mazzo Piani 5 segnaposto Piano Terreno, al 15° tutti i rimanenti
+// (12 destinazioni in tutto: 5 + 5 + 2). Ogni segnaposto, quando esce, pesca una destinazione dal mazzetto Piano Terreno.
+const PT_BATCHES = { 5: 5, 10: 5, 15: Infinity };
+function addPianoTerrenoBatch(){
+  const n = PT_BATCHES[state.jumps];
+  if(n===undefined) return;
+  const left = PIANO_TERRENO.length - (state.ptInserted||0);
+  const todo = Math.max(0, Math.min(n, left));
+  if(!todo) return;
+  for(let i=0;i<todo;i++) state.mazzoPiani.push('__PT__');
+  state.ptInserted = (state.ptInserted||0) + todo;
+  logMsg(`🗺️ ${state.jumps}° salto: ${todo} carte Piano Terreno finiscono in fondo al mazzo Piani.`);
 }
 // Stranezza del portale: finché il flag è attivo, i segnaposto Piano Terreno in cima al mazzo vengono
 // rimessi in fondo (dopo refillMazzoPianiIfNeeded c'è sempre almeno un Piano vero nel mazzo). Va
@@ -1896,14 +1904,8 @@ function doJump(){
     logMsg('🌀 Per la Stranezza del portale, questo salto non può condurre al Piano Terreno.');
   }
   const drawnId = state.mazzoPiani.shift();
-  // un nuovo segnaposto __PT__ si aggiunge in fondo solo quando si pesca un Piano VERO — se se
-  // ne aggiungesse uno anche quando si pesca già un __PT__ (bug segnalato dall'utente), i
-  // segnaposto si accumulerebbero senza mai diminuire: la probabilità di uscita non farebbe
-  // che salire per tutta la partita, fino a incatenare più uscite di fila senza un vero Piano
-  // in mezzo. Così invece pescare un __PT__ lo consuma e basta (il mazzo si accorcia, finché
-  // non resta più nessun Piano vero e si rimescolano dentro gli scarti — vedi sopra), tenendo
-  // il rapporto __PT__/Piani veri sotto controllo invece di farlo crescere per sempre.
-  if(drawnId!=='__PT__') state.mazzoPiani.push('__PT__');
+  // i segnaposto Piano Terreno non si aggiungono piu' a ogni salto: entrano a lotti (5° e 10° salto: 5 carte, 15°: le restanti)
+  addPianoTerrenoBatch();
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
@@ -4070,10 +4072,15 @@ function renderSpellPickPopup(){
 function resolvePianoTerreno(){
   if(state.pianoTerrenoDeck.length===0){ logMsg('Il mazzetto Piano Terreno è già esaurito: si tratta come una carta normale, nessun effetto speciale.'); state.currentDraw=null; render(); return; }
   const id = state.pianoTerrenoDeck.shift();
-  if(id==='finale_c'){
-    // "resta nel mazzetto, non va tolta": a differenza delle altre 11, non si consuma.
-    const pos = Math.floor(Math.random()*(state.pianoTerrenoDeck.length+1));
+  if(id==='via_di_casa'){
+    // La Via di Casa e' l'UNICA destinazione che torna in gioco (le altre si consumano): rientra nel mazzetto Piano Terreno
+    // (a caso, ma davanti alle due uscite personali, che restano sempre in fondo) e un segnaposto torna mescolato nel mazzo
+    // Piani — cosi' il mazzo Piani non puo' finire mai.
+    const tail = state.pianoTerrenoDeck.filter(x=>PIANO_TERRENO.find(p=>p.id===x && p.kind==='terrestre')).length;
+    const pos = Math.floor(Math.random()*(state.pianoTerrenoDeck.length - tail + 1));
     state.pianoTerrenoDeck.splice(pos,0,id);
+    reinsertPianoCard('__PT__');
+    logMsg('🏠 La Via di Casa resta nel gioco: torna nel mazzo (mescolata fra i Piani).');
   } else {
     state.pianoTerrenoUsed.push(id);
   }
