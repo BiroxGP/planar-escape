@@ -77,8 +77,10 @@ const Y0 = HALF;
 // Piano corrente e Incontro attivo: vicini, ai due lati della giunzione (il taglio cade fra i due)
 const ACTIVE = [
   { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 76, y: Y0 + 31, ...T },
-  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Ogni 5 piani (come il livello):<br>mazzo Generico.', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
+  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Ogni 5 piani (come il livello):<br>mazzo Generico.<br>Famiglia completata o nuovo<br>giro: mazzo Epico (vince).', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
 ];
+// Mazzo Epico (Poker): in alto, al centro sotto il Generico. Finche' non c'e' il retro e' una cornice con testo.
+const EPICO = { n: 'MAZZO EPICO', sub: "Famiglia completata<br>o nuovo giro della<br>scaletta: l'Incontro<br>del turno è Epico.", col: '#e7c988', x: zx(2), y: ROW2, ...P };
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
 const CW = 76, CY = Y0 + 110;
 const G3 = [12.5, 38, 63.5];
@@ -150,11 +152,12 @@ function starHtml() {
   return neb + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
 }
 function ladderHtml() {
-  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 14}mm; width:130mm; text-align:left; font-size:2.8mm; margin:0;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1</div>`;
+  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 21}mm; width:340mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.35;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1, e il primo piano di ogni nuovo giro è Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato · lato girato = piano murato (conta come visitato) · famiglia completata = tutti i suoi nodi occupati</div>`;
   for (let i = 0; i < LADDER_N; i++) {
     const n = i + 1, x = ladderX(i), lv = LEVEL_AT[n];
     const d = lv ? LADDER_D + 3 : LADDER_D, col = lv ? '#e7c988' : 'rgba(217,207,174,.65)';
     h += `<div class="tk" style="left:${x - d / 2}mm; top:${LADDER_Y - d / 2}mm; width:${d}mm; height:${d}mm; border:${lv ? '.9mm' : '.5mm'} solid ${col}; ${lv ? 'box-shadow:0 0 2mm #e7c98899; color:#f1d9a0;' : ''}">${n}</div>`;
+    if (n === 1) h += `<div class="tl" style="left:${x + 10}mm; top:${LADDER_Y + d / 2 + 1}mm; width:44mm; text-align:left;">◂ DAL 2° GIRO: EPICO</div>`;
     if (lv) h += `<div class="tl" style="left:${x - 8}mm; top:${LADDER_Y + d / 2 + 1}mm;">${lv}</div>`;
   }
   return h;
@@ -163,7 +166,7 @@ function ladderHtml() {
 function boardHtml() {
   const bgs = `<img class="bg" style="top:0; height:${BH}mm" src="${pathToFileURL(BG_UNICO).href}">`;
   const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${SEAM_X}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
-  return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
+  return wrap + DECKS.map(deckHtml).join('') + [...ACTIVE, EPICO].map(activeHtml).join('') + starHtml() + ladderHtml();
 }
 
 function sheetHtml(col, row, label) {
@@ -191,7 +194,7 @@ function docHtml(sheets) {
 function misure() {
   let ok = true;
   console.log('Zone-carta (mm sul tabellone montato 406x580):');
-  const zones = [...DECKS.map(d => ({ n: d.n, x: d.x, y: d.y, w: d.w, h: d.h })), ...ACTIVE.map(a => ({ n: a.n, x: a.x, y: a.y, w: a.w, h: a.h }))];
+  const zones = [...DECKS.map(d => ({ n: d.n, x: d.x, y: d.y, w: d.w, h: d.h })), ...[...ACTIVE, EPICO].map(a => ({ n: a.n, x: a.x, y: a.y, w: a.w, h: a.h }))];
   for (const z of zones) {
     const x1 = z.x + z.w, y1 = z.y + z.h;
     const crossY = z.y < SEAM_Y && y1 > SEAM_Y, crossX = z.x < 210 && x1 > 196;     // 196..210 = fascia di sovrapposizione
