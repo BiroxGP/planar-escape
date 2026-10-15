@@ -1,5 +1,93 @@
 [
   {
+    "id": "ep_custode",
+    "name": "Il Custode risvegliato",
+    "deck": "epico",
+    "family": "epico",
+    "type": "incontro",
+    "text": "Scontro sulla caratteristica nativa del piano (valore nemico 4; danno passante: oltre ai PV, anche -1 temporaneo alla stessa caratteristica), persistente: da sconfitto serve un check di Destrezza di gruppo per fuggire, se fallisce torna lo stesso Incontro. Sconfitto: 2 oggetti e +1 caratteristica permanente.",
+    "manual": false,
+    "forte": true,
+    "persistent": true
+  },
+  {
+    "id": "ep_altare",
+    "name": "L'Altare del portale",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Un altare antico chiede un'offerta. Ogni presente può offrire 1 risorsa planare oppure 1 oggetto e ottiene +1 permanente a una caratteristica a scelta (massimo 6). Una volta a testa.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_mappastellare",
+    "name": "La Mappa stellare",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Una mappa di luce si apre davanti al gruppo. Guardate le prime 3 carte del mazzo Piani e rimettetene 1 in fondo (come il Terzo Occhio). Potete anche murare gratis un piano non visitato (pedina sul suo nodo).",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_eco",
+    "name": "Eco del viaggio",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Un momento di quiete in mezzo al viaggio. Ogni presente recupera tutti i PV, +1 Sanità Mentale e +1 Anima (non oltre il massimo), ricarica la sua abilità di classe, perde tutte le caratteristiche temporanee (positive e negative) e ottiene 1 risorsa planare.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_patto",
+    "name": "Il Patto del portale",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Il portale offre due doni. Ogni presente sceglie: +1 permanente a una caratteristica a scelta, ma perde subito 1 Anima (con il check contro la Corruzione); oppure pesca 1 oggetto senza prezzo.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_fenditura",
+    "name": "La Fenditura",
+    "deck": "epico",
+    "family": "epico",
+    "type": "check",
+    "text": "Una spaccatura nello spazio lascia intravedere un tesoro. Check di gruppo sulla caratteristica nativa del piano (valore più alto, a -1, nessun reroll). Successo: pesca 1 oggetto e 1 spell. Fallimento: 1 danno ai PV a ogni presente.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_banchetto",
+    "name": "Il Banchetto dei dimenticati",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Una tavola imbandita e commensali di nebbia. Ogni presente può scambiare fino a 2 risorse planari: ogni risorsa vale 1 oggetto oppure 1 spell, a scelta.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
+    "id": "ep_lascito",
+    "name": "Il Lascito del primo viaggiatore",
+    "deck": "epico",
+    "family": "epico",
+    "type": "ricompensa",
+    "text": "Un baule antico si apre su tre doni. Pesca 3 carte da una scuola di spell a tua scelta: ne tieni 1, le altre vanno in fondo al mazzo.",
+    "manual": false,
+    "forte": false,
+    "persistent": false
+  },
+  {
     "id": "el_nessuno",
     "name": "Nessun evento",
     "deck": "elementare",

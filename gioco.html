@@ -206,6 +206,7 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .fam-eterei{--fam:#3a5aa8; --fam-soft:#dbe4f5;}
 .fam-armonia{--fam:#b89323; --fam-soft:#f6edd2;}
 .fam-entropia{--fam:#5f3f92; --fam-soft:#ece2f7;}
+.fam-epico{--fam:#c9a15a; --fam-soft:#f4ead0;}
 .fam-generico{--fam:#5f564a; --fam-soft:#e9e4da;}
 .fam-oggetto{--fam:#a94f1e; --fam-soft:#f4e0cd;}
 .fam-spell{--fam:#5f3f92; --fam-soft:#ece2f7;}
@@ -627,6 +628,19 @@ RECUPERO_PLANES.add("flora_aliena");
 function C(id,name,type,text,extra){ return Object.assign({id,name,type,text},extra||{}); }
 
 const INCONTRI = {
+  // Mazzo EPICO (8 carte, un solo mazzo per tutti): sostituisce l'Incontro del turno quando si completa una famiglia di piani
+  // (tutti i suoi nodi occupati: visitati o murati) o al primo piano di ogni nuovo giro della scaletta (16°, 31° salto...).
+  // Le carte non nominano la famiglia: contano il piano in corso e la sua caratteristica nativa. Vince sul mazzo Generico.
+  epico:[
+    C("ep_custode","Il Custode risvegliato","incontro","Scontro sulla caratteristica nativa del piano (valore nemico 4; danno passante: oltre ai PV, anche -1 temporaneo alla stessa caratteristica), persistente: da sconfitto serve un check di Destrezza di gruppo per fuggire, se fallisce torna lo stesso Incontro. Sconfitto: 2 oggetti e +1 caratteristica permanente.",{check:"native",gravity:2,forte:true,persistent:true,onLoseExtra:"tempDebuffNative",extraItem:1}),
+    C("ep_altare","L'Altare del portale","ricompensa","Un altare antico chiede un'offerta. Ogni presente può offrire 1 risorsa planare oppure 1 oggetto e ottiene +1 permanente a una caratteristica a scelta (massimo 6). Una volta a testa.",{epicoCard:"altare"}),
+    C("ep_mappastellare","La Mappa stellare","ricompensa","Una mappa di luce si apre davanti al gruppo. Guardate le prime 3 carte del mazzo Piani e rimettetene 1 in fondo (come il Terzo Occhio). Potete anche murare gratis un piano non visitato (pedina sul suo nodo).",{epicoCard:"mappa"}),
+    C("ep_eco","Eco del viaggio","ricompensa","Un momento di quiete in mezzo al viaggio. Ogni presente recupera tutti i PV, +1 Sanità Mentale e +1 Anima (non oltre il massimo), ricarica la sua abilità di classe, perde tutte le caratteristiche temporanee (positive e negative) e ottiene 1 risorsa planare.",{epicoCard:"eco"}),
+    C("ep_patto","Il Patto del portale","ricompensa","Il portale offre due doni. Ogni presente sceglie: +1 permanente a una caratteristica a scelta, ma perde subito 1 Anima (con il check contro la Corruzione); oppure pesca 1 oggetto senza prezzo.",{epicoCard:"patto"}),
+    C("ep_fenditura","La Fenditura","check","Una spaccatura nello spazio lascia intravedere un tesoro. Check di gruppo sulla caratteristica nativa del piano (valore più alto, a -1, nessun reroll). Successo: pesca 1 oggetto e 1 spell. Fallimento: 1 danno ai PV a ogni presente.",{epicoCard:"fenditura"}),
+    C("ep_banchetto","Il Banchetto dei dimenticati","ricompensa","Una tavola imbandita e commensali di nebbia. Ogni presente può scambiare fino a 2 risorse planari: ogni risorsa vale 1 oggetto oppure 1 spell, a scelta.",{epicoCard:"banchetto"}),
+    C("ep_lascito","Il Lascito del primo viaggiatore","ricompensa","Un baule antico si apre su tre doni. Pesca 3 carte da una scuola di spell a tua scelta: ne tieni 1, le altre vanno in fondo al mazzo.",{epicoCard:"lascito"}),
+  ],
   elementare:[
     C("el_nessuno","Nessun evento","nessun","Un turno tranquillo, nessun effetto."),
     C("el_elementale","Elementale","incontro","Un elementale si manifesta, della natura del piano corrente. Scontro sulla statistica nativa del piano (valore nemico 2).",{check:"native",gravity:0}),
@@ -813,6 +827,7 @@ const OGGETTI_BY_ID = Object.fromEntries(OGGETTI.map(o=>[o.id,o]));
 function S(id,name,text,extra){return Object.assign({id,name,text},extra||{});}
 const SPELLS = {
   essenza:[
+    S("sp_sentierobattuto","Sentiero battuto","Si lancia appena arrivati su un piano, prima che faccia effetto. Se la sua famiglia ha già almeno un'altra pedina sulla mappa (visitata o murata), il primo danno subito da ciascun presente in questo piano è parato, come per il Cerchio di Protezione. Dura fino al prossimo salto.",{sentieroSpell:true}),
     S("sp_analisi","Analisi Planare","Guarda la cima del mazzo Piani; se non convince, la scarta e ne pesca un'altra. Costa 1 risorsa planare.",{reward:{type:"peek",n:1,discard:true},cost:1}),
     S("sp_convulsione","Convulsione Planare","Raro: rimescola per intero il mazzo Piani.",{reward:{type:"reshuffle"},cost:1}),
     S("sp_manofantasma","Mano Fantasma","Evoca una mano spettrale che si lega al lanciatore come un compagno (valore 2): aiuta nei check e assorbe i colpi negli scontri finché non si distrugge.",{summonCompanion:2}),
@@ -842,6 +857,7 @@ const SPELLS = {
     S("sp_egida","Egida","Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",{egidaSpell:true}),
   ],
   divinazione:[
+    S("sp_viamurata","Via murata","Costa 1 risorsa planare. Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa a Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.",{viaMurataSpell:true,cost:1}),
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
@@ -908,6 +924,10 @@ function newGame(){
     spellDecks: Object.fromEntries(Object.entries(SPELLS).map(([k,v])=>[k, shuffle(v.map(s=>s.id))])),
     pianoTerrenoDeck: freshPianoTerrenoDeck(),
     pianoTerrenoUsed: [],
+    mapMarks: [],       // piani con la pedina sulla mappa stellare (visitati o murati)
+    pianiMurati: [],    // quelli murati con Via murata / Mappa stellare (fuori dal mazzo Piani per sempre)
+    epicQueue: 0,       // Incontri Epici maturati (famiglia completata) e non ancora giocati
+    epicLapDone: 0,     // ultimo salto (del personaggio piu' avanti) per cui e' gia' scattato l'Epico del nuovo giro
     ptInserted: 0,      // quanti segnaposto Piano Terreno sono gia' entrati nel mazzo Piani (a lotti: 5 al 5° salto, 5 al 10°, il resto al 15°)
     jumps:0,
     log:[],
@@ -1916,6 +1936,8 @@ function doJump(){
   }
   const plane = PIANI_BY_ID[drawnId];
   discardPianoCard(drawnId);
+  markPlane(drawnId);
+  queueEpicIfFamilyDone(plane.family, true);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   state.stayTurn = { planeId: drawnId, count:1 };
   // reset resistance charge per questo ingresso, solo per il gruppo che sta saltando
@@ -1953,7 +1975,7 @@ function openPrePlaneProtectionModal(plane, jumpers){
   // d'ingresso si applichi, si offre la scelta a chi ha uno dei due spell in mano.
   const holders = [];
   jumpers.forEach(c=>{
-    c.spells.forEach((spId,idx)=>{ if(spId==='sp_cerchio'||spId==='sp_egida') holders.push({c, idx, spId}); });
+    c.spells.forEach((spId,idx)=>{ if(spId==='sp_cerchio'||spId==='sp_egida'||(spId==='sp_sentierobattuto' && sentieroOk(plane))) holders.push({c, idx, spId}); });
   });
   if(holders.length===0){ applyPlaneIntrinsic(plane); render(); return; }
   openModal(`<h3>🛡️ Prima che ${escapeHtml(plane.name)} faccia effetto</h3>
@@ -1963,10 +1985,10 @@ function openPrePlaneProtectionModal(plane, jumpers){
   document.querySelectorAll('[data-preplane]').forEach(b=>b.onclick=()=>{
     const [cid,idxStr,spId] = b.dataset.preplane.split('::');
     const c = jumpers.find(x=>x.id===cid); const idx=+idxStr;
-    if(spId==='sp_cerchio'){
+    if(spId==='sp_cerchio' || spId==='sp_sentierobattuto'){
       state.currentDraw.cerchioActive = true;
       c.spells.splice(idx,1);
-      logMsg(`🛡️ ${c.name} lancia Cerchio di Protezione prima che ${plane.name} faccia effetto: il gruppo parerà il primo danno.`,'good');
+      logMsg(`🛡️ ${c.name} lancia ${SPELLS_BY_ID[spId].name} prima che ${plane.name} faccia effetto: il gruppo parerà il primo danno.`,'good');
       closeModal();
       applyPlaneIntrinsic(plane);
       render();
@@ -2729,7 +2751,19 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
     // almeno uno dei presenti ha appena fatto un salto multiplo di 5.
     const arrivalTurn = !state.stayTurn || (state.stayTurn.count||1) <= 1;
     const fifthJump = arrivalTurn && acts.some(c=>c.jumps>0 && c.jumps%5===0);
+    // Mazzo EPICO: famiglia completata (maturata in epicQueue) oppure primo piano di un nuovo giro della scaletta (16°, 31°, ...).
+    // Sostituisce l'Incontro del turno e vince sul Generico (il Generico di quel turno salta). Se maturano insieme si gioca uno solo
+    // (il giro) e l'altro scatta al prossimo arrivo.
+    const lapKey = Math.max(0, ...acts.map(c=>c.jumps||0));
+    const lapStart = arrivalTurn && acts.some(c=>c.jumps>1 && (c.jumps-1)%15===0) && state.epicLapDone!==lapKey;
+    const queuedEpic = arrivalTurn && (state.epicQueue||0)>0;
+    if(lapStart || queuedEpic){
+      if(lapStart){ state.epicLapDone = lapKey; logMsg("⚜️ Nuovo giro della scaletta: l'Incontro di questo turno viene dal mazzo EPICO."); }
+      else { state.epicQueue--; logMsg("⚜️ Famiglia completata: l'Incontro di questo turno viene dal mazzo EPICO."); }
+      deckKey = 'epico';
+    } else
     if(fifthJump && deckKey!=='generico'){ logMsg("🎴 Quinto salto (la cadenza del passaggio di livello): l'Incontro arriva dal mazzo Generico, invece che da quello tematico."); deckKey='generico'; }
+    if(!state.subdecks[deckKey]){ state.subdecks[deckKey] = shuffle(INCONTRI[deckKey].map(c=>c.id)); state.subdecksDiscard[deckKey] = []; }
     const deck = state.subdecks[deckKey];
     if(deck.length===0){
       state.subdecks[deckKey] = shuffle(state.subdecksDiscard[deckKey]);
@@ -2747,7 +2781,7 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
   state.currentDraw = { planeId: plane.id, incontroDeck:deckKey, incontroId: cardId, phase:'incontro', targets: acts.map(c=>c.id), stealthDecided:{}, hidden:[], manualUsed:{} };
   if(keepCerchio){ state.currentDraw.cerchioActive = true; state.currentDraw.cerchioUsedBy = prevDraw.cerchioUsedBy || []; }
   if(pend && pend.cb){ pend.cb.rounds = 0; state.currentDraw.combat = pend.cb; } // stessi nemici, con i PV che avevano
-  logMsg(pend ? `🔁 Incontro persistente: torna <strong>${card.name}</strong>.` : `🎴 Incontro (${FAMILIES[deckKey]?.name||deckKey}): <strong>${card.name}</strong>.`, pend?'warn':undefined);
+  logMsg(pend ? `🔁 Incontro persistente: torna <strong>${card.name}</strong>.` : `🎴 Incontro (${deckKey==='epico'?'Epico':(FAMILIES[deckKey]?.name||deckKey)}): <strong>${card.name}</strong>.`, pend?'warn':undefined);
   render();
 }
 
@@ -2771,7 +2805,7 @@ function renderDrawFlow(){
 
 // Carte Incontro già composte da cardgen (nome/tipo/testo incollati nei pixel): mano a
 // mano che arrivano le illustrazioni di altri mazzi, aggiungere i loro id qui.
-const INCONTRO_COMPOSED_IDS = new Set(['el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce','ge_nessuno','ge_viandante','ge_mercante','ge_ecocasa','ge_stranezza','ge_relitto','ge_predatore','ge_bivio','ge_segnale','ge_cacciatore','ge_anomalia','ge_randagio','ge_superstite','ge_legame']);
+const INCONTRO_COMPOSED_IDS = new Set(['ep_custode','ep_altare','ep_mappastellare','ep_eco','ep_patto','ep_fenditura','ep_banchetto','ep_lascito','el_nessuno','el_elementale','el_sciame','el_vena','el_instabilita','el_guida','el_mercante','el_custode','el_amplificazione','el_rifugio','el_frattura','el_onda','el_vento','el_grotta','el_fumo','de_nessuno','de_tentatore','de_bruto','de_patto','de_orda','de_bottino','de_sussurro','de_guardiano','de_fiamme','de_mercante','de_legione','de_infranto','nm_nessuno','nm_appestato','nm_spettro','nm_nugolo','nm_tomba','nm_nebbia','nm_lich','nm_catena','nm_reliquia','nm_eco','nm_mano','nm_cripta','et_nessuno','et_frammento','et_visione','et_guida','et_distorsione','et_eco','et_entita','et_silenzio','et_portale','et_reliquia','et_quiete','et_ombra','et_incubo','et_doppio','et_sogno','ar_nessuno','ar_giudice','ar_esattore','ar_custode','ar_automa','ar_oracolo','ar_eternita','ar_statua','ar_benedizione','ar_geometria','ar_bagliore','ar_pattodonore','ar_paradosso','ar_ingranaggio','ar_illuminazione','en_nessuno','en_caos','en_voragine','en_sciame','en_spettro','en_cenere','en_oblio','en_ombra','en_relitto','en_avatar','en_corrosione','en_eco','en_marcescenza','en_richiamo','en_voce','ge_nessuno','ge_viandante','ge_mercante','ge_ecocasa','ge_stranezza','ge_relitto','ge_predatore','ge_bivio','ge_segnale','ge_cacciatore','ge_anomalia','ge_randagio','ge_superstite','ge_legame']);
 function incontroHeroArt(id, name){
   return `<div class="incontro-card-hero">
     <img src="assets/cards/${id}.png" alt="${escapeHtml(name)}" onerror="this.parentElement.style.display='none';">
@@ -2825,6 +2859,10 @@ function renderIncontroAction(){
   if(card.manual){
     el.innerHTML = fineTurnoWarning + renderManualPanel(card, acts);
     bindManualPanel(card, acts);
+    return;
+  }
+  if(card.epicoCard){
+    renderEpicoCard(card, acts, plane);
     return;
   }
   if(card.pattoSangueCard){
@@ -3067,6 +3105,7 @@ function onLoseExtraLabel(key){
   if(key==='tempDebuffDes') return 'depotenziamento temporaneo a Destrezza';
   if(key==='tempDebuffInt') return 'depotenziamento temporaneo a Intelletto';
   if(key==='tempDebuffRandom') return 'depotenziamento temporaneo a una caratteristica casuale';
+  if(key==='tempDebuffNative') return 'depotenziamento temporaneo alla caratteristica nativa del piano';
   return null;
 }
 function applyConsequence(cons, targets, plane){
@@ -3385,6 +3424,7 @@ function fightRound(plane, card, acts, cb){
     if(card.onLoseExtra==='tempDebuffDes') applyTempDebuff(c,'des');
     if(card.onLoseExtra==='tempDebuffInt') applyTempDebuff(c,'int');
     if(card.onLoseExtra==='tempDebuffRandom') applyTempDebuff(c,STATS[Math.floor(Math.random()*6)]);
+    if(card.onLoseExtra==='tempDebuffNative') applyTempDebuff(c, cb.checkStat || nativeStatFor(plane));
   }
   // chi ha attaccato di sorpresa questo giro è scoperto da ora in poi (niente più scelta per
   // lui, combatte come tutti); tutti gli altri ancora nascosti ridecidono al prossimo giro.
@@ -3485,11 +3525,301 @@ function grantCombatReward(plane, card, acts, cb){
     else if(value===3){ giveItem(); giveStat(false); }
     else if(value===4){ giveItem(); giveStat(true); }
     else { giveItem(); giveItem(); giveStat(true); giveStat(true); }
+    // Epico (Custode risvegliato): la ricompensa della scala piu' 1 oggetto extra
+    if(card && card.extraItem){ for(let i=0;i<card.extraItem;i++) giveItem(); }
   }
   if(state.pattoOnoreActive && plane.family==='entropia' && acts.length){
     const it = drawOggetto();
     if(it){ const who=acts[Math.floor(Math.random()*acts.length)]; who.inventory.push(it); logMsg(`🤝 Patto d'Onore: vittoria contro l'Entropia, ${who.name} trova ${OGGETTI_BY_ID[it].name}.`,'good'); }
   }
+}
+
+/* ---------- MAPPA DEI PIANI, MAZZO EPICO, Via murata ---------- */
+// La mappa stellare del tabellone: un nodo per piano, una pedina quando il piano è visitato o murato.
+// state.mapMarks = id dei piani con la pedina (non si toglie mai, nemmeno se un effetto riporta un piano visitato nel mazzo).
+// state.pianiMurati = quelli murati con Via murata (tolti dal mazzo Piani, mai più pescati né ripescati).
+function planesInPlay(){ return PIANI.filter(p=>waveOfCard(p.id, p.family) <= effectiveWave()); }
+function mapMarks(){ if(!state.mapMarks) state.mapMarks=[]; return state.mapMarks; }
+function planeMarked(id){ return mapMarks().includes(id); }
+function markPlane(id){ if(!planeMarked(id)) mapMarks().push(id); }
+function familyProgress(fam){
+  const ps = planesInPlay().filter(p=>p.family===fam);
+  return { done: ps.filter(p=>planeMarked(p.id)).length, total: ps.length };
+}
+function familyCompleted(fam){ const f=familyProgress(fam); return f.total>0 && f.done===f.total; }
+// Famiglia completata (tutti i suoi nodi occupati, visitati o murati): l'Incontro del turno diventa Epico.
+// Se a completarla è l'arrivo su un piano l'Epico è quello di questo stesso turno, se è una Via murata scatta al prossimo arrivo.
+function queueEpicIfFamilyDone(fam, byArrival){
+  if(!familyCompleted(fam)) return;
+  state.epicQueue = (state.epicQueue||0) + 1;
+  const nm = FAMILIES[fam]?.name || fam;
+  logMsg(byArrival ? `⚜️ Famiglia ${nm} completata: l'Incontro di questo turno sarà EPICO.` : `⚜️ Famiglia ${nm} completata: l'Incontro del prossimo arrivo sarà EPICO.`, 'good');
+}
+function wallablePlanes(){ return planesInPlay().filter(p=>!planeMarked(p.id)); }
+function wallPlane(id){
+  const p = PIANI_BY_ID[id];
+  if(!p || planeMarked(id)) return false;
+  markPlane(id);
+  const i = state.mazzoPiani.indexOf(id);
+  if(i>=0) state.mazzoPiani.splice(i,1);
+  (state.pianiMurati = state.pianiMurati||[]).push(id);
+  logMsg(`🧱 ${p.name} viene murato: pedina sul suo nodo, conta come visitato e non uscirà più.`,'good');
+  queueEpicIfFamilyDone(p.family, false);
+  return true;
+}
+// Scelta del piano da murare (Via murata, Mappa stellare): i piani senza pedina, divisi per famiglia.
+function openWallPicker(opts){
+  if(inStasi()){ logMsg('⏳ Qui a Stasi nulla può cambiare: non si può murare nessun piano.','warn'); return false; }
+  const fams = [...new Set(planesInPlay().map(p=>p.family))];
+  const body = fams.map(f=>{
+    const pr = familyProgress(f);
+    const list = wallablePlanes().filter(p=>p.family===f);
+    return `<div class="mb1"><strong>${escapeHtml(FAMILIES[f]?.name||f)}</strong> <span class="hint">(${pr.done}/${pr.total})</span><div class="row">${list.length ? list.map(p=>`<button class="small" data-wallplane="${p.id}">${escapeHtml(p.name.replace(/ \(.*\)$/,''))}</button>`).join('') : '<span class="hint">nessun piano libero</span>'}</div></div>`;
+  }).join('');
+  openModal(`<h3>${opts.title}</h3><p>${opts.hint}</p>${body}<div class="row mt1"><button id="btnWallCancel">Annulla</button></div>`);
+  document.getElementById('btnWallCancel').onclick=()=>{ closeModal(); if(opts.onCancel) opts.onCancel(); render(); };
+  document.querySelectorAll('[data-wallplane]').forEach(b=>b.onclick=()=>{
+    closeModal();
+    opts.onPick(b.dataset.wallplane);
+    render();
+  });
+  return true;
+}
+// Via murata (Divinazione): 1 risorsa planare, un piano senza pedina riceve la pedina e conta come visitato.
+function openViaMurataModal(c, idx){
+  if(inStasi()){ logMsg('⏳ Qui a Stasi nulla può cambiare: Via murata non si può lanciare.','warn'); return; }
+  if(c.resources<1){ logMsg(`⚠️ ${c.name} non ha abbastanza risorse planari per lanciare Via murata (serve 1).`,'warn'); return; }
+  openWallPicker({
+    title:'🧱 Via murata',
+    hint:'Costa 1 risorsa planare. Scegli un piano non ancora visitato: riceve una pedina e conta come visitato, quindi non uscirà più dal mazzo Piani.',
+    onPick:(id)=>{
+      c.resources -= 1;
+      c.spells.splice(idx,1);
+      logMsg(`🧱 ${c.name} lancia Via murata (1 risorsa planare).`,'good');
+      wallPlane(id);
+    },
+  });
+}
+// Sentiero battuto (Essenza): su un piano la cui famiglia ha già un altro nodo occupato, come un Cerchio di Protezione.
+function sentieroOk(plane){ return !!plane && mapMarks().some(id=>id!==plane.id && PIANI_BY_ID[id]?.family===plane.family); }
+
+// +1 permanente a una caratteristica (massimo 6): stessa regola delle ricompense della scala.
+function permBonus(c, stat, why){
+  if(c.stats[stat]>=6){ logMsg(`${c.name}: ${STAT_LABEL[stat]} è già al massimo.`,'warn'); return false; }
+  c.stats[stat] = Math.min(6, c.stats[stat]+1);
+  c.start[stat] = Math.max(c.start[stat], c.stats[stat]);
+  logMsg(`🎁 ${c.name} ottiene +1 PERMANENTE a ${STAT_LABEL[stat]} (${why}).`,'good');
+  return true;
+}
+function epicoPickStat(c, title, onPick){
+  openModal(`<h3>${title}</h3><p>${escapeHtml(c.name)}: scegli la caratteristica che ottiene +1 permanente.</p>
+    <div class="row">${STATS.map(s=>`<button class="small" data-eps="${s}" ${c.stats[s]>=6?'disabled':''}>${STAT_LABEL[s]} (${c.stats[s]})</button>`).join('')}</div>
+    <div class="row mt1"><button id="btnEpsCancel">Annulla</button></div>`);
+  document.getElementById('btnEpsCancel').onclick=()=>{ closeModal(); render(); };
+  document.querySelectorAll('[data-eps]').forEach(b=>b.onclick=()=>{ closeModal(); onPick(b.dataset.eps); });
+}
+function epicoPickSchool(title, onPick){
+  const schools = Object.keys(SPELLS).filter(sc=>state.spellDecks[sc] && state.spellDecks[sc].length>0);
+  if(!schools.length){ logMsg('📜 Tutti i mazzi di spell sono esauriti.','warn'); render(); return; }
+  openModal(`<h3>${title}</h3><p>Scegli la scuola di spell.</p>
+    <div class="row">${schools.map(sc=>`<button class="small" data-epsch="${sc}">${SPELL_SCHOOL_LABEL[sc]||sc} (${state.spellDecks[sc].length} carte)</button>`).join('')}</div>
+    <div class="row mt1"><button id="btnEpschCancel">Annulla</button></div>`);
+  document.getElementById('btnEpschCancel').onclick=()=>{ closeModal(); render(); };
+  document.querySelectorAll('[data-epsch]').forEach(b=>b.onclick=()=>{ closeModal(); onPick(b.dataset.epsch); });
+}
+function charFewest(acts, key){
+  const m = Math.min(...acts.map(c=>c[key].length));
+  const cand = acts.filter(c=>c[key].length===m);
+  return cand[Math.floor(Math.random()*cand.length)];
+}
+// Eco del viaggio: recupero completo (PV al massimo, +1 Sanità, +1 Anima, abilità ricaricata, temporanee azzerate) e 1 risorsa planare.
+function epicoEcoFor(c){
+  const parts = [];
+  const boosted = Object.keys(c.tempBonus||{}).filter(s=>c.tempBonus[s]);
+  if(boosted.length){
+    boosted.forEach(s=>{ c.stats[s]=Math.max(statFloor(s),c.stats[s]-c.tempBonus[s]); });
+    c.tempBonus={};
+    parts.push('perde i bonus temporanei');
+  }
+  const deb = activeTempDebuffs(c);
+  deb.forEach(s=>cureOneDebuff(c,s));
+  if(deb.length) parts.push('guarisce i depotenziamenti temporanei');
+  if(c.stats.pv<c.start.pv){ healStat(c,'pv',c.start.pv-c.stats.pv); parts.push('PV al massimo'); }
+  healStat(c,'san',1); healStat(c,'anima',1);
+  if(CLASSES[c.cls].special && !c.charges.special) parts.push('ricarica l\'abilità di classe');
+  c.charges.special = true;
+  const corroded = Object.keys(c.corroded||{}).filter(slot=>c.corroded[slot]);
+  corroded.forEach(slot=>{ c.corroded[slot]=false; });
+  c.resources += 1;
+  logMsg(`⚜️ Eco del viaggio: ${c.name} ${parts.length?parts.join(', ')+'; ':''}+1 Sanità, +1 Anima e +1 risorsa planare.`,'good');
+}
+// Pannello delle carte del Mazzo Epico (tranne il Custode, che è un normale scontro).
+function renderEpicoCard(card, acts, plane){
+  const el = document.getElementById('incontroAction');
+  const st = state.currentDraw.epico = state.currentDraw.epico || {};
+  const done = `<div class="row mt1"><button class="primary" id="btnEpicoDone">Continua</button></div>`;
+  const bindDone = ()=>{ const b=document.getElementById('btnEpicoDone'); if(b) b.onclick=finishIncontro; };
+  const kind = card.epicoCard;
+  if(kind==='altare'){
+    st.altare = st.altare||{};
+    el.innerHTML = `<p class="hint">Ogni presente può offrire 1 risorsa planare o 1 oggetto e ottenere +1 permanente a una caratteristica a scelta (massimo 6). Una volta a testa.</p>
+      ${acts.map(c=> st.altare[c.id] ? `<div class="mb1">✅ ${escapeHtml(c.name)}: offerta fatta.</div>` : `<div class="mb1"><button class="small" data-altare="${c.id}">${escapeHtml(c.name)}: fai un'offerta</button></div>`).join('')}${done}`;
+    bindDone();
+    el.querySelectorAll('[data-altare]').forEach(b=>b.onclick=()=>{
+      const c = acts.find(x=>x.id===b.dataset.altare);
+      const items = c.inventory.map((id,i)=>({id,i})).filter(x=>x.id!==c.protectedItemId);
+      openModal(`<h3>⚜️ L'Altare del portale — ${escapeHtml(c.name)}</h3><p>Cosa offri?</p>
+        <div class="row">${c.resources>0?`<button class="small" data-off="res">1 risorsa planare</button>`:''}${items.map(x=>`<button class="small" data-off="i${x.i}">${escapeHtml(OGGETTI_BY_ID[x.id]?.name||x.id)}</button>`).join('')}</div>
+        ${(!c.resources && !items.length)?'<p class="hint">Non hai niente da offrire.</p>':''}
+        <div class="row mt1"><button id="btnOffCancel">Annulla</button></div>`);
+      document.getElementById('btnOffCancel').onclick=()=>{ closeModal(); render(); };
+      document.querySelectorAll('[data-off]').forEach(ob=>ob.onclick=()=>{
+        const what = ob.dataset.off;
+        closeModal();
+        epicoPickStat(c, "⚜️ L'Altare del portale", (stat)=>{
+          if(what==='res'){ c.resources -= 1; logMsg(`⚜️ ${c.name} offre 1 risorsa planare all'Altare.`); }
+          else { const i=+what.slice(1); const lost=c.inventory.splice(i,1)[0]; logMsg(`⚜️ ${c.name} offre ${OGGETTI_BY_ID[lost]?.name||lost} all'Altare.`); }
+          permBonus(c, stat, "Altare del portale");
+          st.altare[c.id] = true;
+          render();
+        });
+      });
+    });
+    return;
+  }
+  if(kind==='mappa'){
+    el.innerHTML = `<p class="hint">Guardate le prime 3 carte del mazzo Piani e rimettetene 1 in fondo (come il Terzo Occhio). Potete anche murare gratis un piano non visitato.</p>
+      <div class="row"><button class="small" id="btnMappaPeek" ${st.peek?'disabled':''}>👁️ Guarda 3 carte del mazzo Piani${st.peek?' (fatto)':''}</button>
+      <button class="small" id="btnMappaWall" ${st.wall?'disabled':''}>🧱 Murare un piano (gratis)${st.wall?' (fatto)':''}</button></div>${done}`;
+    bindDone();
+    const pk=document.getElementById('btnMappaPeek');
+    if(pk) pk.onclick=()=>{ showPeekModal({type:'peek',n:3,chooseBottom:true}, false, ()=>{ st.peek=true; render(); }); };
+    const wl=document.getElementById('btnMappaWall');
+    if(wl) wl.onclick=()=>{ openWallPicker({ title:'🧱 La Mappa stellare', hint:'Scegli un piano non ancora visitato: riceve una pedina e non uscirà più.', onPick:(id)=>{ if(wallPlane(id)) st.wall=true; } }); };
+    return;
+  }
+  if(kind==='eco'){
+    if(!st.ecoDone){ st.ecoDone = true; acts.forEach(epicoEcoFor); }
+    el.innerHTML = `<p class="hint">⚜️ Ogni presente recupera tutti i PV, +1 Sanità e +1 Anima, ricarica la sua abilità, perde tutte le temporanee e ottiene 1 risorsa planare (già applicato).</p>${done}`;
+    bindDone();
+    return;
+  }
+  if(kind==='patto'){
+    st.patto = st.patto||{};
+    el.innerHTML = `<p class="hint">Ognuno sceglie: +1 permanente a una caratteristica ma perde subito 1 Anima (con il check contro la Corruzione), oppure pesca 1 oggetto senza prezzo.</p>
+      ${acts.map(c=> st.patto[c.id] ? `<div class="mb1">✅ ${escapeHtml(c.name)}: ${st.patto[c.id]}.</div>` : `<div class="mb1">${escapeHtml(c.name)}: <button class="small" data-patto="${c.id}-stat">+1 permanente, -1 Anima</button> <button class="small" data-patto="${c.id}-item">pesca 1 oggetto</button></div>`).join('')}${done}`;
+    bindDone();
+    el.querySelectorAll('[data-patto]').forEach(b=>b.onclick=()=>{
+      const [cid, what] = b.dataset.patto.split('-');
+      const c = acts.find(x=>x.id===cid);
+      if(what==='item'){
+        const it = drawOggetto();
+        if(it){ c.inventory.push(it); logMsg(`🎁 ${c.name} pesca ${OGGETTI_BY_ID[it].name} dal Patto del portale.`,'good'); }
+        st.patto[c.id] = 'oggetto';
+        render();
+      } else {
+        epicoPickStat(c, 'Il Patto del portale', (stat)=>{
+          permBonus(c, stat, 'Patto del portale');
+          applyAnimaLoss(c,1);
+          st.patto[c.id] = 'caratteristica, -1 Anima';
+          render();
+        });
+      }
+    });
+    return;
+  }
+  if(kind==='fenditura'){
+    if(!st.fenStat) st.fenStat = nativeStatFor(plane);
+    const stat = st.fenStat;
+    if(!st.fenRes){
+      el.innerHTML = `<p class="hint">Check di gruppo su ${STAT_LABEL[stat]} (valore più alto, a -1, nessun reroll). Successo: 1 oggetto e 1 spell. Fallimento: 1 danno ai PV a ogni presente.</p>
+        <button class="primary" id="btnFenditura">Esegui il check di gruppo (${STAT_LABEL[stat]}, -1)</button>`;
+      document.getElementById('btnFenditura').onclick=()=>{
+        const best = Math.max(...acts.map(c=>effectiveStat(c,stat))) - 1;
+        const {roll, success} = groupCheckRoll(acts, best, `check di gruppo (${STAT_LABEL[stat]})`);
+        st.fenRes = {roll, best, success};
+        if(success){
+          const it = drawOggetto();
+          if(it){ const who=charFewest(acts,'inventory'); who.inventory.push(it); logMsg(`🎁 ${who.name} trova ${OGGETTI_BY_ID[it].name} nella Fenditura.`,'good'); }
+          st.fenSpellPending = true;
+        } else {
+          applyConsequence({type:'damage', n:1}, acts, plane);
+        }
+        render();
+      };
+      return;
+    }
+    const r = st.fenRes;
+    el.innerHTML = `<div class="roll-row"><div class="roll-chip ${r.success?'hit':'miss'}"><div class="roll-die">${r.roll}</div> vs ${r.best} → ${r.success?'Successo':'Fallito'}</div></div>
+      ${(r.success && st.fenSpellPending)?`<div class="row mt1"><button class="primary" id="btnFenSpell">📜 Pesca 1 spell (scegli la scuola)</button></div>`:''}${done}`;
+    bindDone();
+    const fs=document.getElementById('btnFenSpell');
+    if(fs) fs.onclick=()=>{
+      epicoPickSchool('La Fenditura', (school)=>{
+        const s = drawSpell(school);
+        if(s){ const who=charFewest(acts,'spells'); who.spells.push(s); logMsg(`📜 ${who.name} ottiene ${SPELLS_BY_ID[s]?.name||s} (${SPELL_SCHOOL_LABEL[school]}) dalla Fenditura.`,'good'); }
+        st.fenSpellPending = false;
+        render();
+      });
+    };
+    return;
+  }
+  if(kind==='banchetto'){
+    st.banc = st.banc||{};
+    el.innerHTML = `<p class="hint">Ogni presente può scambiare fino a 2 risorse planari: ogni risorsa = 1 oggetto oppure 1 spell, a scelta.</p>
+      ${acts.map(c=>{ const k=st.banc[c.id]||0; const off=(c.resources<1||k>=2)?'disabled':''; return `<div class="mb1">${escapeHtml(c.name)} (risorse ${c.resources}, scambi ${k}/2): <button class="small" data-banc="${c.id}-item" ${off}>1 risorsa → oggetto</button> <button class="small" data-banc="${c.id}-spell" ${off}>1 risorsa → spell</button></div>`; }).join('')}${done}`;
+    bindDone();
+    el.querySelectorAll('[data-banc]').forEach(b=>b.onclick=()=>{
+      const [cid, what] = b.dataset.banc.split('-');
+      const c = acts.find(x=>x.id===cid);
+      if(what==='item'){
+        const it = drawOggetto();
+        if(!it) return;
+        c.resources -= 1; c.inventory.push(it); st.banc[c.id]=(st.banc[c.id]||0)+1;
+        logMsg(`🍽️ ${c.name} scambia 1 risorsa planare: trova ${OGGETTI_BY_ID[it].name}.`,'good');
+        render();
+      } else {
+        epicoPickSchool('Il Banchetto dei dimenticati', (school)=>{
+          const s = drawSpell(school);
+          if(!s) return;
+          c.resources -= 1; c.spells.push(s); st.banc[c.id]=(st.banc[c.id]||0)+1;
+          logMsg(`🍽️ ${c.name} scambia 1 risorsa planare: ottiene ${SPELLS_BY_ID[s]?.name||s} (${SPELL_SCHOOL_LABEL[school]}).`,'good');
+          render();
+        });
+      }
+    });
+    return;
+  }
+  if(kind==='lascito'){
+    el.innerHTML = `<p class="hint">Pesca 3 carte da una scuola di spell a scelta: ne tieni 1 (chi la prende lo decidete voi), le altre vanno in fondo al mazzo.</p>
+      <div class="row"><button class="small" id="btnLascito" ${st.lascito?'disabled':''}>📜 Pesca 3 spell${st.lascito?' (fatto)':''}</button></div>${done}`;
+    bindDone();
+    const lb=document.getElementById('btnLascito');
+    if(lb) lb.onclick=()=>{
+      epicoPickSchool('Il Lascito del primo viaggiatore', (school)=>{
+        const deck = state.spellDecks[school];
+        const drawn = deck.splice(0, Math.min(3, deck.length));
+        openModal(`<h3>📜 Il Lascito del primo viaggiatore</h3><p>Scegli lo spell da tenere (${SPELL_SCHOOL_LABEL[school]}): gli altri tornano in fondo al mazzo.</p>
+          <div class="mb1">${drawn.map((id,i)=>`<div class="mb1"><button class="small" data-lasc="${i}">${escapeHtml(SPELLS_BY_ID[id]?.name||id)}</button> <span class="hint">${escapeHtml(SPELLS_BY_ID[id]?.text||'')}</span></div>`).join('')}</div>`);
+        document.querySelectorAll('[data-lasc]').forEach(sb=>sb.onclick=()=>{
+          const keepId = drawn[+sb.dataset.lasc];
+          drawn.filter(id=>id!==keepId).forEach(id=>deck.push(id));
+          closeModal();
+          openModal(`<h3>📜 ${escapeHtml(SPELLS_BY_ID[keepId]?.name||keepId)}</h3><p>Chi lo prende?</p>
+            <div class="row">${acts.map(c=>`<button class="small" data-lascwho="${c.id}">${escapeHtml(c.name)}</button>`).join('')}</div>`);
+          document.querySelectorAll('[data-lascwho]').forEach(wb=>wb.onclick=()=>{
+            const c = acts.find(x=>x.id===wb.dataset.lascwho);
+            c.spells.push(keepId);
+            logMsg(`📜 ${c.name} tiene ${SPELLS_BY_ID[keepId]?.name||keepId} dal Lascito del primo viaggiatore.`,'good');
+            st.lascito = true;
+            closeModal(); render();
+          });
+        });
+      });
+    };
+    return;
+  }
+  el.innerHTML = done; bindDone();
 }
 
 /* ---------- reward cards ---------- */
@@ -4757,6 +5087,18 @@ function useSpell(c, idx){
     const g = groupOf(c);
     state.pendingSferaAntiplanare = { groupId: g?g.id:null };
     logMsg(`🔮 ${c.name} lancia ${sp.name}: l'effetto intrinseco del prossimo piano in cui il gruppo entra sarà completamente annullato.`,'good');
+    c.spells.splice(idx,1);
+    return;
+  }
+  if(sp.viaMurataSpell){
+    return openViaMurataModal(c, idx);
+  }
+  if(sp.sentieroSpell){
+    if(!state.currentDraw || state.currentDraw.phase==='vuoto-choice'){ logMsg(`⚠️ ${sp.name}: si usa mentre si è in un piano.`,'warn'); return; }
+    const plS = currentPlane();
+    if(!sentieroOk(plS)){ logMsg(`⚠️ ${sp.name}: nessun altro piano della famiglia di ${plS?plS.name:'questo piano'} è già sulla mappa, il sentiero non è ancora battuto.`,'warn'); return; }
+    state.currentDraw.cerchioActive = true;
+    logMsg(`🛤️ ${c.name} lancia ${sp.name}: il sentiero è già battuto, ogni presente para il primo danno subito in questo piano.`,'good');
     c.spells.splice(idx,1);
     return;
   }

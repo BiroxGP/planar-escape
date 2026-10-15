@@ -21,16 +21,17 @@ const FAMILY_ACCENT = {
   demoniaco:  '#8f1f1f',
   nonmorti:   '#3d5c40',
   generico:   '#5f564a',
+  epico:      '#c9a15a',
 };
 
 const FAMILY_EMOJI = {
-  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋', generico: '🌐',
+  elementare: '🔥', eterei: '🌙', armonia: '✨', entropia: '🌀', demoniaco: '👹', nonmorti: '☠️', terrestre: '🌋', generico: '🌐', epico: '⚜️',
 };
 // nome per le badge di Resistenza sulle carte Classe (senza il prefisso "Resist.", tolto per
 // farle entrare accanto alle statistiche): capitalizzato come in FAMILIES di gioco.html.
 const FAMILY_LABEL = {
   elementare: 'Elementare', terrestre: 'Terrestre', demoniaco: 'Demoniaco', nonmorti: 'Non-morti',
-  eterei: 'Eterei', armonia: 'Armonia', entropia: 'Entropia', generico: 'Generico',
+  eterei: 'Eterei', armonia: 'Armonia', entropia: 'Entropia', generico: 'Generico', epico: 'Epico',
 };
 
 const INCONTRO_TYPE_LABEL = { nessun: 'Nessun evento', incontro: 'Incontro', check: 'Check', ricompensa: 'Ricompensa' };
