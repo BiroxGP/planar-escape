@@ -4,10 +4,11 @@ Stato: SOLO BOZZA di design. Non è ancora nel gioco né nelle carte.
 Aggiornamenti di questa versione: Via murata ora è Divinazione e Sentiero battuto è Essenza; la ricompensa del Custode segue la scala delle ricompense (+1 oggetto); testi senza segnaposto, pronti per la stampa.
 
 ## Regole di base
-- **Mappa:** i 36 nodi partono VUOTI (nessun setup). Si mette una pedina sul nodo solo quando il piano viene visitato (lato davanti) o murato con Via murata (lato girato). Nodo occupato = piano visitato o murato. Un piano murato conta come visitato.
+- **Mappa:** i 36 nodi partono VUOTI (nessun setup). La **pedina Piano** è una sola, generica, con la stessa icona su entrambi i lati (nessun verso): si mette sul nodo quando il piano viene visitato **oppure** murato con Via murata. Nodo occupato = piano visitato o murato (un piano murato conta come visitato).
+- **Piano murato nel mazzo:** i piani visitati escono dal mazzo Piani per sempre, quindi se esce un piano **il cui nodo è già occupato**, è un piano murato: lo si scarta senza giocarlo e si guarda la carta dopo. Non serve nessun segno diverso sulla pedina.
 - Il **Piano Terreno non è tracciato sulla mappa stellare**: non ha nodo, quindi non può essere murato né conta per le famiglie.
 - **Famiglia completata:** tutti i suoi nodi sono occupati. Demoniaco 3, Non-morti 3, Eterei 5, Elementare 7, Armonia 9, Entropia 9.
-- **Il mazzo Piani non si rimescola mai con gli scarti.** Se un piano murato arriva in cima al mazzo (anche solo per un'anteprima), si scarta e si guarda la carta dopo.
+- **Il mazzo Piani non si rimescola mai con gli scarti.** Anche un'anteprima o una sbirciata che mostra un piano murato lo scarta e passa alla carta dopo.
 
 ## Quando scatta l'Epico
 L'Epico **sostituisce l'Incontro del turno** (nessun turno in più) e **vince sul Generico** (che in quel turno salta).
@@ -33,7 +34,7 @@ Come la **scala delle ricompense** in base al valore del nemico, **più 1 oggett
 
 ## Le due spell
 ### Via murata — scuola **Divinazione** (1 sola carta: il mazzo Divinazione passa da 6 a 7)
-> **Via murata.** Costa 1 risorsa planare. Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina dal lato «murato»: il piano conta come visitato. Quando esce dal mazzo Piani lo scarti senza giocarlo e guardi la carta dopo. Non si usa su Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.
+> **Via murata.** Costa 1 risorsa planare. Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa su Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.
 
 ### Sentiero battuto — scuola **Essenza** (1 sola carta: il mazzo Essenza passa da 13 a 14)
 > **Sentiero battuto.** Si lancia appena arrivati su un piano, prima che faccia effetto. Se la sua famiglia ha già almeno un'altra pedina sulla mappa (visitata o murata), il primo danno subito da ciascun presente in questo piano è parato, come per il Cerchio di Protezione. Dura fino al prossimo salto.
@@ -58,5 +59,5 @@ Se il mazzo Epico finisce, si rimescolano gli scarti dell'Epico (sono pochi e ra
 - 2 illustrazioni spell: `sp_viamurata`, `sp_sentierobattuto` (1696×2528, come le altre spell).
 - 8 illustrazioni Epico: `ep_custode`, `ep_altare`, `ep_mappastellare`, `ep_eco`, `ep_patto`, `ep_fenditura`, `ep_banchetto`, `ep_lascito` (stesso formato degli Incontri).
 - 1 retro: `retro_incontro_epico` (848×1264, dorso per il Mazzo Epico, poi nello slot del tabellone).
-- Pedine mappa a due facce (visitato / murato): le disegno io via script, nessuna immagine da generare.
+- **Pedina Piano** (visitato/murato, una sola, stessa icona su entrambi i lati): 1 immagine moneta, 15 mm, 40 pezzi (36 + 4 di scorta), stampa in una pagina; vedi il prompt nel brief. Fogli PnP via `render-pedine.js` quando c'è l'immagine.
 - Cornice/colore «Epico» per le carte: la preparo io (bianco-oro `#e7c988`, come sul tabellone).

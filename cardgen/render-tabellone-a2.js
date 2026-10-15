@@ -152,7 +152,7 @@ function starHtml() {
   return neb + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
 }
 function ladderHtml() {
-  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 21}mm; width:340mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.35;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1, e il primo piano di ogni nuovo giro è Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato · lato girato = piano murato (conta come visitato) · famiglia completata = tutti i suoi nodi occupati</div>`;
+  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 21}mm; width:340mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.35;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1, e il primo piano di ogni nuovo giro è Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato o murato (Via murata) · se esce un piano con il nodo già occupato è murato: si scarta · famiglia completata = tutti i suoi nodi occupati</div>`;
   for (let i = 0; i < LADDER_N; i++) {
     const n = i + 1, x = ladderX(i), lv = LEVEL_AT[n];
     const d = lv ? LADDER_D + 3 : LADDER_D, col = lv ? '#e7c988' : 'rgba(217,207,174,.65)';

@@ -17,7 +17,7 @@ Due novità di regole:
 1. **Il Mazzo Epico**: un mazzo speciale di 8 Incontri rari, grandi e generosi. Scatta quando il gruppo **completa tutti i piani di una famiglia** oppure quando **inizia un nuovo giro della scaletta dei salti**. In quel turno sostituisce l'Incontro normale. È un momento di svolta/premio del viaggio: aria solenne, quasi mitica, più luminosa e meno cupa degli Incontri normali, ma sempre dark fantasy.
 2. **Due spell nuove** che parlano della mappa: *Via murata* (si sigilla per sempre un piano, che conta come visitato) e *Sentiero battuto* (su un piano di una famiglia già esplorata il gruppo avanza protetto).
 
-Totale da illustrare: **2 spell + 8 carte Epico + 1 retro del mazzo Epico**.
+Totale da illustrare: **2 spell + 8 carte Epico + 1 retro del mazzo Epico + 1 pedina Piano (moneta)**.
 
 **IMPORTANTE — arte neutra per le carte Epico:** una stessa carta Epico può uscire su un piano di QUALUNQUE famiglia (fuoco, acqua, caos, inferno, non-morti…). Quindi l'illustrazione **non deve contenere elementi di una famiglia specifica** (niente fiamme, niente ghiaccio, niente teschi, niente simboli di un solo piano). Usa invece un linguaggio "planare" generico: portali, archi di pietra antichi, rune, polvere di stelle, luce bianco-oro e argento con qualche riflesso iridescente.
 
@@ -35,7 +35,7 @@ Totale da illustrare: **2 spell + 8 carte Epico + 1 retro del mazzo Epico**.
 
 ### A) SPELL
 
-**1. Via murata** — scuola *Divinazione* (accento indaco). *Testo:* «Costa 1 risorsa planare. Scegli un piano non ancora visitato e mettici una pedina dal lato murato: il piano conta come visitato. Quando esce dal mazzo Piani lo scarti e guardi la carta dopo.»
+**1. Via murata** — scuola *Divinazione* (accento indaco). *Testo:* «Costa 1 risorsa planare. Scegli un piano non ancora visitato e mettici una pedina Piano: conta come visitato. Quando esce dal mazzo Piani il nodo è già occupato: lo scarti e guardi la carta dopo.»
 Che cosa è: il veggente "vede" un percorso pericoloso e lo chiude per sempre.
 Scena: un lungo corridoio-portale sospeso nel vuoto stellato, che si perde in lontananza; in primo piano un **muro di blocchi di pietra runici si innalza dal nulla e sigilla il varco**, con fili di luce indaco che cuciono le pietre. Qualche sigillo a forma di occhio brilla fra i blocchi. Sensazione di porta che si chiude definitivamente. Nessuna persona, oppure una piccola silhouette di spalle e mano alzata, lontana.
 
@@ -74,6 +74,15 @@ Non è un'illustrazione: è un **dorso di carta** come gli altri mazzi (vedi ret
 Stile dei dorsi esistenti: **linee sottili incise su fondo quasi nero**, una **cornice ornamentale** a motivi geometrici/spirali lungo il bordo, **un grande disegno simmetrico centrale** (mandala, spirali, raggi) e **un cerchio vuoto e scuro al centro** (ci va scritto il nome del mazzo). Ogni mazzo ha un solo colore (Armonia oro, Elementare arancio, Eterei blu, Entropia viola, Demoniaco rosso, Non-morti verde, Generico verde acqua).
 Per l'Epico: colore **bianco-oro/avorio con riflessi argento** (le stesse linee sottili, ma con una **corona di raggi** e **sei piccoli punti/stelle sul bordo del cerchio centrale**, uno per ogni famiglia di piani, nei colori delle sei famiglie, molto sobri). Cerchio centrale vuoto e scuro. Simmetria perfetta, senza testo, senza figure.
 
+### D) PEDINA PIANO — `pedina_piano` (moneta, stessa icona sui due lati)
+Gettone da 15 mm che si appoggia sul nodo di un piano della mappa quando viene **visitato** (o sigillato con *Via murata*: stessa pedina, il piano conta come visitato). Ne servono 40. **Le due facce sono identiche** (così non c'è un verso), quindi si genera **una sola immagine** della faccia.
+Formato come le altre pedine (`pedina_risorsa_planare.jpg`): immagine 2816 × 1536 con **la moneta a tutto schermo al centro**, fondo pieno uniforme (nero) intorno, vista frontale dall'alto, bordo netto. La moneta copre l'emblema del piano, quindi deve essere **scura/opaca con rilievo metallico** (non trasparente).
+Icona (da scegliere, la prima è la proposta): 
+1. **Sigillo del portale chiuso** — disco di pietra scura con bordo in oro anticato; al centro un piccolo arco-portale simmetrico **chiuso da una chiave di volta luminosa** con una piccola stella a quattro punte oro-avorio; fini raggi incisi attorno. Leggibile a 15 mm, simmetrico, nessun testo.
+2. **Orma nella stella** — disco scuro, al centro una stella a otto punte incisa con una piccola impronta di passo al centro.
+3. **Occhio chiuso** — disco scuro con un occhio stilizzato a palpebre chiuse fra due archi (visitato = «già visto»).
+In ogni caso: **un solo colore d'accento (bianco-oro `#e7c988`)**, linee sottili incise come nei dorsi delle carte, rilievo metallico morbido, simmetria radiale così che ruotandola non si veda un verso.
+
 ## 5. Cosa deve produrre il generatore di prompt
-Per ognuna delle **11 immagini** (2 spell, 8 carte Epico, 1 retro): **un prompt completo per il generatore di immagini**, in inglese, con: soggetto e composizione, stile pittorico dark fantasy, palette (accento colore), illuminazione, formato verticale 2:3 con terzo inferiore scuro, divieto di testo/numeri/cornici/volti nitidi, e il riferimento di stile alle carte già fatte. Per le 8 carte Epico: ricorda sempre **"neutral, not tied to any element or plane family"**.
-Nome file da usare: `sp_viamurata`, `sp_sentierobattuto`, `ep_custode`, `ep_altare`, `ep_mappastellare`, `ep_eco`, `ep_patto`, `ep_fenditura`, `ep_banchetto`, `ep_lascito`, `retro_incontro_epico`.
+Per ognuna delle **12 immagini** (2 spell, 8 carte Epico, 1 retro, 1 pedina): **un prompt completo per il generatore di immagini**, in inglese, con: soggetto e composizione, stile pittorico dark fantasy, palette (accento colore), illuminazione, formato verticale 2:3 con terzo inferiore scuro, divieto di testo/numeri/cornici/volti nitidi, e il riferimento di stile alle carte già fatte. Per le 8 carte Epico: ricorda sempre **"neutral, not tied to any element or plane family"**.
+Nome file da usare: `sp_viamurata`, `sp_sentierobattuto`, `ep_custode`, `ep_altare`, `ep_mappastellare`, `ep_eco`, `ep_patto`, `ep_fenditura`, `ep_banchetto`, `ep_lascito`, `retro_incontro_epico`, `pedina_piano`.
