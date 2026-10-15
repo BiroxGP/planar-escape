@@ -57,6 +57,16 @@ const TOKENS = {
     backAccent: '#8b5fbf', // viola, coerente col vortice del fronte
     backFontSize: 110,
   },
+  // Pedina Piano (mappa stellare): una sola moneta, stessa icona (occhio) sui due lati, 15mm. Si mette sul nodo di un piano
+  // visitato o murato. Centro e diametro misurati sui pixel della moneta (nera su fondo chiaro).
+  piano: {
+    src: path.join(UI_DIR, 'pedina_piano.jpg'),
+    srcW: 2752, srcH: 1536,
+    center: [1376, 769],
+    diameterPx: 1158,
+    diameterMm: 15,
+    renderPx: 700,
+  },
   // Pedina abilità di classe: due facce disegnate dall'utente (2752x1536 entrambe). Fronte =
   // abilità disponibile (moneta che brilla), retro = abilità usata (stessa moneta spenta).
   // Doppia delle pedine risorsa planare (40mm contro 20mm). Centro e diametro misurati sui
@@ -361,8 +371,24 @@ async function mainAbilita() {
   console.log(`Fatto: pedine_fronte_retro.pdf (2 pagine: ${MIX.abilita} abilità, ${MIX.risorsa} risorse, ${MIX.reroll} reroll, ${MIX.mod} segnalini, carta Scala) in ${PRINT_DIR}`);
 }
 
+// Pedine Piano: 40 monete da 15mm (36 piani + 4 di scorta), stessa immagine sui due lati: due pagine (fronte, retro specchiato).
+const PIANO_COUNT = 40;
+async function mainPiano() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(PRINT_DIR, { recursive: true });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
+  const png = path.join(OUT_DIR, 'pedina_piano.png');
+  await renderPng(browser, tokenHtml('piano'), png, TOKENS.piano.renderPx);
+  const mm = TOKENS.piano.diameterMm;
+  await renderPdf(browser, sheetHtml(png, PIANO_COUNT, mm, 'Pedina Piano ' + mm + 'mm (' + PIANO_COUNT + ' pezzi) — fronte'), path.join(PRINT_DIR, 'pedine_piano_fronte.pdf'));
+  await renderPdf(browser, sheetHtml(png, PIANO_COUNT, mm, 'Pedina Piano ' + mm + 'mm (' + PIANO_COUNT + ' pezzi) — retro (stessa immagine, specchiata)', true), path.join(PRINT_DIR, 'pedine_piano_retro.pdf'));
+  await browser.close();
+  console.log('Fatto: pedine_piano_fronte/retro.pdf (' + PIANO_COUNT + ' pedine da ' + mm + 'mm, una pagina per lato) in ' + PRINT_DIR);
+}
+
 async function main() {
   if (process.argv[2] === 'abilita') return mainAbilita();
+  if (process.argv[2] === 'piano') return mainPiano();
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
