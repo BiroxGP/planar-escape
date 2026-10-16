@@ -34,7 +34,7 @@ Come la **scala delle ricompense** in base al valore del nemico, **più 1 oggett
 
 ## Le due spell
 ### Via murata — scuola **Divinazione** (1 sola carta: il mazzo Divinazione passa da 6 a 7)
-> **Via murata.** Costa 1 risorsa planare. Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa su Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.
+> **Via murata.** Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa su Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.
 
 ### Sentiero battuto — scuola **Essenza** (1 sola carta: il mazzo Essenza passa da 13 a 14)
 > **Sentiero battuto.** Si lancia appena arrivati su un piano, prima che faccia effetto. Se la sua famiglia ha già almeno un'altra pedina sulla mappa (visitata o murata), il primo danno subito da ciascun presente in questo piano è parato, come per il Cerchio di Protezione. Dura fino al prossimo salto.

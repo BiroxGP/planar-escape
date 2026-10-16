@@ -35,7 +35,7 @@ Totale da illustrare: **2 spell + 8 carte Epico + 1 retro del mazzo Epico + 1 pe
 
 ### A) SPELL
 
-**1. Via murata** — scuola *Divinazione* (accento indaco). *Testo:* «Costa 1 risorsa planare. Scegli un piano non ancora visitato e mettici una pedina Piano: conta come visitato. Quando esce dal mazzo Piani il nodo è già occupato: lo scarti e guardi la carta dopo.»
+**1. Via murata** — scuola *Divinazione* (accento indaco). *Testo:* «Scegli un piano non ancora visitato e mettici una pedina Piano: conta come visitato. Quando esce dal mazzo Piani il nodo è già occupato: lo scarti e guardi la carta dopo.»
 Che cosa è: il veggente "vede" un percorso pericoloso e lo chiude per sempre.
 Scena: un lungo corridoio-portale sospeso nel vuoto stellato, che si perde in lontananza; in primo piano un **muro di blocchi di pietra runici si innalza dal nulla e sigilla il varco**, con fili di luce indaco che cuciono le pietre. Qualche sigillo a forma di occhio brilla fra i blocchi. Sensazione di porta che si chiude definitivamente. Nessuna persona, oppure una piccola silhouette di spalle e mano alzata, lontana.
 

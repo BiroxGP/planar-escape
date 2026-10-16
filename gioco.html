@@ -857,7 +857,7 @@ const SPELLS = {
     S("sp_egida","Egida","Il bersaglio para sempre il primo danno Fisico, fino al prossimo salto.",{egidaSpell:true}),
   ],
   divinazione:[
-    S("sp_viamurata","Via murata","Costa 1 risorsa planare. Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa a Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.",{viaMurataSpell:true,cost:1}),
+    S("sp_viamurata","Via murata","Scegli un piano non ancora visitato (nodo vuoto sulla mappa) e mettici una pedina Piano: il piano conta come visitato. Quando esce dal mazzo Piani il suo nodo è già occupato: lo scarti senza giocarlo e guardi la carta dopo. Non si usa a Stasi. Il Piano Terreno non è sulla mappa, quindi non si può murare.",{viaMurataSpell:true}),
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
@@ -3585,17 +3585,15 @@ function openWallPicker(opts){
   });
   return true;
 }
-// Via murata (Divinazione): 1 risorsa planare, un piano senza pedina riceve la pedina e conta come visitato.
+// Via murata (Divinazione): gratis, un piano senza pedina riceve la pedina e conta come visitato.
 function openViaMurataModal(c, idx){
   if(inStasi()){ logMsg('⏳ Qui a Stasi nulla può cambiare: Via murata non si può lanciare.','warn'); return; }
-  if(c.resources<1){ logMsg(`⚠️ ${c.name} non ha abbastanza risorse planari per lanciare Via murata (serve 1).`,'warn'); return; }
   openWallPicker({
     title:'🧱 Via murata',
-    hint:'Costa 1 risorsa planare. Scegli un piano non ancora visitato: riceve una pedina e conta come visitato, quindi non uscirà più dal mazzo Piani.',
+    hint:'Scegli un piano non ancora visitato: riceve una pedina e conta come visitato, quindi non uscirà più dal mazzo Piani.',
     onPick:(id)=>{
-      c.resources -= 1;
       c.spells.splice(idx,1);
-      logMsg(`🧱 ${c.name} lancia Via murata (1 risorsa planare).`,'good');
+      logMsg(`🧱 ${c.name} lancia Via murata.`,'good');
       wallPlane(id);
     },
   });
