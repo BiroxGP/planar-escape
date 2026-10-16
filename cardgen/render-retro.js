@@ -29,6 +29,7 @@ const BACKS = [
   { id: 'retro_incontro_eterei', label: 'Eterei', accent: FAMILY_ACCENT.eterei, shape: 'portrait', labelPos: 'circle' },
   { id: 'retro_incontro_generico', label: 'Generico', accent: FAMILY_ACCENT.generico, shape: 'portrait', labelPos: 'circle' },
   { id: 'retro_incontro_nonmorti', label: 'Non-morti', accent: FAMILY_ACCENT.nonmorti, shape: 'portrait', labelPos: 'circle', fontSize: 34 },
+  { id: 'retro_incontro_epico', label: 'Epico', accent: FAMILY_ACCENT.epico, shape: 'portrait', labelPos: 'circle' },
 ];
 
 async function main() {

@@ -67,6 +67,7 @@ const DECKS = [
   { n: 'ETEREI', col: FAM.eterei.c, x: zx(3), y: ROW1, retro: ['retro_incontro_eterei'] },
   { n: 'ENTROPIA', col: FAM.entropia.c, x: zx(4), y: ROW1, retro: ['retro_incontro_entropia'] },
   { n: 'NON-MORTI', col: FAM.nonmorti.c, x: zx(3), y: ROW2, retro: ['retro_incontro_nonmorti'] },
+  { n: 'MAZZO EPICO', col: '#e7c988', x: zx(2), y: ROW2, retro: ['retro_incontro_epico'] },
   { n: 'DEMONIACO', col: FAM.demoniaco.c, x: zx(4), y: ROW2, retro: ['retro_incontro_demoni'] },
   // il Mazzo Piani da solo a sinistra, separato dai mazzi Incontro (Tarocco, centrato verticalmente nella fila)
   { n: 'MAZZO PIANI', col: '#c9a15a', x: 28, y: ROW2 + (P.h - T.h) / 2, w: T.w, h: T.h, retro: ['retro_piani'] },
@@ -79,8 +80,6 @@ const ACTIVE = [
   { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 76, y: Y0 + 31, ...T },
   { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Ogni 5 piani (come il livello):<br>mazzo Generico.<br>Famiglia completata o nuovo<br>giro: mazzo Epico (vince).', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
 ];
-// Mazzo Epico (Poker): in alto, al centro sotto il Generico. Finche' non c'e' il retro e' una cornice con testo.
-const EPICO = { n: 'MAZZO EPICO', sub: "Famiglia completata<br>o nuovo giro della<br>scaletta: l'Incontro<br>del turno è Epico.", col: '#e7c988', x: zx(2), y: ROW2, ...P };
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
 const CW = 76, CY = Y0 + 110;
 const G3 = [12.5, 38, 63.5];
@@ -166,7 +165,7 @@ function ladderHtml() {
 function boardHtml() {
   const bgs = `<img class="bg" style="top:0; height:${BH}mm" src="${pathToFileURL(BG_UNICO).href}">`;
   const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${SEAM_X}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
-  return wrap + DECKS.map(deckHtml).join('') + [...ACTIVE, EPICO].map(activeHtml).join('') + starHtml() + ladderHtml();
+  return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
 }
 
 function sheetHtml(col, row, label) {
@@ -194,7 +193,7 @@ function docHtml(sheets) {
 function misure() {
   let ok = true;
   console.log('Zone-carta (mm sul tabellone montato 406x580):');
-  const zones = [...DECKS.map(d => ({ n: d.n, x: d.x, y: d.y, w: d.w, h: d.h })), ...[...ACTIVE, EPICO].map(a => ({ n: a.n, x: a.x, y: a.y, w: a.w, h: a.h }))];
+  const zones = [...DECKS.map(d => ({ n: d.n, x: d.x, y: d.y, w: d.w, h: d.h })), ...ACTIVE.map(a => ({ n: a.n, x: a.x, y: a.y, w: a.w, h: a.h }))];
   for (const z of zones) {
     const x1 = z.x + z.w, y1 = z.y + z.h;
     const crossY = z.y < SEAM_Y && y1 > SEAM_Y, crossX = z.x < 210 && x1 > 196;     // 196..210 = fascia di sovrapposizione

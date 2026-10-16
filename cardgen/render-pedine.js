@@ -57,13 +57,13 @@ const TOKENS = {
     backAccent: '#8b5fbf', // viola, coerente col vortice del fronte
     backFontSize: 110,
   },
-  // Pedina Piano (mappa stellare): una sola moneta, stessa icona (occhio) sui due lati, 15mm. Si mette sul nodo di un piano
+  // Pedina Piano (mappa stellare): una sola moneta, stessa icona (murata con la stella) sui due lati, 15mm. Si mette sul nodo di un piano
   // visitato o murato. Centro e diametro misurati sui pixel della moneta (nera su fondo chiaro).
   piano: {
     src: path.join(UI_DIR, 'pedina_piano.jpg'),
     srcW: 2752, srcH: 1536,
-    center: [1376, 769],
-    diameterPx: 1158,
+    center: [1375, 768],
+    diameterPx: 1141,
     diameterMm: 15,
     renderPx: 700,
   },
@@ -371,8 +371,8 @@ async function mainAbilita() {
   console.log(`Fatto: pedine_fronte_retro.pdf (2 pagine: ${MIX.abilita} abilità, ${MIX.risorsa} risorse, ${MIX.reroll} reroll, ${MIX.mod} segnalini, carta Scala) in ${PRINT_DIR}`);
 }
 
-// Pedine Piano: 40 monete da 15mm (36 piani + 4 di scorta), stessa immagine sui due lati: due pagine (fronte, retro specchiato).
-const PIANO_COUNT = 40;
+// Pedine Piano: 45 monete da 15mm (36 piani + 9 di scorta), stessa immagine sui due lati: due pagine (fronte, retro specchiato).
+const PIANO_COUNT = 45;
 async function mainPiano() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.mkdirSync(PRINT_DIR, { recursive: true });
