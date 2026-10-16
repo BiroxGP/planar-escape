@@ -57,13 +57,13 @@ const TOKENS = {
     backAccent: '#8b5fbf', // viola, coerente col vortice del fronte
     backFontSize: 110,
   },
-  // Pedina Piano (mappa stellare): una sola moneta, stessa icona (murata con la stella) sui due lati, 15mm. Si mette sul nodo di un piano
+  // Pedina Piano (mappa stellare): una sola moneta, stessa icona (murata chiaro in argento con la stella d'oro) sui due lati, 15mm. Si mette sul nodo di un piano
   // visitato o murato. Centro e diametro misurati sui pixel della moneta (nera su fondo chiaro).
   piano: {
     src: path.join(UI_DIR, 'pedina_piano.jpg'),
     srcW: 2752, srcH: 1536,
-    center: [1375, 768],
-    diameterPx: 1141,
+    center: [1375, 775],
+    diameterPx: 1296,
     diameterMm: 15,
     renderPx: 700,
   },
