@@ -937,7 +937,7 @@ const SPELLS = {
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
-    S("sp_vaticinio","Vaticinio","Una volta per partita: scegli la Famiglia del prossimo salto. Se indovini, per tutta la permanenza nel piano il gruppo para il primo danno subito e ha +1 in qualsiasi Contesa.",{vaticinioSpell:true,oncePerGame:true}),
+    S("sp_vaticinio","Vaticinio","Una volta per partita, prima di saltare, prevedi due cose indipendenti: la Famiglia del piano (se indovini, il gruppo para il primo danno) e il tipo del primo Incontro, Contesa o Check (se indovini, +1 alla caratteristica in quegli Incontri nel piano). Il Veggente sa già il piano.",{vaticinioSpell:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
     S("sp_richiamofondo","Richiamo dal Fondo","Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Gratuito.",{reward:{type:"peek",n:1,discard:true,noRedraw:true,reshuffleFirst:true}}),
   ],
@@ -1019,7 +1019,8 @@ function newGame(){
     noTerrenoNextJump:false, // Stranezza del portale: il prossimo salto non può portare a una destinazione del Piano Terreno
     pendingReunion:false, // Segnale di richiamo: il prossimo salto riunisce tutti
     pendingLink:null, // Legame a distanza: {groupId, targetId} — al prossimo salto di groupId i due gruppi si riuniscono
-    pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
+    pendingVaticinio:null, // {groupId, family, auto, incType}: previsione attiva (Famiglia del prossimo piano + tipo del primo Incontro); auto = c'e' un Veggente, la Famiglia e' sempre giusta
+    vatType:null, // {groupId, type}: tipo di Incontro previsto da Vaticinio, da verificare sul primo Incontro dopo l'arrivo
     pendingSferaAntiplanare:null, // {groupId}: annulla l'effetto intrinseco del prossimo piano in cui questo gruppo entra
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
     pattoOnoreActive:false, // Patto d'Onore: da quando si prende la ricompensa, ogni vittoria in combattimento nell'Entropia frutta un oggetto
@@ -1103,7 +1104,8 @@ function makeChar(name, clsKey, bonus){
     skipNextIncontro:false, // perdita individuale del turno: escluso dal prossimo Incontro del gruppo, poi si consuma
     wildcardResistance:false, // Resistenza universale ATTIVA: para il primo danno del piano in cui si è; scade al salto successivo
     wildcardResistanceNext:false, // prepara la Resistenza universale (Cimelio/Viandante/Superstite) per il prossimo piano: si attiva al salto
-    contesaBonusPlane:0, // Vaticinio: +1 in qualsiasi Contesa per tutta la permanenza nel piano indovinato
+    contesaBonusPlane:0, // (vecchio Vaticinio, non piu' usato)
+    vatBonusType:null, // Vaticinio: 'contesa'|'check' = +1 alla caratteristica in tutti gli Incontri di quel tipo, finche' si resta nel piano
     tempBonus:{}, // {stat:delta} da ricompensa Etereo non-boss: dura fino al prossimo Recupero
     corroded:{weapon:false,armor:false}, // Corrosione lenta: bonus dello slot sospeso fino al prossimo Recupero
     companion:null, // {name,value}: famiglio/compagno legato al personaggio (Giardino Pietrificato) — un solo valore, niente scheda separata
@@ -1484,9 +1486,16 @@ function effectiveStat(c, stat){
     const it=OGGETTI_BY_ID[id]; if(!it) return;
     if(it.statKey===stat) v+=it.statBonus||0;
   });
-  if(c.contesaBonusPlane) v += c.contesaBonusPlane; // Vaticinio: +1 in qualsiasi Contesa per la permanenza
+  if(c.contesaBonusPlane) v += c.contesaBonusPlane;
+  if(c.vatBonusType && vatTypeMatches(c.vatBonusType)) v += 1; // Vaticinio: +1 negli Incontri del tipo previsto, per la permanenza
   if(c.companion) v = Math.max(v, c.companion.value); // il compagno aiuta in qualsiasi check: si usa il valore migliore fra i due
   return Math.min(6,v);
+}
+// L'Incontro in corso e' del tipo previsto da Vaticinio? (Contesa = scontro con entita', Check = prova su una caratteristica)
+function vatTypeMatches(type){
+  const inc = (state && state.currentDraw && state.currentDraw.incontroId) ? currentIncontro() : null;
+  if(!inc) return false;
+  return (inc.type==='incontro' ? 'contesa' : (inc.type==='check' ? 'check' : null)) === type;
 }
 function damageBonusFor(c, stat){
   let b=0;
@@ -2024,6 +2033,7 @@ function doJump(){
   const jumpers = activeChars();
   jumpers.forEach(c=>{ c.jumps++; checkLevelUp(c); });
   if(drawnId==='__PT__'){
+    if(state.pendingVaticinio && state.pendingVaticinio.groupId===state.currentGroupId){ state.pendingVaticinio = null; logMsg('🔮 Vaticinio: il Piano Terreno non ha Famiglia né Incontro, la previsione svanisce.','warn'); }
     state.stayTurn = null;
     processLevelUpQueue();
     resolvePianoTerreno();
@@ -2044,12 +2054,14 @@ function doJump(){
   }
   if(state.pendingVaticinio && state.pendingVaticinio.groupId===state.currentGroupId){
     const guess = state.pendingVaticinio; state.pendingVaticinio = null;
-    if(guess.family===plane.family){
-      jumpers.forEach(c=>{ c.wildcardResistance=true; c.contesaBonusPlane=(c.contesaBonusPlane||0)+1; });
-      logMsg(`🔮 Vaticinio si avvera: il gruppo ottiene Resistenza e +1 in qualsiasi Contesa per tutta la permanenza in ${plane.name}.`,'good');
+    // le due previsioni sono indipendenti: una, l'altra, entrambe o nessuna
+    if(guess.auto || guess.family===plane.family){
+      jumpers.forEach(c=>{ c.wildcardResistance=true; });
+      logMsg(guess.auto ? `🔮 Vaticinio: il Veggente conosceva il piano — il gruppo para il primo danno subito in ${plane.name}.` : `🔮 Vaticinio: Famiglia indovinata — il gruppo para il primo danno subito in ${plane.name}.`,'good');
     } else {
-      logMsg(`🔮 Vaticinio non si avvera: ${plane.name} non è di Famiglia ${FAMILIES[guess.family]?.name}.`,'warn');
+      logMsg(`🔮 Vaticinio: ${plane.name} non è di Famiglia ${FAMILIES[guess.family]?.name}, nessuna parata.`,'warn');
     }
+    if(guess.incType) state.vatType = { groupId: state.currentGroupId, type: guess.incType };
   }
   // track consecutive turns in same girone plane for Piano Negativo
   if(plane.family==='nonmorti'){
@@ -2869,6 +2881,17 @@ function drawIncontroForPlane(plane, forcedDeck, targetChars){
     state.subdecksDiscard[deckKey].push(cardId);
   }
   const card = INCONTRI[deckKey].find(c=>c.id===cardId);
+  if(state.vatType && state.vatType.groupId===state.currentGroupId){
+    const vt = state.vatType; state.vatType = null;
+    const lab = { contesa:'Contesa', check:'Check' };
+    const incT = card.type==='incontro' ? 'contesa' : (card.type==='check' ? 'check' : null);
+    if(incT===vt.type){
+      acts.forEach(c=>{ c.vatBonusType = vt.type; });
+      logMsg(`🔮 Vaticinio: il primo Incontro è proprio di tipo ${lab[vt.type]}! +1 alla caratteristica in tutti gli Incontri di quel tipo finché restate in ${plane.name}.`,'good');
+    } else {
+      logMsg(`🔮 Vaticinio: il primo Incontro non è di tipo ${lab[vt.type]}: nessun bonus.`,'warn');
+    }
+  }
   // il Cerchio di Protezione (lanciato prima o all'ingresso del piano) vale "per un turno": non
   // deve sparire quando la carta Piano lascia il posto all'Incontro, altrimenti il danno di
   // fine turno (Veleno/Tempesta) lo trova già scaduto senza essere stato usato.
@@ -5142,6 +5165,7 @@ function revertPerPlaneBuffs(c){
   c.wildcardResistanceNext = false;
   if(c.dmgBonusPlane){ c.dmgBonusPlane=0; }
   if(c.contesaBonusPlane){ c.contesaBonusPlane=0; }
+  c.vatBonusType = null;
 }
 function useItem(c, idx){
   const id=c.inventory[idx]; const it=OGGETTI_BY_ID[id];
@@ -5496,17 +5520,25 @@ function openTrasmutazioneModal(caster, idx){
   return true;
 }
 function openVaticinioModal(caster, idx){
+  const g = groupOf(caster);
+  const seerIn = (g ? groupMembers(g) : [caster]).some(c=>c.cls==='veggente' && isConscious(c));
   const families = Object.keys(FAMILIES).filter(f=>f!=='generico');
-  openModal(`<h3>🔮 Vaticinio</h3><p>Indovina la Famiglia del prossimo salto prima di saltare (una volta per partita):</p>
-    <div class="row">${families.map(f=>`<button class="small" data-vaticinio="${f}">${FAMILIES[f].icon} ${FAMILIES[f].name}</button>`).join('')}</div>`);
-  document.querySelectorAll('[data-vaticinio]').forEach(b=>b.onclick=()=>{
-    const fam = b.dataset.vaticinio;
-    const g = groupOf(caster);
-    state.pendingVaticinio = { groupId: g?g.id:null, family: fam };
-    logMsg(`🔮 ${caster.name} lancia Vaticinio: il gruppo scommette che il prossimo salto sarà di Famiglia ${FAMILIES[fam].name}.`,'good');
+  const finish = (fam, incType)=>{
+    state.pendingVaticinio = { groupId: g?g.id:null, family: seerIn?null:fam, auto: seerIn, incType };
+    const lab = { contesa:'Contesa', check:'Check' };
+    logMsg(`🔮 ${caster.name} lancia Vaticinio: ${seerIn ? 'il Veggente conosce già il piano' : 'Famiglia '+FAMILIES[fam].name}; primo Incontro previsto: ${lab[incType]}.`,'good');
     caster.spells.splice(idx,1);
     closeModal(); render();
-  });
+  };
+  const askType = (fam)=>{
+    openModal(`<h3>🔮 Vaticinio — tipo di Incontro</h3><p>Prevedi il tipo del <strong>primo Incontro</strong> dopo l'arrivo. Se indovini, +1 alla caratteristica in tutti gli Incontri di quel tipo finché restate nel piano. È indipendente dalla previsione sul piano.</p>
+      <div class="row"><button class="small" data-vattype="contesa">⚔️ Contesa (scontro con un'entità)</button><button class="small" data-vattype="check">🎲 Check (prova su una caratteristica)</button></div>`);
+    document.querySelectorAll('[data-vattype]').forEach(b=>b.onclick=()=>finish(fam, b.dataset.vattype));
+  };
+  if(seerIn){ askType(null); return true; }
+  openModal(`<h3>🔮 Vaticinio — piano</h3><p>Prevedi la Famiglia del prossimo piano (una volta per partita). Se indovini, il gruppo para il primo danno subito.</p>
+    <div class="row">${families.map(f=>`<button class="small" data-vaticinio="${f}">${FAMILIES[f].icon} ${FAMILIES[f].name}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-vaticinio]').forEach(b=>b.onclick=()=>askType(b.dataset.vaticinio));
   return true;
 }
 function openCorrosioneChoiceModal(c, slots){
