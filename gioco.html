@@ -5684,7 +5684,8 @@ function bindGame(){
   document.querySelectorAll('[data-viewclass]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openClassCardModal(b.dataset.viewclass); });
   document.querySelectorAll('[data-groupjump]').forEach(b=>b.onclick=()=>{
     const gid = b.dataset.groupjump;
-    if(state.groups.length>1 && state.jumpedThisRound[gid]) return; // ha già saltato in questo turno sincronizzato
+    // ha già saltato in questo turno sincronizzato: si avvisa (prima non succedeva niente). Contano solo i gruppi con qualcuno dentro.
+    if(state.groups.filter(g=>g.memberIds.length>0).length>1 && state.jumpedThisRound[gid]){ logMsg('⏳ Questo gruppo ha già saltato in questo turno: aspetta che saltino anche gli altri gruppi separati.','warn'); render(); return; }
     attemptCarryUnconscious(gid);
     state.currentGroupId=gid; startJump();
   });
@@ -5739,6 +5740,18 @@ function openSplitGroupModal(gid){
   };
   document.getElementById('btnCancelSplit').onclick=closeModal;
 }
+
+// Rete di sicurezza: se un'azione fallisce per un errore interno non resta muta, ma lascia una riga nel Diario di viaggio con il messaggio.
+(function(){
+  let busy = false;
+  function report(msg){
+    if(busy) return; busy = true;
+    try{ if(typeof state!=='undefined' && state){ logMsg('⚠️ Errore interno: '+msg+' — segnalalo, serve a correggerlo.','bad'); render(); } }catch(e){}
+    busy = false;
+  }
+  window.addEventListener('error', e=>{ if(e && e.message) report(e.message + (e.lineno?' (riga '+e.lineno+')':'')); });
+  window.addEventListener('unhandledrejection', e=>report(String((e.reason && e.reason.message) || e.reason)));
+})();
 
 /* ---------------- BOOT ----------------
    La demo pubblica non richiede più alcuna password: si entra subito, filtrati solo
