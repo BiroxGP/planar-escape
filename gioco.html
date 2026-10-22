@@ -164,6 +164,11 @@ header.top .sub{font-size:.78rem; color:var(--ink-faint); font-family:'JetBrains
 .die.debuff-t::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--ember);}
 .die.debuff-p::after{content:"●"; position:absolute; top:2px; right:3px; font-size:.5rem; color:var(--bad);}
 .die.boost-t::after{content:"▲"; position:absolute; top:2px; left:3px; font-size:.5rem; color:var(--good);}
+/* valore effettivo con gli oggetti equipaggiati: bordo evidenziato e variazione in basso a destra */
+.die.eq-up{box-shadow:inset 0 0 0 1.5px var(--portal); background:var(--portal-soft);}
+.die.eq-down{box-shadow:inset 0 0 0 1.5px var(--bad); background:var(--bad-soft);}
+.die .eqd{position:absolute; bottom:1px; right:3px; font-size:.52rem; font-weight:700; color:var(--portal);}
+.die.eq-down .eqd{color:var(--bad);}
 .char-meta{font-size:.78rem; color:var(--ink-soft); display:flex; gap:.7rem; flex-wrap:wrap; margin-bottom:.4rem;}
 .char-meta span{white-space:nowrap;}
 .char-inv{font-size:.76rem; color:var(--ink-faint); max-height:3.4em; overflow:hidden;}
@@ -511,6 +516,7 @@ const I18N_EN = {
   "salti personali": "personal jumps",
   "Depotenziato per tutta la permanenza nel piano": "Weakened for the whole stay on this plane",
   "Bonus temporaneo, dura fino al prossimo Recupero": "Temporary bonus, lasts until the next Recovery",
+  "Valore effettivo con gli oggetti equipaggiati": "Effective value with equipped items",
   "risorse": "resources",
   "oggetti": "items",
   "Nessun oggetto": "No items",
@@ -1705,7 +1711,7 @@ function renderCharCard(c){
     <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="${t('Vedi la carta della classe')}" style="padding:.1rem .4rem;">🃏</button> ${won?`<span class="badge win">${t('Vittoria')}</span>`:''} ${dead?`<span class="badge dead">${t('Morto')}</span>`:''} ${out?`<span class="badge">${t('Svenuto')}</span>`:''} ${c.status==='undead'?`<span class="badge">${t('Non-morto')}</span>`:''} ${groupIdx>=0?`<span class="badge">${t('Gruppo')} ${groupIdx+1}</span>`:''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} ${t('salti personali')}</div>
     <div class="stat-dice">
-      ${STATS.map(s=>`<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?t('Depotenziato per tutta la permanenza nel piano'):(c.tempBonus?.[s]?t('Bonus temporaneo, dura fino al prossimo Recupero'):'')}"><div class="lbl">${s}</div>${c.stats[s]}</div>`).join('')}
+      ${STATS.map(s=>{ const base=c.stats[s], eff=effectiveStat(c,s), d=eff-base; return `<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${d>0?'eq-up':''} ${d<0?'eq-down':''} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?t('Depotenziato per tutta la permanenza nel piano'):(c.tempBonus?.[s]?t('Bonus temporaneo, dura fino al prossimo Recupero'):'')}${d!==0?` ${t('Valore effettivo con gli oggetti equipaggiati')}: ${base} ${d>0?'+':'−'} ${Math.abs(d)} = ${eff}`:''}"><div class="lbl">${s}</div>${eff}${d!==0?`<span class="eqd">${d>0?'+':'−'}${Math.abs(d)}</span>`:''}</div>`; }).join('')}
     </div>
     <div class="char-meta">
       <span><img src="assets/ui/reroll_icon.png" alt="" style="width:16px;height:16px;vertical-align:middle;" onerror="this.remove()"> ${c.rerolls} reroll</span>
