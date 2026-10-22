@@ -937,7 +937,7 @@ const SPELLS = {
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
-    S("sp_vaticinio","Vaticinio","Una volta per partita, prima di saltare, prevedi due cose indipendenti: la Famiglia del piano (se indovini, il gruppo para il primo danno) e il tipo del primo Incontro, Contesa o Check (se indovini, +1 alla caratteristica in quegli Incontri nel piano). Il Veggente sa già il piano.",{vaticinioSpell:true,oncePerGame:true}),
+    S("sp_vaticinio","Vaticinio","Una volta per partita, prima di saltare, prevedi due cose indipendenti: la Famiglia del piano (se indovini, il gruppo para il primo danno) e il tipo del primo Incontro, Contesa o Check (se indovini, +1 alla caratteristica in quegli Incontri nel piano).",{vaticinioSpell:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
     S("sp_richiamofondo","Richiamo dal Fondo","Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Gratuito.",{reward:{type:"peek",n:1,discard:true,noRedraw:true,reshuffleFirst:true}}),
   ],

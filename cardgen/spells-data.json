@@ -213,7 +213,7 @@
     "id": "sp_vaticinio",
     "name": "Vaticinio",
     "school": "divinazione",
-    "text": "Una volta per partita, prima di saltare, prevedi due cose indipendenti: la Famiglia del piano (se indovini, il gruppo para il primo danno) e il tipo del primo Incontro, Contesa o Check (se indovini, +1 alla caratteristica in quegli Incontri nel piano). Il Veggente sa già il piano.",
+    "text": "Una volta per partita, prima di saltare, prevedi due cose indipendenti: la Famiglia del piano (se indovini, il gruppo para il primo danno) e il tipo del primo Incontro, Contesa o Check (se indovini, +1 alla caratteristica in quegli Incontri nel piano).",
     "cost": 0
   },
   {
