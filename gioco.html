@@ -265,6 +265,74 @@ select.stat-sel{width:auto;}
 .card-row .actions{display:flex; gap:.3rem; flex-wrap:wrap; margin-top:.4rem;}
 dialog#modalRoot{border:none; border-radius:12px; padding:0; background:transparent; max-width:560px; width:92vw;}
 dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
+/* ---- Mappa stellare ---- */
+.mapbar{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem .9rem; margin:0 0 .8rem; padding:.55rem .75rem; border:1px solid #3a3550; border-radius:12px; cursor:pointer;
+  background:linear-gradient(180deg,#14172b,#0b0e1d); color:#e9e2d3; box-shadow:0 2px 10px var(--shadow);}
+.mapbar:hover{border-color:#7c7fe0;}
+.mapbar-fams,.mfams{display:flex; flex-wrap:wrap; gap:.3rem .45rem;}
+.mchip{display:inline-flex; align-items:center; gap:.3rem; font-size:.78rem; padding:.12rem .5rem; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid color-mix(in srgb, var(--fc) 55%, transparent); white-space:nowrap;}
+.mchip i{display:inline-block; width:.55rem; height:.55rem; border-radius:50%; background:var(--fc); box-shadow:0 0 6px var(--fc);}
+.mchip b{font-family:'JetBrains Mono',monospace; font-weight:600; font-size:.74rem;}
+.mchip.done{border-color:#e7c988; box-shadow:0 0 8px rgba(231,201,136,.55); }
+.mchip.done::after{content:'⚜️'; font-size:.74rem;}
+.mapbar-right{display:flex; flex-wrap:wrap; align-items:center; gap:.3rem .6rem;}
+.mapbar-right button{background:#242a4a; color:#e9e2d3; border-color:#4a5088;}
+.mapbar-j{font-size:.74rem; color:#b6ac99; font-family:'JetBrains Mono',monospace; white-space:nowrap;}
+.mepic{white-space:nowrap; font-size:.76rem; color:#e7c988; font-weight:700; animation:mepic 1.6s ease-in-out infinite;}
+@keyframes mepic{50%{opacity:.45;}}
+.mladder{display:flex; align-items:center; gap:.22rem;}
+.mtk{display:inline-flex; align-items:center; justify-content:center; position:relative; width:1.35rem; height:1.35rem; border-radius:50%; border:1px solid rgba(217,207,174,.5); font:600 .68rem 'JetBrains Mono',monospace; color:#d9cfae; background:rgba(5,7,18,.6);}
+.mtk.lv{border-color:#e7c988; box-shadow:0 0 6px rgba(231,201,136,.6); color:#f1d9a0;}
+.mtk.past{background:rgba(231,201,136,.22);}
+.mtk.now{background:#e7c988; color:#1a1508; box-shadow:0 0 10px rgba(231,201,136,.95);}
+.mtk em{position:absolute; top:-.55rem; right:-.3rem; font-style:normal; font-size:.62rem;}
+.mladder.mini .mtk{width:.5rem; height:.5rem; border-width:1px; font-size:0;}
+.mladder.mini{gap:.14rem;}
+.mladder.mini .mtk.lv{width:.62rem; height:.62rem;}
+dialog#mapDialog{border:1px solid #3a3550; border-radius:14px; padding:.8rem .9rem 1rem; background:#0a0d1c; color:#e9e2d3; width:min(1180px,98vw); max-width:98vw; max-height:96vh; overflow:auto;}
+dialog#mapDialog::backdrop{background:rgba(5,6,14,.78);}
+.mdlg-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.6rem;}
+.mdlg-head h3{color:#f1e7cc; margin:0;}
+.mpick-hint{margin:.2rem 0 .6rem; padding:.45rem .65rem; border-radius:8px; background:rgba(231,201,136,.12); border:1px solid rgba(231,201,136,.4); color:#f1e7cc; font-size:.92rem;}
+.smap-wrap{overflow-x:auto; border-radius:12px;}
+.smap{position:relative; width:100%; min-width:760px; aspect-ratio:360/212; container-type:inline-size; overflow:hidden; border-radius:12px;
+  background:radial-gradient(ellipse at 50% 40%, #121733 0%, #0a0d1c 70%), #0a0d1c; border:1px solid #232846;}
+.smap-bg{position:absolute; inset:0;}
+.smap-neb{position:absolute; transform:translate(-50%,-50%); mix-blend-mode:screen; opacity:.92; pointer-events:none;}
+.smap-links{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+.smap-title{position:absolute; transform:translate(-50%,-50%); font:700 1.6cqw 'Cinzel',serif; letter-spacing:.1em; text-transform:uppercase; text-shadow:0 0 6px #000,0 0 10px #000; white-space:nowrap; pointer-events:none;}
+.smap-title small{font:600 1.15cqw 'JetBrains Mono',monospace; letter-spacing:0; opacity:.85;}
+.smap-title.done{text-shadow:0 0 10px #e7c988,0 0 4px #000;}
+.smap-title.narrow{font-size:1.3cqw; letter-spacing:.05em; text-align:center;}
+.smap-title.narrow small{display:block;}
+.smap-node{position:absolute; aspect-ratio:1/1; transform:translate(-50%,-50%); border-radius:50%; background-size:cover; background-position:center; background-color:#05070f;
+  box-shadow:0 0 10px color-mix(in srgb, var(--fc) 80%, transparent), 0 0 2px #000;}
+.smap-node.done{box-shadow:0 0 14px #e7c988, 0 0 2px #000;}
+.smap-node.cur::before{content:''; position:absolute; inset:-14%; border-radius:50%; border:.25cqw solid #f1e7cc; box-shadow:0 0 14px #fff; animation:mcur 1.4s ease-in-out infinite;}
+@keyframes mcur{50%{transform:scale(1.16); opacity:.55;}}
+.smap-node.pick{cursor:pointer; animation:mpick 1.6s ease-in-out infinite;}
+.smap-node.pick:hover{transform:translate(-50%,-50%) scale(1.15); box-shadow:0 0 18px #fff;}
+@keyframes mpick{50%{box-shadow:0 0 18px var(--fc), 0 0 6px #e7c988;}}
+.smap-node.dim{opacity:.7;}
+.smap-pedina{position:absolute; inset:7%; width:86%; height:86%; border-radius:50%; filter:drop-shadow(0 .3cqw .5cqw rgba(0,0,0,.8)); pointer-events:none;}
+.smap-pedina.drop{animation:mdrop .9s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes mdrop{0%{transform:translateY(-220%) scale(1.8); opacity:0;} 60%{opacity:1;} 100%{transform:none; opacity:1;}}
+.smap-lbl{position:absolute; transform:translate(-50%,0); width:12cqw; text-align:center; font:500 1.15cqw/1.1 'Source Serif 4',serif; color:#f1e7cc; text-shadow:0 0 4px #000,0 0 6px #000; pointer-events:none;}
+.mfoot{margin-top:.7rem; display:flex; flex-direction:column; gap:.55rem;}
+.mladder-row{display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .9rem; padding-top:.5rem;}
+.mlad-label{font-size:.85rem; color:#d8ccaa;}
+.mscroll{display:none; margin:0 0 .4rem; font-size:.78rem; color:#a79c85;}
+@media (max-width:780px){ .mscroll{display:block;} }
+.mnote{margin:0; font-size:.8rem; color:#a79c85;}
+.mauto{font-size:.82rem; color:#b6ac99;}
+#mapPreview{position:fixed; top:4.2rem; left:50%; transform:translate(-50%,-14px); width:min(760px,94vw); z-index:50; pointer-events:none; opacity:0; transition:opacity .35s, transform .35s;
+  background:#0a0d1c; border:1px solid #4a5088; border-radius:14px; padding:.5rem .6rem .6rem; box-shadow:0 12px 40px rgba(0,0,0,.65); color:#e9e2d3;}
+#mapPreview.show{opacity:1; transform:translate(-50%,0);}
+#mapPreview .smap{min-width:0;}
+.mprev-head{font:600 .95rem 'Cinzel',serif; margin-bottom:.35rem; color:#f1e7cc;}
+.mprev-head small{font:500 .75rem 'JetBrains Mono',monospace; color:#b6ac99; margin-left:.4rem;}
+@media (max-width:700px){ .mapbar-right{width:100%; justify-content:space-between;} }
+
 #modalInner{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.5rem; max-height:80vh; overflow-y:auto;}
 </style>
 </head>
@@ -307,6 +375,8 @@ dialog#modalRoot::backdrop{background:rgba(20,15,10,.55);}
 </div>
 
 <dialog id="modalRoot"><div id="modalInner"></div></dialog>
+<dialog id="mapDialog"><div id="mapDialogInner"></div></dialog>
+<div id="mapPreview" aria-hidden="true"></div>
 
 <script>
 /* =========================================================================
@@ -1438,6 +1508,9 @@ function render(){
   }
   app.innerHTML = renderGame();
   bindGame();
+  const mapBarEl = document.getElementById('mapBar');
+  if(mapBarEl){ mapBarEl.onclick = ()=>openMapDialog(); mapBarEl.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openMapDialog(); } }; }
+  if(mapPulseId){ const pid = mapPulseId; mapPulseId = null; setTimeout(()=>mapShowPreview(pid), 250); }
   applyI18nStatic();
   if(!renderPendingMadnessPopup() && !renderLeggeDebtPopup()) renderSpellPickPopup();
 }
@@ -1603,6 +1676,7 @@ function renderGame(){
     statusPanel = renderTurnArea();
   }
   return `
+  ${renderMapBar()}
   ${renderPartyBar()}
   <div class="flex-between mb1">
     <div class="jump-counter">${t('Salti totali:')} <strong>${state.jumps}</strong> · ${t('Mazzo Piani:')} ${state.mazzoPiani.length} ${t('carte')} (${state.mazzoPianiScarti.length} ${t('già scartate')}) · ${t('Piano Terreno accumulati sul fondo:')} ${countPianoTerrenoMarkers()}${state.currentDraw && state.groups && state.groups.length>1 ? ` · ${t('Turno di:')} <strong>${activeChars().map(c=>c.name).join(', ')}</strong>`:''}</div>
@@ -1937,6 +2011,7 @@ function doJump(){
   const plane = PIANI_BY_ID[drawnId];
   discardPianoCard(drawnId);
   markPlane(drawnId);
+  mapPulseId = drawnId;
   queueEpicIfFamilyDone(plane.family, true);
   state.currentDraw = { planeId: drawnId, phase:'plane', log:[] };
   state.stayTurn = { planeId: drawnId, count:1 };
@@ -3564,25 +3639,15 @@ function wallPlane(id){
   if(i>=0) state.mazzoPiani.splice(i,1);
   (state.pianiMurati = state.pianiMurati||[]).push(id);
   logMsg(`🧱 ${p.name} viene murato: pedina sul suo nodo, conta come visitato e non uscirà più.`,'good');
+  mapPulseId = id;
   queueEpicIfFamilyDone(p.family, false);
   return true;
 }
-// Scelta del piano da murare (Via murata, Mappa stellare): i piani senza pedina, divisi per famiglia.
+// Scelta del piano da murare (Via murata, Mappa stellare): si tocca il nodo sulla mappa stellare.
 function openWallPicker(opts){
   if(inStasi()){ logMsg('⏳ Qui a Stasi nulla può cambiare: non si può murare nessun piano.','warn'); return false; }
-  const fams = [...new Set(planesInPlay().map(p=>p.family))];
-  const body = fams.map(f=>{
-    const pr = familyProgress(f);
-    const list = wallablePlanes().filter(p=>p.family===f);
-    return `<div class="mb1"><strong>${escapeHtml(FAMILIES[f]?.name||f)}</strong> <span class="hint">(${pr.done}/${pr.total})</span><div class="row">${list.length ? list.map(p=>`<button class="small" data-wallplane="${p.id}">${escapeHtml(p.name.replace(/ \(.*\)$/,''))}</button>`).join('') : '<span class="hint">nessun piano libero</span>'}</div></div>`;
-  }).join('');
-  openModal(`<h3>${opts.title}</h3><p>${opts.hint}</p>${body}<div class="row mt1"><button id="btnWallCancel">Annulla</button></div>`);
-  document.getElementById('btnWallCancel').onclick=()=>{ closeModal(); if(opts.onCancel) opts.onCancel(); render(); };
-  document.querySelectorAll('[data-wallplane]').forEach(b=>b.onclick=()=>{
-    closeModal();
-    opts.onPick(b.dataset.wallplane);
-    render();
-  });
+  if(document.getElementById('modalRoot').open) closeModal();
+  openMapDialog({ pick:{ title:opts.title, hint:opts.hint, onPick:opts.onPick, onCancel:opts.onCancel } });
   return true;
 }
 // Via murata (Divinazione): gratis, un piano senza pedina riceve la pedina e conta come visitato.
@@ -3600,6 +3665,143 @@ function openViaMurataModal(c, idx){
 }
 // Sentiero battuto (Essenza): su un piano la cui famiglia ha già un altro nodo occupato, come un Cerchio di Protezione.
 function sentieroOk(plane){ return !!plane && mapMarks().some(id=>id!==plane.id && PIANI_BY_ID[id]?.family===plane.family); }
+/* ---------- MAPPA STELLARE nell'app ---------- */
+// Stessa mappa del tabellone (6 cluster, 36 nodi, stesse posizioni): ogni piano visitato o murato riceve la pedina Piano.
+// Barra compatta sempre in cima (progresso per famiglia + scaletta), mappa grande al tocco, anteprima dopo ogni salto.
+const MAP_BOX = { x:24, y:312, w:360, h:212 };   // area del tabellone (mm) mostrata nella mappa
+const MAP_LAYOUT = {"armonia":{"nodes":[[40.5,429],[66,426],[91.5,430],[40.5,463],[66,461],[91.5,465],[40.5,497],[66,495],[91.5,498]],"links":[[0,1],[1,2],[3,4],[4,5],[6,7],[7,8],[0,3],[3,6],[1,4],[4,7],[2,5],[5,8]],"neb":[66,462,124],"title":[66,412]},"elementare":{"nodes":[[139,428],[165,426],[126.5,462],[152,461],[177.5,463],[139,496],[165,497]],"links":[[0,1],[0,2],[0,3],[1,3],[1,4],[2,3],[3,4],[2,5],[3,5],[3,6],[4,6],[5,6]],"neb":[152,461.5,124],"title":[152,412]},"eterei":{"nodes":[[228.5,430],[279.5,427],[254,462],[228.5,496],[279.5,494]],"links":[[0,2],[1,2],[2,3],[2,4],[0,1],[3,4]],"neb":[254,461.5,124],"title":[254,413]},"entropia":{"nodes":[[316.5,427],[342,430],[367.5,426],[316.5,462],[342,464],[367.5,461],[316.5,497],[342,494],[367.5,498]],"links":[[0,1],[1,2],[0,3],[1,4],[2,5],[3,4],[4,5],[3,6],[4,7],[5,8],[6,7],[7,8]],"neb":[342,462,128],"title":[342,412]},"nonmorti":{"nodes":[[310,338],[310,365],[310,392]],"links":[[0,1],[1,2]],"neb":[310,365,112],"title":[310,324]},"demoniaco":{"nodes":[[354,338],[354,365],[354,392]],"links":[[0,1],[1,2]],"neb":[354,365,112],"title":[354,324]}};
+const MAP_FAM_COLOR = { elementare:'#c1531f', eterei:'#3a5aa8', armonia:'#b89323', entropia:'#5f3f92', demoniaco:'#8f1f1f', nonmorti:'#3d5c40' };
+const MAP_FAM_ORDER = ['elementare','eterei','armonia','entropia','demoniaco','nonmorti'];
+const MAP_NODE_MM = 18;
+const MAP_AUTO_KEY = 'planarEscapeMapAuto';
+let mapPulseId = null, mapPreviewTimer = null, mapPick = null;
+function mapAutoOn(){ try{ return localStorage.getItem(MAP_AUTO_KEY)!=='0'; }catch(e){ return true; } }
+function mapAutoSet(v){ try{ localStorage.setItem(MAP_AUTO_KEY, v?'1':'0'); }catch(e){} }
+function mapLight(hex, k){
+  const n=parseInt(hex.slice(1),16), m=v=>Math.round(v+(255-v)*k);
+  return `rgb(${m((n>>16)&255)},${m((n>>8)&255)},${m(n&255)})`;
+}
+function mapPct(x, y){ return [ (x-MAP_BOX.x)/MAP_BOX.w*100, (y-MAP_BOX.y)/MAP_BOX.h*100 ]; }
+function mapShortName(p){
+  let n = p.name.replace(/ \(.*\)$/,'');
+  if(p.family==='demoniaco' || p.family==='nonmorti') n = n.replace(/^(Il |La |Le |Lo |L')/,'');
+  return n;
+}
+// scaletta dei piani pescati: 15 tacche (livello a 5/10/15, poi si riparte dalla 1 con un nuovo giro: il 1° piano del giro e' Epico)
+function mapLadderInfo(){
+  const act = (state.players||[]).filter(c=>c.status==='active'||c.status==='undead');
+  const j = Math.max(0, ...act.map(c=>c.jumps||0));
+  return { j, t: j===0 ? 0 : ((j-1)%15)+1, lap: j===0 ? 1 : Math.floor((j-1)/15)+1 };
+}
+function mapLadderHtml(mini){
+  const L = mapLadderInfo();
+  let h = `<div class="mladder ${mini?'mini':''}">`;
+  for(let i=1;i<=15;i++){
+    const lv = i%5===0;
+    h += `<span class="mtk ${lv?'lv':''} ${L.t>=i?'past':''} ${L.t===i?'now':''}" title="${lv?('Livello '+(i/5+1)):''}">${mini?'':i}${(!mini && i===1 && L.lap>1)?'<em>⚜️</em>':''}</span>`;
+  }
+  return h + '</div>';
+}
+function mapHtml(opts){
+  opts = opts||{};
+  const inPlay = new Set(planesInPlay().map(p=>p.id));
+  const cur = state.currentDraw && state.currentDraw.planeId;
+  const nodeW = MAP_NODE_MM/MAP_BOX.w*100;
+  let neb='', links='', nodes='', titles='';
+  MAP_FAM_ORDER.forEach(fam=>{
+    const lay = MAP_LAYOUT[fam];
+    const planes = PIANI.filter(p=>p.family===fam);
+    if(!lay || !planes.some(p=>inPlay.has(p.id))) return;
+    const col = MAP_FAM_COLOR[fam];
+    const done = familyCompleted(fam), pr = familyProgress(fam);
+    const [nx,ny,ns] = lay.neb, [pcx,pcy] = mapPct(nx,ny);
+    neb += `<img class="smap-neb" src="assets/ui/mappa_web/nebulosa_${fam}.jpg" alt="" style="left:${pcx}%;top:${pcy}%;width:${ns/MAP_BOX.w*100}%;">`;
+    links += lay.links.map(([a,b])=>`<line x1="${lay.nodes[a][0]-MAP_BOX.x}" y1="${lay.nodes[a][1]-MAP_BOX.y}" x2="${lay.nodes[b][0]-MAP_BOX.x}" y2="${lay.nodes[b][1]-MAP_BOX.y}" stroke="${mapLight(col,.5)}" stroke-opacity="${done?.95:.55}" stroke-width=".7" stroke-linecap="round"/>`).join('');
+    const [tx,ty] = mapPct(lay.title[0], lay.title[1]);
+    titles += `<div class="smap-title ${done?'done':''} ${(fam==='demoniaco'||fam==='nonmorti')?'narrow':''}" style="left:${tx}%;top:${ty}%;color:${mapLight(col,.55)};">${escapeHtml(FAMILIES[fam]?.name||fam)} <small>${pr.done}/${pr.total}</small>${done?' ⚜️':''}</div>`;
+    planes.forEach((p,i)=>{
+      if(!inPlay.has(p.id) || !lay.nodes[i]) return;
+      const [x,y] = mapPct(lay.nodes[i][0], lay.nodes[i][1]);
+      const marked = planeMarked(p.id), isCur = p.id===cur;
+      const cls = ['smap-node', marked?'marked':'', isCur?'cur':'', done?'done':'', opts.pick && !marked ? 'pick':'', opts.pick && marked ? 'dim':''].filter(Boolean).join(' ');
+      nodes += `<div class="${cls}" data-plane="${p.id}" title="${escapeHtml(p.name)}" style="left:${x}%;top:${y}%;width:${nodeW}%;--fc:${col};background-image:url(assets/ui/mappa_web/${fam}_${i}.jpg);">${marked?`<img class="smap-pedina ${opts.newId===p.id?'drop':''}" src="assets/ui/mappa_web/pedina_piano.png" alt="">`:''}</div>
+        <div class="smap-lbl" style="left:${x}%;top:${y + MAP_NODE_MM/2/MAP_BOX.h*100 + .6}%;">${escapeHtml(mapShortName(p))}</div>`;
+    });
+  });
+  return `<div class="smap"><div class="smap-bg">${neb}</div><svg class="smap-links" viewBox="0 0 ${MAP_BOX.w} ${MAP_BOX.h}" preserveAspectRatio="none">${links}</svg>${titles}${nodes}</div>`;
+}
+function mapFullHtml(opts){
+  const L = mapLadderInfo();
+  const fams = MAP_FAM_ORDER.filter(f=>planesInPlay().some(p=>p.family===f));
+  const pick = opts.pick;
+  return `<div class="mdlg-head"><h3>🗺️ Mappa stellare</h3><button class="small" id="btnMapClose">${pick?'Annulla':'✕ Chiudi'}</button></div>
+    ${pick?`<p class="mpick-hint"><strong>${escapeHtml(pick.title)}</strong> ${escapeHtml(pick.hint)} <em>Tocca un nodo senza pedina.</em></p>`:''}
+    <p class="mscroll">↔ Scorri di lato per vedere tutta la mappa.</p><div class="smap-wrap">${mapHtml(opts)}</div>
+    <div class="mfoot">
+      <div class="mfams">${fams.map(f=>{ const pr=familyProgress(f); return `<span class="mchip ${familyCompleted(f)?'done':''}" style="--fc:${MAP_FAM_COLOR[f]}"><i></i>${escapeHtml(FAMILIES[f]?.name||f)} <b>${pr.done}/${pr.total}</b></span>`; }).join('')}</div>
+      <div class="mladder-row"><span class="mlad-label">Piani pescati: salto ${L.j} · giro ${L.lap}${state.epicQueue>0?' · <b>⚜️ Epico in arrivo</b>':''}</span>${mapLadderHtml(false)}</div>
+      <p class="mnote">Una pedina per ogni piano visitato o murato. Ogni 5 piani: livello e mazzo Generico. Famiglia completata (tutti i nodi con la pedina) o primo piano di un nuovo giro: Incontro Epico.</p>
+      <label class="mauto"><input type="checkbox" id="chkMapAuto" ${mapAutoOn()?'checked':''}> Mostra la mappa per un attimo dopo ogni salto</label>
+    </div>`;
+}
+function openMapDialog(opts){
+  opts = opts||{};
+  mapHidePreview();
+  const d = document.getElementById('mapDialog');
+  if(!d) return;
+  document.getElementById('mapDialogInner').innerHTML = mapFullHtml(opts);
+  mapPick = opts.pick || null;
+  if(!d.open) d.showModal();
+  document.getElementById('btnMapClose').onclick = ()=>d.close();
+  const chk = document.getElementById('chkMapAuto');
+  if(chk) chk.onchange = ()=>mapAutoSet(chk.checked);
+  if(opts.pick){
+    document.querySelectorAll('#mapDialog .smap-node.pick').forEach(n=>n.onclick=()=>{
+      const id = n.dataset.plane, pk = mapPick;
+      if(!pk || planeMarked(id)) return;
+      mapPick = null;
+      d.close();
+      pk.onPick(id);
+      render();
+    });
+  }
+}
+// chiusura con X, Esc o click fuori: se era una scelta (Via murata, Mappa stellare) non fatta, torna indietro senza effetti
+(function(){
+  const d = document.getElementById('mapDialog');
+  if(!d) return;
+  d.addEventListener('close', ()=>{
+    if(mapPick){ const pk = mapPick; mapPick = null; if(pk.onCancel) pk.onCancel(); render(); }
+  });
+  d.addEventListener('click', e=>{ if(e.target===d) d.close(); });
+})();
+function mapShowPreview(id){
+  if(!mapAutoOn() || !state) return;
+  const d = document.getElementById('mapDialog');
+  if(d && d.open) return;
+  const el = document.getElementById('mapPreview');
+  if(!el) return;
+  const p = PIANI_BY_ID[id];
+  const n = mapMarks().length, tot = planesInPlay().length;
+  el.innerHTML = `<div class="mprev-head">🗺️ ${escapeHtml(p?mapShortName(p):'')} <small>${n}/${tot} piani con la pedina</small></div>${mapHtml({newId:id})}`;
+  el.classList.add('show');
+  clearTimeout(mapPreviewTimer);
+  mapPreviewTimer = setTimeout(mapHidePreview, 3400);
+}
+function mapHidePreview(){
+  clearTimeout(mapPreviewTimer);
+  const el = document.getElementById('mapPreview');
+  if(el) el.classList.remove('show');
+}
+function renderMapBar(){
+  const fams = MAP_FAM_ORDER.filter(f=>planesInPlay().some(p=>p.family===f));
+  const L = mapLadderInfo();
+  return `<div class="mapbar" id="mapBar" role="button" tabindex="0" title="Apri la mappa stellare">
+    <div class="mapbar-fams">${fams.map(f=>{ const pr=familyProgress(f); return `<span class="mchip ${familyCompleted(f)?'done':''}" style="--fc:${MAP_FAM_COLOR[f]}"><i></i>${escapeHtml(FAMILIES[f]?.name||f)} <b>${pr.done}/${pr.total}</b></span>`; }).join('')}</div>
+    <div class="mapbar-right">${mapLadderHtml(true)}<span class="mapbar-j">salto ${L.j}${L.lap>1?' · giro '+L.lap:''}</span>${state.epicQueue>0?'<span class="mepic">⚜️ Epico</span>':''}<button class="small" id="btnMapOpen">🗺️ Mappa</button></div>
+  </div>`;
+}
+
 
 // +1 permanente a una caratteristica (massimo 6): stessa regola delle ricompense della scala.
 function permBonus(c, stat, why){
