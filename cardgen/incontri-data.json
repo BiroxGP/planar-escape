@@ -1160,7 +1160,7 @@
     "deck": "generico",
     "family": "generico",
     "type": "ricompensa",
-    "text": "Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",
+    "text": "Un legame a distanza si stabilisce con un altro gruppo separato, a tua scelta: al prossimo salto di questo gruppo i due gruppi si riuniscono in uno solo. Se non ci sono altri gruppi separati, non ha effetto.",
     "manual": false,
     "forte": false,
     "persistent": false

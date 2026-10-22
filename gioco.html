@@ -827,7 +827,7 @@ const INCONTRI = {
     C("ge_anomalia","Anomalia temporale","check","Automatico, nessun check: tira 1d6. 1-2 il gruppo perde il turno e resta fermo dov'è (se il piano ha un rischio di fine turno, lo subisce di nuovo); 3-4 nessun effetto; 5 si pesca subito un altro Incontro; 6 +1 risorsa planare a testa.",{anomaliaCard:true}),
     C("ge_randagio","Randagio planare","check","Una creatura minore e spaventata si avvicina, in cerca di un compagno. Nessun check: chi lo accoglie lo lega a sé come compagno (valore 1) — aiuta nei check e assorbe un colpo alla volta negli scontri, finché non si distrugge.",{randagioCard:true}),
     C("ge_superstite","Superstite planare","ricompensa","Un superstite offre la stessa scelta a tre del Viandante smarrito: Resistenza di gruppo (bonus temporaneo: al prossimo piano para il primo danno d'ingresso, di qualunque famiglia), sbircia 2 carte Piani, o rimescola il mazzo.",{reward:{type:"choice3"}}),
-    C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce: il prossimo salto riunirà automaticamente tutti i gruppi separati.",{reward:{type:"syncJump"}}),
+    C("ge_legame","Legame a distanza","ricompensa","Un legame a distanza si stabilisce con un altro gruppo separato, a tua scelta: al prossimo salto di questo gruppo i due gruppi si riuniscono in uno solo. Se non ci sono altri gruppi separati, non ha effetto.",{reward:{type:"linkGroup"}}),
   ],
 };
 // sanity: attach family key to every card
@@ -937,7 +937,7 @@ const SPELLS = {
     S("sp_sguardo","Sguardo Fugace","Guarda la cima del mazzo Piani; se non convince, la rimette in fondo (gratis).",{reward:{type:"peek",n:1,discard:true,noRedraw:true}}),
     S("sp_occhiodestino","Occhio del Destino","Raro: rimescola per intero il mazzo Piani (gratis).",{reward:{type:"reshuffle"}}),
     S("sp_terzocchio","Terzo Occhio","Guarda le prime 3 carte in cima al mazzo, rimettine 1 in fondo.",{reward:{type:"peek",n:3,chooseBottom:true}}),
-    S("sp_vaticinio","Vaticinio","Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",{vaticinioSpell:true,oncePerGame:true}),
+    S("sp_vaticinio","Vaticinio","Una volta per partita: scegli la Famiglia del prossimo salto. Se indovini, per tutta la permanenza nel piano il gruppo para il primo danno subito e ha +1 in qualsiasi Contesa.",{vaticinioSpell:true,oncePerGame:true}),
     S("sp_buonasorte","Buona Sorte","Concede a un compagno 1 reroll, non ricaricabile.",{reward:{type:"grantReroll",n:1}}),
     S("sp_richiamofondo","Richiamo dal Fondo","Rimescola il mazzo Piani, poi guarda la nuova carta in cima: se non convince, la rimette in fondo (gratis). Gratuito.",{reward:{type:"peek",n:1,discard:true,noRedraw:true,reshuffleFirst:true}}),
   ],
@@ -1017,7 +1017,8 @@ function newGame(){
     pendingTempesta:null, // Tempesta di Cenere: {planeId, mainGroupId, splitGroupId, stage:'start'|'main'|'split'}
     richiamoPlaneId:null, // Richiamo di sangue: id del piano su cui ogni danno ai PV costa 1 in più, finché lo si lascia
     noTerrenoNextJump:false, // Stranezza del portale: il prossimo salto non può portare a una destinazione del Piano Terreno
-    pendingReunion:false, // Segnale di richiamo / Legame a distanza: il prossimo salto riunisce tutti
+    pendingReunion:false, // Segnale di richiamo: il prossimo salto riunisce tutti
+    pendingLink:null, // Legame a distanza: {groupId, targetId} — al prossimo salto di groupId i due gruppi si riuniscono
     pendingVaticinio:null, // {groupId, family}: scommessa attiva sulla Famiglia del prossimo salto
     pendingSferaAntiplanare:null, // {groupId}: annulla l'effetto intrinseco del prossimo piano in cui questo gruppo entra
     jumpedThisRound:{}, // {groupId:true}: gruppi separati che hanno già saltato in questo turno sincronizzato — si aspettano a vicenda
@@ -1708,7 +1709,7 @@ function renderCharCard(c){
   ensureGroups();
   const groupIdx = state.groups.length>1 ? state.groups.findIndex(g=>g.memberIds.includes(c.id)) : -1;
   return `<div class="char-card ${dead?'dead':''} ${out?'out':''}">
-    <div class="cname"><img src="assets/classes/${c.cls}.png" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.remove()"> ${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="${t('Vedi la carta della classe')}" style="padding:.1rem .4rem;">🃏</button> ${won?`<span class="badge win">${t('Vittoria')}</span>`:''} ${dead?`<span class="badge dead">${t('Morto')}</span>`:''} ${out?`<span class="badge">${t('Svenuto')}</span>`:''} ${c.status==='undead'?`<span class="badge">${t('Non-morto')}</span>`:''} ${groupIdx>=0?`<span class="badge">${t('Gruppo')} ${groupIdx+1}</span>`:''}</div>
+    <div class="cname">${cls.icon} ${escapeHtml(c.name)} <button class="small" data-viewclass="${c.cls}" title="${t('Vedi la carta della classe')}" style="padding:.1rem .4rem;">🃏</button> ${won?`<span class="badge win">${t('Vittoria')}</span>`:''} ${dead?`<span class="badge dead">${t('Morto')}</span>`:''} ${out?`<span class="badge">${t('Svenuto')}</span>`:''} ${c.status==='undead'?`<span class="badge">${t('Non-morto')}</span>`:''} ${groupIdx>=0?`<span class="badge">${t('Gruppo')} ${groupIdx+1}</span>`:''}</div>
     <div class="ccls">${cls.name} · Lv ${c.level} · ${c.jumps} ${t('salti personali')}</div>
     <div class="stat-dice">
       ${STATS.map(s=>{ const base=c.stats[s], eff=effectiveStat(c,s), d=eff-base; return `<div class="die ${s==='pv'?'pv':(s==='san'?'san':(s==='anima'?'anima':''))} ${d>0?'eq-up':''} ${d<0?'eq-down':''} ${c.tempDebuff[s]||c.planeDebuff?.[s]?'debuff-t':''} ${c.permDebuffN[s]>0?'debuff-p':''} ${c.tempBonus?.[s]?'boost-t':''}" title="${c.planeDebuff?.[s]?t('Depotenziato per tutta la permanenza nel piano'):(c.tempBonus?.[s]?t('Bonus temporaneo, dura fino al prossimo Recupero'):'')}${d!==0?` ${t('Valore effettivo con gli oggetti equipaggiati')}: ${base} ${d>0?'+':'−'} ${Math.abs(d)} = ${eff}`:''}"><div class="lbl">${s}</div>${eff}${d!==0?`<span class="eqd">${d>0?'+':'−'}${Math.abs(d)}</span>`:''}</div>`; }).join('')}
@@ -1831,6 +1832,8 @@ function renderGroupPicker(){
   const groups = state.groups.map(g=>({g, roster:g.memberIds.map(id=>state.players.find(p=>p.id===id)).filter(c=>c && c.status!=='dead' && c.status!=='won')})).filter(x=>x.roster.length>0);
   if(groups.length===0) return '';
   const isSplit = groups.length>1;
+  // rete di sicurezza: se tutti i gruppi risultano "in attesa" nessuno potrebbe piu' saltare (succede se un gruppo gia' saltato viene unito e poi diviso): il turno sincronizzato riparte
+  if(isSplit) maybeResetJumpRound();
   return `<div class="panel center">
     ${isSplit?`<h2>${t('Il portale attende — il gruppo è separato')}</h2>`:`<div class="plane-hero">
       <img src="assets/cards/portale_gruppo.jpg" alt="${t('Il gruppo davanti al portale')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -1971,6 +1974,18 @@ function doJump(){
     mergeAllGroups();
     state.pendingReunion=false;
     logMsg('🔗 Il segnale di richiamo funziona: tutti i separati si ritrovano, il gruppo si riunisce prima di saltare.','good');
+  }
+  if(state.pendingLink){
+    const pl = state.pendingLink;
+    if(pl.groupId===state.currentGroupId){
+      state.pendingLink = null;
+      const tg = state.groups.find(g=>g.id===pl.targetId && g.memberIds.length>0);
+      const mg = state.groups.find(g=>g.id===pl.groupId);
+      if(tg && mg && tg!==mg){
+        logMsg('🔗 Il legame a distanza funziona: i due gruppi si ritrovano e saltano insieme.','good');
+        mergeGroups(tg.id, mg.id);
+      }
+    }
   }
   activeChars().forEach(c=>{
     if(c.pendingPersonalReunion){
@@ -4055,6 +4070,12 @@ function renderRewardPanel(card, acts){
     case 'itemPlusCheck': return `<p class="hint">⚠️ Se il check di Sanità fallisce: depotenziamento temporaneo a San.</p><div>${acts.map(c=>`<button class="small" data-itemcheck="${c.id}">Pesca oggetto e fai il check di Sanità → ${c.name}</button>`).join(' ')}</div>`;
     case 'noTerreno': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto non porterà a una destinazione del Piano Terreno</button>`;
     case 'syncJump': return `<button class="primary" id="btnApplyReward">Segna: il prossimo salto sarà lo stesso per tutti i separati</button>`;
+    case 'linkGroup': {
+      const mine = groupOf(acts[0]);
+      const others = state.groups.filter(g=>g.memberIds.length>0 && (!mine || g.id!==mine.id));
+      if(!others.length) return `<p class="hint">Non ci sono altri gruppi separati: il legame non ha effetto.</p><button class="primary" id="btnApplyReward">Continua</button>`;
+      return `<p class="hint">Scegli con quale gruppo separato stabilire il legame: al prossimo salto di questo gruppo i due si riuniscono.</p><div>${others.map(g=>`<button class="small" data-linkgroup="${g.id}">${groupMembers(g).map(c=>escapeHtml(c.name)).join(', ')}</button>`).join(' ')}</div>`;
+    }
     case 'resourceForSacrifice': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;"><button class="small" data-sacrifice="${c.id}-pv">${c.name}: sacrifica 1 PV → +1 risorsa</button> <button class="small" data-sacrifice="${c.id}-item" ${c.inventory.length?'':'disabled'}>sacrifica oggetto → +1 risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta, non fare nulla</button></div>`;
     case 'tradeItemForItemOrResource': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradeitem="${c.id}-item" ${c.inventory.length?'':'disabled'}>scambia oggetto → nuovo oggetto</button> <button class="small" data-tradeitem="${c.id}-resource" ${c.inventory.length?'':'disabled'}>scambia oggetto → risorsa</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta il baratto</button></div>`;
     case 'tradeForItem': return `<div>${acts.map(c=>`<div style="margin-bottom:.3rem;">${c.name}: <button class="small" data-tradepay="${c.id}-resource" ${c.resources>0?'':'disabled'}>paga 1 risorsa → oggetto</button> <button class="small" data-tradepay="${c.id}-anima">paga 1 Anima → oggetto</button></div>`).join('')}<button id="btnDeclineReward">Rifiuta</button></div>`;
@@ -4083,6 +4104,13 @@ function bindRewardPanel(card, acts){
     if(r.type==='pattoOnore'){ state.pattoOnoreActive=true; logMsg("🤝 Patto d'Onore sigillato: da ora ogni vittoria contro l'Entropia farà trovare un oggetto al gruppo.",'good'); }
     done();
   };
+  document.querySelectorAll('[data-linkgroup]').forEach(b=>b.onclick=()=>{
+    const mine = groupOf(acts[0]);
+    state.pendingLink = { groupId: mine?mine.id:state.currentGroupId, targetId: b.dataset.linkgroup };
+    const tg = state.groups.find(g=>g.id===b.dataset.linkgroup);
+    logMsg(`🔗 Legame a distanza: al prossimo salto di questo gruppo si riunirà con ${tg?groupMembers(tg).map(c=>c.name).join(', '):'l\'altro gruppo'}.`,'good');
+    done();
+  });
   document.querySelectorAll('[data-spellboost]').forEach(b=>b.onclick=()=>{
     const c=acts.find(x=>x.id===b.dataset.spellboost);
     c.nextSpellBoost=true;

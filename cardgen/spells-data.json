@@ -213,7 +213,7 @@
     "id": "sp_vaticinio",
     "name": "Vaticinio",
     "school": "divinazione",
-    "text": "Una volta per partita: indovina la Famiglia del prossimo salto prima di saltare.",
+    "text": "Una volta per partita: scegli la Famiglia del prossimo salto. Se indovini, per tutta la permanenza nel piano il gruppo para il primo danno subito e ha +1 in qualsiasi Contesa.",
     "cost": 0
   },
   {
