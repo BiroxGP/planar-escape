@@ -26,7 +26,7 @@ const BLOCKS_LEFT = [
     '<b>4 · Fine turno.</b> Scattano gli effetti di fine turno, poi si salta di nuovo. Ogni <b>5 salti</b>: livello, +1 a una caratteristica e un potere di classe.',
   ]],
   ['La mappa stellare', [
-    'Sul tabellone ogni piano ha un <b>nodo</b>: quando viene <b>visitato</b> (o <b>murato</b> con Via murata) ci va una <b>pedina</b>. <b>Famiglia completata</b> = tutti i suoi nodi occupati.',
+    'Sul tabellone ogni piano ha un <b>nodo</b>: quando viene <b>visitato</b> ci va una <b>pedina</b>. <b>Famiglia completata</b> = tutti i suoi nodi occupati.',
   ]],
   ['Check', [
     'Tira <b>1d6</b>: riesce se il risultato è <b>≤ al tuo valore</b> in quella caratteristica, oppure se esce un <b>6</b>. Le caratteristiche vanno da 1 a 5 (6 con un bonus temporaneo).',
