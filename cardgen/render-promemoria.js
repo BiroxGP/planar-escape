@@ -22,8 +22,11 @@ const BLOCKS_LEFT = [
   ['Il turno', [
     '<b>1 · Salto.</b> Si pesca la carta Piano in cima al mazzo. Il gruppo salta unito: nel portale è un\'unica entità, quindi la meta è la stessa per tutti. I gruppi possono anche essere <b>separati</b>: ognuno ha il proprio turno (salto, piano, Incontro), e i turni si fanno <b>uno alla volta</b>.',
     '<b>2 · Il piano.</b> Si applica il suo effetto d\'ingresso. Alcuni piani colpiscono a <b>fine turno</b> (Veleno, Tempesta, gironi più bassi del Piano Negativo).',
-    '<b>3 · Incontro.</b> La carta arriva dal mazzo della famiglia del piano; ogni <b>5° piano</b> (come il passaggio di livello) arriva invece dal mazzo <b>Generico</b>.',
+    '<b>3 · Incontro.</b> La carta arriva dal mazzo della famiglia del piano; ogni <b>5° piano</b> (come il passaggio di livello) dal mazzo <b>Generico</b>. Se si <b>completa una famiglia</b> di piani o inizia un <b>nuovo giro</b> della scaletta (16°, 31° salto…), arriva dal mazzo <b>Epico</b>, che vince sul Generico.',
     '<b>4 · Fine turno.</b> Scattano gli effetti di fine turno, poi si salta di nuovo. Ogni <b>5 salti</b>: livello, +1 a una caratteristica e un potere di classe.',
+  ]],
+  ['La mappa stellare', [
+    'Sul tabellone ogni piano ha un <b>nodo</b>: quando viene <b>visitato</b> (o <b>murato</b> con Via murata) ci va una <b>pedina</b>. <b>Famiglia completata</b> = tutti i suoi nodi occupati.',
   ]],
   ['Check', [
     'Tira <b>1d6</b>: riesce se il risultato è <b>≤ al tuo valore</b> in quella caratteristica, oppure se esce un <b>6</b>. Le caratteristiche vanno da 1 a 5 (6 con un bonus temporaneo).',
@@ -66,7 +69,7 @@ const BLOCKS_RIGHT = [
 const SCHOOLS = [
   ['Flusso', 'cura, protezione, benedizioni'],
   ['Essenza', 'magia arcana: illusioni, evocazioni, manipolazione dei portali'],
-  ['Divinazione', 'presagi e informazione: guardare e riordinare il mazzo Piani'],
+  ['Divinazione', 'presagi e informazione: guardare e riordinare il mazzo Piani, murare piani'],
 ];
 
 function blockHtml(b) {
