@@ -54,34 +54,34 @@ async function frontHtml() {
     .card{
       position:relative; width:${CARD_W}px; height:${CARD_H}px; overflow:hidden;
       background:
-        radial-gradient(ellipse 620px 420px at 82% 18%, rgba(184,135,74,.28), transparent 60%),
-        linear-gradient(135deg, #2a1f35 0%, #1c1524 55%, #140f1a 100%);
+        radial-gradient(ellipse 620px 420px at 82% 18%, rgba(184,135,74,.34), transparent 62%),
+        linear-gradient(135deg, #34274a 0%, #251c33 55%, #1a1324 100%);
       color:#f4ecdc; font-family:'Source Serif 4',Georgia,serif;
     }
     .frame{ position:absolute; inset:28px; border:1.5px solid #c9a15a; }
     .corner{ position:absolute; width:16px; height:16px; }
     .title{
       position:absolute; left:56px; top:64px; right:56px;
-      font-family:'Cinzel',serif; font-weight:700; font-size:50px; letter-spacing:.07em;
+      font-family:'Cinzel',serif; font-weight:700; font-size:56px; letter-spacing:.07em;
       background:linear-gradient(90deg,#e7c988,#b8874a); -webkit-background-clip:text; background-clip:text; color:transparent;
     }
     .tagline{
-      position:absolute; left:58px; top:150px;
-      font-style:italic; font-size:21px; color:#e6d7b2; text-shadow:0 1px 3px rgba(0,0,0,.4);
+      position:absolute; left:58px; top:152px;
+      font-style:italic; font-size:30px; color:#e6d7b2; text-shadow:0 1px 3px rgba(0,0,0,.4);
     }
-    .tagline-rule{ position:absolute; left:58px; top:188px; width:290px; height:1px; background:#c9a15a; opacity:.6; }
-    .contact{ position:absolute; left:58px; top:216px; }
-    .contact .name{ font-size:24px; font-weight:600; color:#f9f3e6; }
-    .contact .role{ font-style:italic; font-size:16px; font-weight:500; color:#d6c9b8; margin-top:6px; }
-    .contact .mono{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:16px; letter-spacing:.015em; color:#f2d18f; margin-top:12px; text-shadow:0 1px 2px rgba(0,0,0,.35); }
-    .igrow{ position:absolute; left:58px; top:428px; display:flex; align-items:center; gap:18px; }
-    .igrow .av{ width:84px; height:84px; border-radius:50%; object-fit:cover; transform:scale(1.04); box-shadow:0 0 0 1.5px #c9a15a; }
-    .igrow span{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:19px; letter-spacing:.02em; color:#f2d18f; text-shadow:0 1px 2px rgba(0,0,0,.35); }
-    .qrblock{ position:absolute; right:40px; top:70px; text-align:center; display:flex; gap:22px; }
-    .qrcol{ width:114px; }
-    .qrcol .lbl{ font-family:'Cinzel',serif; font-weight:500; font-size:13px; letter-spacing:.1em; color:#f9f3e6; margin-bottom:8px; }
-    .qrcol img{ width:114px; height:114px; border-radius:6px; box-shadow:0 3px 10px rgba(0,0,0,.45); display:block; }
-    .qrcap{ position:absolute; right:40px; top:264px; width:250px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:13px; color:#d6c9b8; }
+    .tagline-rule{ position:absolute; left:58px; top:204px; width:340px; height:1px; background:#c9a15a; opacity:.6; }
+    .contact{ position:absolute; left:58px; top:226px; }
+    .contact .name{ font-size:34px; font-weight:600; color:#f9f3e6; }
+    .contact .role{ font-style:italic; font-size:25px; font-weight:500; color:#e3d7c4; margin-top:4px; }
+    .contact .mono{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:25px; letter-spacing:.01em; color:#f6d99b; margin-top:10px; text-shadow:0 1px 2px rgba(0,0,0,.35); }
+    .igrow{ position:absolute; left:58px; top:466px; display:flex; align-items:center; gap:20px; }
+    .igrow .av{ width:100px; height:100px; border-radius:50%; object-fit:cover; transform:scale(1.04); box-shadow:0 0 0 1.5px #c9a15a; }
+    .igrow span{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:29px; letter-spacing:.01em; color:#f6d99b; text-shadow:0 1px 2px rgba(0,0,0,.35); }
+    .qrblock{ position:absolute; right:40px; top:62px; text-align:center; display:flex; gap:20px; }
+    .qrcol{ width:136px; }
+    .qrcol .lbl{ font-family:'Cinzel',serif; font-weight:700; font-size:19px; letter-spacing:.08em; color:#fbf6ea; margin-bottom:8px; }
+    .qrcol img{ width:136px; height:136px; border-radius:6px; box-shadow:0 3px 10px rgba(0,0,0,.45); display:block; }
+    .qrcap{ position:absolute; right:40px; top:270px; width:292px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:21px; line-height:1.35; color:#e6dbc8; }
   </style></head><body>
     <div class="card">
       <div class="frame"></div>
@@ -100,7 +100,7 @@ async function frontHtml() {
         <div class="qrcol"><div class="lbl">INSTAGRAM</div><img src="${igQr}"></div>
         <div class="qrcol"><div class="lbl">TIKTOK</div><img src="${ttQr}"></div>
       </div>
-      <div class="qrcap">@planar.escape (IG + TikTok)</div>
+      <div class="qrcap">@planar.escape<br>Instagram + TikTok</div>
     </div>
   </body></html>`;
 }
@@ -112,21 +112,23 @@ function backHtml() {
     body{ background:#0c0810; }
     .card{
       position:relative; width:${CARD_W}px; height:${CARD_H}px; overflow:hidden;
-      background-image:url(${url}); background-size:cover; background-position:center 38%;
+      background:#1a1220;
     }
+    .bg{ position:absolute; inset:0; background-image:url(${url}); background-size:cover; background-position:center 38%; filter:brightness(1.18) saturate(1.08); }
     .overlay{
       position:absolute; left:0; right:0; bottom:0; top:0;
-      background:linear-gradient(to top, rgba(10,7,13,.97) 0%, rgba(10,7,13,.82) 42%, rgba(10,7,13,.4) 68%, transparent 100%);
+      background:linear-gradient(to top, rgba(10,7,13,.9) 0%, rgba(10,7,13,.62) 38%, rgba(10,7,13,.2) 64%, transparent 100%), linear-gradient(to bottom, rgba(10,7,13,.5) 0%, transparent 24%);
     }
     .text{ position:absolute; left:48px; right:48px; bottom:34px; }
     .tagline{
-      font-family:'Cinzel',serif; font-size:42px; line-height:1.22; letter-spacing:.02em; color:#f9f3e6;
+      font-family:'Cinzel',serif; font-size:46px; line-height:1.2; letter-spacing:.02em; color:#fffaf0;
       text-shadow:0 2px 4px rgba(0,0,0,.9), 0 4px 16px rgba(0,0,0,.75);
     }
-    .subtagline{ margin-top:10px; font-family:'Source Serif 4',Georgia,serif; font-style:italic; font-size:19px; color:#e7ddce; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 12px rgba(0,0,0,.7); }
-    .brand{ position:absolute; left:48px; top:32px; font-family:'Cinzel',serif; font-weight:700; font-size:22px; letter-spacing:.12em; color:#f9f3e6; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 10px rgba(0,0,0,.7); }
+    .subtagline{ margin-top:12px; font-family:'Source Serif 4',Georgia,serif; font-style:italic; font-size:26px; color:#f3ead9; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 12px rgba(0,0,0,.7); }
+    .brand{ position:absolute; left:48px; top:30px; font-family:'Cinzel',serif; font-weight:700; font-size:38px; letter-spacing:.1em; color:#fffaf0; text-shadow:0 2px 4px rgba(0,0,0,.85), 0 3px 10px rgba(0,0,0,.7); }
   </style></head><body>
     <div class="card">
+      <div class="bg"></div>
       <div class="overlay"></div>
       <div class="brand">PLANAR ESCAPE</div>
       <div class="text">
