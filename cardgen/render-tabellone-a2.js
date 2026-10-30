@@ -1,4 +1,5 @@
-// Tabellone da tavolo a 4 FOGLI A4 verticali uniti 2x2 (equivalente A2, 406x580mm montato).
+// Tabellone da tavolo a 6 FOGLI A4 verticali (3 colonne x 2 righe, 602x580mm montato): a sinistra il tabellone di sempre, a destra
+// il PERCORSO dei salti (3 colonne da 5 carte Incontro dritte, una per livello) con cornice e sfondo unici.
 //   META' ALTA  (y 0..290)   : i 7 mazzi Incontro (Poker 63,5x88) disposti per poli, il Mazzo Piani (Tarocco 120x70) a sinistra
 //   META' BASSA (y 290..580) : Piano corrente (Tarocco) e Incontro attivo (Poker) vicini al centro in alto, le due catene
 //                              oscure, 4 cluster stellari (36 nodi da 18mm per il segnalino) e la scaletta dei piani pescati
@@ -10,7 +11,7 @@
 // lungo le linee tratteggiate (x=203, y=290). Nessuna zona-carta attraversa y=290; il Generico (centro in alto) sta a
 // cavallo di x=203, tutto il resto no (a parte qualche nodo/tacca, che tollera 1-2mm).
 //
-// Uso: node render-tabellone-a2.js          -> cards_final/print/tabellone_A2_4fogli.pdf (4 pagine) + anteprima
+// Uso: node render-tabellone-a2.js          -> cards_final/print/tabellone_A2_6fogli.pdf (6 pagine) + anteprima
 //      node render-tabellone-a2.js prova    -> solo l'anteprima PNG del tabellone montato (cards_final/altro/tabellone_A2_prova.png)
 //      node render-tabellone-a2.js misure   -> verifica dimensioni e distanze
 const fs = require('fs');
@@ -29,18 +30,20 @@ const JPG_CACHE = path.join(__dirname, '..', 'cards_final', 'print', '_jpgcache'
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 // sfondo UNICO dell'utente (1728x2464 = 7:10): una sola immagine, una sola cornice (le due meta' precedenti sono archiviate come v1/alto/basso)
-const BG_UNICO = path.join(UI, 'tabellone_unico.jpg');
+const BG_UNICO = path.join(UI, 'tabellone_percorso_v2.jpg');   // sfondo ricomposto da cardgen/compose-sfondo-percorso.js (2064x1990)
 
-const BW = 406, BH = 580, HALF = 290;
-const SEAM_X = 203, SEAM_Y = 290;
-const SHEET_DX = 196, SHEET_DY = 283;
+const BW = 602, BH = 580, HALF = 290;
+const SEAMS_X = [203, 399], SEAM_Y = 290;           // linee di taglio verticali (meta' delle sovrapposizioni di 14mm) e orizzontale
+const SHEET_DXS = [0, 196, 392], SHEET_DY = 283;     // dove inizia ciascuna colonna di fogli
+const LEFT_END = 379;                                // il tabellone di prima finisce qui; da qui parte il percorso
+const SLOT = { x: [413.5, 480, 546.5], y0: 72, pitch: 90, w: 63.5, h: 88 };   // 15 caselle del percorso (centri colonna, mm)
 const P = { w: 63.5, h: 88 }, T = { w: 120, h: 70 };
 const NODE_D = 18;
 // MARGINE FISICO: una stampante A4 non stampa i primi 5-7mm del foglio. I fogli esterni (x=0 / x=406, y=0 / y=580) hanno
 // la cornice dello sfondo proprio sul bordo: per non perderla si rimpicciolisce SOLO lo sfondo (non le carte, che restano a
 // misura reale) verso il centro, lasciando 7mm di margine attorno; le zone-carta e i nodi restano dove sono.
 const PRINT_MARGIN = 7;
-const BG_SCALE = (BW - 2 * PRINT_MARGIN) / BW;      // 0,9655
+const BG_SCALE = Math.min((BW - 2 * PRINT_MARGIN) / BW, (BH - 2 * PRINT_MARGIN) / BH);
 const MAPPA = path.join(__dirname, '..', 'cards_final', 'print', '_mappa');   // medaglie e nebulose pronte (node prep-mappa.js)
 const NEB_SIZE = { elementare: 124, eterei: 124, armonia: 124, entropia: 128, demoniaco: 112, nonmorti: 112 };   // mm, lato dell'immagine quadrata
 
@@ -78,7 +81,7 @@ const Y0 = HALF;
 // Piano corrente e Incontro attivo: vicini, ai due lati della giunzione (il taglio cade fra i due)
 const ACTIVE = [
   { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 76, y: Y0 + 31, ...T },
-  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Ogni 5 piani (come il livello):<br>mazzo Generico.<br>Famiglia completata o nuovo<br>giro: mazzo Epico (vince).', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
+  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Risolta, va nel percorso<br>a destra, nella casella<br>del suo salto.<br>Ogni 5° salto: Generico;<br>famiglia completa o nuovo<br>giro: Epico (vince).', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
 ];
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
 const CW = 76, CY = Y0 + 110;
@@ -101,11 +104,6 @@ const PIANI = JSON.parse(fs.readFileSync(path.join(__dirname, 'piani-data.json')
 const planeNames = fam => PIANI.filter(p => p.family === fam).map(p => { const n = p.name.replace(/ \(.*\)$/, ''); return SHORT[n] || n; });
 const nodeAbs = cl => cl.pts.map(([x, y]) => [cl.ox + x, cl.oy + y]);
 
-// scaletta dei piani pescati: 20 tacche; avanzamento di livello a 5/10/15 (3 livelli, come nel gioco)
-const LADDER_N = 15, LADDER_PITCH = 22, LADDER_Y = Y0 + 245, LADDER_D = 14;     // passo 16mm: la tacca 1 e la 20 restano fuori dai nodi d'angolo della cornice
-const LEVEL_AT = { 5: 'LIV. 2', 10: 'LIV. 3', 15: 'LIV. 4' };
-const ladderX = i => SEAM_X + (i - (LADDER_N - 1) / 2 - 0.5) * LADDER_PITCH;      // il taglio cade fra la tacca 8 e la 9
-
 // ---------- HTML ------------------------------------------------------------------------------------
 const CSS = `
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -122,6 +120,8 @@ const CSS = `
   .nl{ position:absolute; text-align:center; font-family:'Source Serif 4',serif; font-size:2.5mm; line-height:1.1; color:#f1e7cc; text-shadow:0 0 1mm #000, 0 0 .6mm #000; width:24mm; }
   .ct{ position:absolute; text-align:center; font-family:'Cinzel',serif; font-weight:700; font-size:3.7mm; letter-spacing:.12em; text-shadow:0 0 1mm #000, 0 0 2mm #000, 0 0 3.5mm #000; }
   .tk{ position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:3.3mm; color:#d9cfae; background:rgba(5,7,18,.6); }
+  .sn{ position:absolute; width:6.4mm; height:6.4mm; border-radius:50%; background:rgba(8,10,24,.86); border:.5mm solid #e7c988; color:#e7c988; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:3.4mm; display:flex; align-items:center; justify-content:center; }
+  .sl{ position:absolute; background:rgba(231,201,136,.92); color:#1a1508; font-family:'Cinzel',serif; font-weight:700; font-size:2.5mm; letter-spacing:.03em; text-align:center; border-radius:1mm; padding:.7mm 0; }
   .tl{ position:absolute; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:2.4mm; letter-spacing:.05em; color:#f1d9a0; width:16mm; text-shadow:0 0 1mm #000; }
 `;
 const outline = (z, col) => `<div class="fr" style="left:${z.x - 1}mm; top:${z.y - 1}mm; width:${z.w + 2}mm; height:${z.h + 2}mm; border:.7mm solid ${col}; box-shadow:0 0 2.4mm ${rgba(col, .65)}, inset 0 0 1.6mm ${rgba(col, .25)};"></div>`;
@@ -148,35 +148,47 @@ function starHtml() {
         <div class="nl" style="left:${x - 12}mm; top:${y + NODE_D / 2 + .8}mm;">${names[i] || ''}</div>`;
     });
   }
-  return neb + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
+  return `<div style="position:absolute; left:0; top:0; width:${LEFT_END}mm; height:${BH}mm; overflow:hidden;">${neb}</div>` + `<svg style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; overflow:visible" viewBox="0 0 ${BW} ${BH}">${svg}</svg>` + html;
 }
-function ladderHtml() {
-  let h = `<div class="ts" style="position:absolute; left:26mm; top:${LADDER_Y - 21}mm; width:340mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.35;">PIANI PESCATI · ogni 5: livello e mazzo Generico · alla 15 (livello massimo) si riparte dalla 1, e il primo piano di ogni nuovo giro è Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato o murato (Via murata) · se esce un piano con il nodo già occupato è murato: si scarta · famiglia completata = tutti i suoi nodi occupati</div>`;
-  for (let i = 0; i < LADDER_N; i++) {
-    const n = i + 1, x = ladderX(i), lv = LEVEL_AT[n];
-    const d = lv ? LADDER_D + 3 : LADDER_D, col = lv ? '#e7c988' : 'rgba(217,207,174,.65)';
-    h += `<div class="tk" style="left:${x - d / 2}mm; top:${LADDER_Y - d / 2}mm; width:${d}mm; height:${d}mm; border:${lv ? '.9mm' : '.5mm'} solid ${col}; ${lv ? 'box-shadow:0 0 2mm #e7c98899; color:#f1d9a0;' : ''}">${n}</div>`;
-    if (n === 1) h += `<div class="tl" style="left:${x + 10}mm; top:${LADDER_Y + d / 2 + 1}mm; width:44mm; text-align:left;">◂ DAL 2° GIRO: EPICO</div>`;
-    if (lv) h += `<div class="tl" style="left:${x - 8}mm; top:${LADDER_Y + d / 2 + 1}mm;">${lv}</div>`;
+// Il PERCORSO dei salti: 15 caselle (3 colonne x 5), numeri nell'angolo, fascia di livello sulle caselle 5/10/15 e legenda.
+// Le nicchie e gli archi sono nello sfondo; qui si stampa solo cio' che serve a leggere il percorso.
+function pathHtml() {
+  let h = '';
+  // lo sfondo e' rimpicciolito del margine fisico (BG_SCALE) attorno al centro: le nicchie dello sfondo si spostano di conseguenza, quindi i testi vanno posti sulle posizioni scalate
+  const cx0 = BW / 2, cy0 = SEAM_Y, PX = v => cx0 + (v - cx0) * BG_SCALE, PY = v => cy0 + (v - cy0) * BG_SCALE;
+  const LV = { 5: 'LIV. 2 + GENERICO', 10: 'LIV. 3 + GENERICO', 15: 'LIV. 4 + GENERICO' };
+  for (let c = 0; c < 3; c++) {
+    const cx = SLOT.x[c];
+    h += `<div class="tl" style="left:${PX(cx) - 10}mm; top:${PY(SLOT.y0) - 3.2}mm; width:20mm;">LIV. ${c + 1}</div>`;
+    for (let r = 0; r < 5; r++) {
+      const n = c * 5 + r + 1, x = PX(cx - SLOT.w / 2), y = PY(SLOT.y0 + r * SLOT.pitch), w = SLOT.w * BG_SCALE, hh = SLOT.h * BG_SCALE;
+      h += `<div class="sn" style="left:${x + 1.8}mm; top:${y + 1.8}mm;">${n}</div>`;
+      if (LV[n]) h += `<div class="sl" style="left:${x + 1.5}mm; top:${y + hh - 8}mm; width:${w - 3}mm;">${LV[n]}</div>`;
+    }
   }
+  // 16° salto: nuovo giro, vicino alla porta in fondo
+  h += `<div class="ts" style="position:absolute; left:${PX(SLOT.x[1]) - 36}mm; top:${PY(539)}mm; width:24mm; text-align:right; font-size:2.9mm; margin:0; color:#f1d9a0;">16° salto ▸</div>`;
+  h += `<div class="ts" style="position:absolute; left:${PX(SLOT.x[1]) + 12}mm; top:${PY(539)}mm; width:30mm; text-align:left; font-size:2.9mm; margin:0; color:#f1d9a0;">◂ nuovo giro: EPICO</div>`;
+  // legenda sotto la mappa
+  h += `<div class="ts" style="position:absolute; left:26mm; top:519mm; width:346mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.4;">PERCORSO · ogni Incontro risolto va nella casella del suo salto (a destra) · 5°, 10°, 15°: livello e mazzo Generico · 16°: nuovo giro, mazzo Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato · famiglia completata = tutti i suoi nodi occupati → Incontro Epico</div>`;
   return h;
 }
 
 function boardHtml() {
   const bgs = `<img class="bg" style="top:0; height:${BH}mm" src="${pathToFileURL(BG_UNICO).href}">`;
-  const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${SEAM_X}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
-  return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + ladderHtml();
+  const wrap = `<div style="position:absolute; left:0; top:0; width:${BW}mm; height:${BH}mm; transform-origin:${BW / 2}mm ${SEAM_Y}mm; transform:scale(${BG_SCALE});">${bgs}</div>`;
+  return wrap + DECKS.map(deckHtml).join('') + ACTIVE.map(activeHtml).join('') + starHtml() + pathHtml();
 }
 
 function sheetHtml(col, row, label) {
-  const sx = col === 0 ? 0 : -SHEET_DX, sy = row === 0 ? 0 : -SHEET_DY;
-  const cutX = col === 0 ? SEAM_X : SEAM_X - SHEET_DX;
+  const sx = -SHEET_DXS[col], sy = row === 0 ? 0 : -SHEET_DY;
   const cutY = row === 0 ? SEAM_Y : SEAM_Y - SHEET_DY;
   const dash = 'repeating-linear-gradient(%DIR%, rgba(235,235,235,.85) 0 1.2mm, transparent 1.2mm 2.4mm)';
-  const cuts = `<div style="position:absolute; left:${cutX - .15}mm; top:0; width:.3mm; height:297mm; background:${dash.replace('%DIR%', '180deg')};"></div>
-    <div style="position:absolute; top:${cutY - .15}mm; left:0; height:.3mm; width:210mm; background:${dash.replace('%DIR%', '90deg')};"></div>`;
+  let cuts = `<div style="position:absolute; top:${cutY - .15}mm; left:0; height:.3mm; width:210mm; background:${dash.replace('%DIR%', '90deg')};"></div>`;
+  SEAMS_X.forEach(sxm => { const x = sxm - SHEET_DXS[col]; if (x > 0 && x < 210) cuts += `<div style="position:absolute; left:${x - .15}mm; top:0; width:.3mm; height:297mm; background:${dash.replace('%DIR%', '180deg')};"></div>`; });
   const rulY = row === 0 ? 285 : 9;     // dentro il navy centrale (mai sopra la cornice)
-  const rul = `<div style="position:absolute; left:24mm; top:${rulY}mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:.8mm; font:2.2mm sans-serif; color:#cfcfcf; width:100mm;">${label} · righello 40mm: se non misura 40mm stampa al 100%</div></div>`;
+  // righello di calibrazione: nelle due colonne di sinistra (nella terza colonna le caselle del percorso occupano tutto lo spazio libero)
+  const rul = col < 2 ? `<div style="position:absolute; left:24mm; top:${rulY}mm; width:40mm;"><div style="height:.3mm; background:#ddd;"></div>${[0, 1, 2, 3, 4].map(m => `<i style="position:absolute; left:${m * 10 - .15}mm; top:-1mm; width:.3mm; height:2.3mm; background:#ddd;"></i>`).join('')}<div style="margin-top:.8mm; font:2.2mm sans-serif; color:#cfcfcf; width:100mm;">${label} · righello 40mm: se non misura 40mm stampa al 100%</div></div>` : '';
   return `<div class="sheet"><div class="board" style="left:${sx}mm; top:${sy}mm;">${boardHtml()}</div>${cuts}${rul}</div>`;
 }
 function docHtml(sheets) {
@@ -192,15 +204,23 @@ function docHtml(sheets) {
 
 function misure() {
   let ok = true;
-  console.log('Zone-carta (mm sul tabellone montato 406x580):');
+  console.log('Zone-carta (mm sul tabellone montato 602x580):');
   const zones = [...DECKS.map(d => ({ n: d.n, x: d.x, y: d.y, w: d.w, h: d.h })), ...ACTIVE.map(a => ({ n: a.n, x: a.x, y: a.y, w: a.w, h: a.h }))];
   for (const z of zones) {
     const x1 = z.x + z.w, y1 = z.y + z.h;
-    const crossY = z.y < SEAM_Y && y1 > SEAM_Y, crossX = z.x < 210 && x1 > 196;     // 196..210 = fascia di sovrapposizione
-    const inFrame = z.x >= 24 && x1 <= 382 && z.y >= (z.y < SEAM_Y ? 25 : SEAM_Y + 25) && y1 <= (z.y < SEAM_Y ? 266 : SEAM_Y + 266);
+    const crossY = z.y < SEAM_Y && y1 > SEAM_Y, crossX = SEAMS_X.some(sx => z.x < sx + 7 && x1 > sx - 7);
+    const inFrame = z.x >= 24 && x1 <= LEFT_END && z.y >= (z.y < SEAM_Y ? 25 : SEAM_Y + 25) && y1 <= (z.y < SEAM_Y ? 266 : SEAM_Y + 266);
     if (crossY || !inFrame) ok = false;
-    console.log(z.n.padEnd(16), `${z.w}x${z.h}`.padEnd(10), `x ${z.x.toFixed(1)}..${x1.toFixed(1)}  y ${z.y}..${y1}`.padEnd(30), crossY ? 'ATTRAVERSA y=290! ' : '', crossX ? '(tocca la fascia di giunzione x 196..210)' : '', inFrame ? '' : ' FUORI DALLA CORNICE?');
+    console.log(z.n.padEnd(16), `${z.w}x${z.h}`.padEnd(10), `x ${z.x.toFixed(1)}..${x1.toFixed(1)}  y ${z.y}..${y1}`.padEnd(30), crossY ? 'ATTRAVERSA y=290! ' : '', crossX ? '(tocca una fascia di giunzione)' : '', inFrame ? '' : ' FUORI DALLA CORNICE?');
   }
+  console.log('Percorso (15 caselle da ' + SLOT.w + 'x' + SLOT.h + 'mm):');
+  for (let c = 0; c < 3; c++) {
+    const x0 = SLOT.x[c] - SLOT.w / 2, x1 = x0 + SLOT.w;
+    const seamOn = SEAMS_X.filter(sx => x0 < sx + 7 && x1 > sx - 7);
+    const rows = [0, 1, 2, 3, 4].filter(r => { const y0 = SLOT.y0 + r * SLOT.pitch; return y0 < SEAM_Y + 7 && y0 + SLOT.h > SEAM_Y - 7; });
+    console.log(`colonna ${c + 1}: x ${x0.toFixed(1)}..${x1.toFixed(1)}${c === 0 ? `  (distanza dal tabellone: ${(x0 - LEFT_END).toFixed(1)}mm)` : ''}; giunzione verticale: ${seamOn.length ? seamOn.join(',') : 'no'}; a cavallo della giunzione orizzontale: carte ${rows.map(r => c * 5 + r + 1).join(', ')}`);
+  }
+  console.log(`distanza fra le colonne: ${(SLOT.x[1] - SLOT.x[0] - SLOT.w).toFixed(1)}mm; bordo destro: ${(BW - 22 - (SLOT.x[2] + SLOT.w / 2)).toFixed(1)}mm; ultima casella finisce a y=${SLOT.y0 + 4 * SLOT.pitch + SLOT.h}mm (cornice bassa da 558)`);
   const all = [];
   for (const cl of CLUSTERS) nodeAbs(cl).forEach(([x, y], i) => all.push({ fam: cl.fam, i, x, y }));
   let minD = 1e9, pair = '';
@@ -211,8 +231,8 @@ function misure() {
   }
   console.log(`Nodi: ${all.length} (attesi 36); distanza minima fra centri ${minD.toFixed(1)}mm (${pair}) => spazio fra nodi ${(minD - NODE_D).toFixed(1)}mm`);
   if (all.length !== 36) ok = false;
-  const onSeam = all.filter(n => Math.abs(n.x - SEAM_X) < NODE_D / 2 + 1).length;
-  console.log(`Nodi sulla giunzione x=203: ${onSeam}; scaletta: taglio fra tacca 8 (${ladderX(7).toFixed(1)}) e 9 (${ladderX(8).toFixed(1)})`);
+  const maxR = Math.max(...all.map(n => n.x + NODE_D / 2 + 12));
+  console.log(`Nodi sulle giunzioni verticali: ${all.filter(n => SEAMS_X.some(sx => Math.abs(n.x - sx) < NODE_D / 2 + 1)).length}; il nodo piu' a destra (con etichetta) arriva a x=${maxR.toFixed(1)} (limite ${LEFT_END})`);
   console.log(ok ? 'OK' : 'ATTENZIONE: controlla gli avvisi sopra');
 }
 
@@ -226,9 +246,9 @@ async function main() {
   const ids = [...new Set(DECKS.flatMap(d => d.retro))];
   await convertAll(ids.map(id => ({ id, srcDir: RETRO, outDir: JPG_CACHE })));
   if (!prova) {
-    const labels = ['1/4 alto-sinistra', '2/4 alto-destra', '3/4 basso-sinistra', '4/4 basso-destra'];
+    const labels = ['1/6 alto-sx', '2/6 alto-centro', '3/6 alto-dx', '4/6 basso-sx', '5/6 basso-centro', '6/6 basso-dx'];
     const parts = [];
-    for (const [i, [c, r]] of [[0, 0], [1, 0], [0, 1], [1, 1]].entries()) {
+    for (const [i, [c, r]] of [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]].entries()) {
       const tmp = path.join(__dirname, '_tmp-a2-' + i + '-' + Date.now() + '.html');
       fs.writeFileSync(tmp, docHtml([sheetHtml(c, r, labels[i])]));
       const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 2 });
@@ -239,7 +259,7 @@ async function main() {
       parts.push(part);
       await page.close(); fs.unlinkSync(tmp);
     }
-    execFileSync(PDFUNITE, [...parts, path.join(OUT_PRINT, 'tabellone_A2_4fogli.pdf')]);
+    execFileSync(PDFUNITE, [...parts, path.join(OUT_PRINT, 'tabellone_A2_6fogli.pdf')]);
     parts.forEach(p => fs.unlinkSync(p));
   }
   // anteprima del tabellone montato
@@ -251,6 +271,6 @@ async function main() {
   await pg.screenshot({ path: path.join(OUT_ALTRO, prova ? 'tabellone_A2_prova.png' : 'tabellone_A2_anteprima.png') });
   await pg.close(); fs.unlinkSync(both);
   await browser.close();
-  console.log(prova ? 'Fatto: anteprima di prova' : 'Fatto: tabellone_A2_4fogli.pdf (4 pagine) + anteprima');
+  console.log(prova ? 'Fatto: anteprima di prova' : 'Fatto: tabellone_A2_6fogli.pdf (6 pagine) + anteprima');
 }
 main().catch(e => { console.error(e); process.exit(1); });

@@ -13,16 +13,16 @@ const OUT = path.join(__dirname, '..', 'assets', 'ui', 'tabellone_percorso_v2.jp
 const PREV = path.join(__dirname, '..', 'cards_final', 'altro', 'percorso_sfondo_anteprima.png');
 const CARDS = ['el_elementale', 'el_vena', 'ar_custode', 'et_incubo', 'ge_viandante', 'en_caos', 'nm_spettro'].map(id => pathToFileURL(path.join(__dirname, '..', 'assets', 'cards', id + '.png')).href);
 
-const PX = 3.4286;                 // px per mm (2112 px / 616 mm)
-const W = 2112, H = 1990;
+const PX = 3.4286;                 // px per mm (3 fogli A4 con 14mm di sovrapposizione = 602 x 580mm: 2064 x 1990 px)
+const W = 2064, H = 1990;
 const GEO = {
   W, H, BORDER: 75, BOT: 1919,
   SRC_W: 2112, SRC_H: 2016, SRC_DIV: 1255, SRC_RIGHT: 2040, SRC_BOTB: 1945,
-  LEFT_END: 1331,                  // x (dest) dove finisce il tabellone originale e inizia la fascia del percorso
-  XK: 0.903,                       // scala orizzontale della fascia di destra
+  LEFT_END: 1299,                  // x (dest) dove finisce il tabellone originale e inizia la fascia del percorso
+  XK: 0.883,                       // scala orizzontale della fascia di destra
   ARCH_SRC: { cx: [1385, 1648, 1905], y0: 98, y1: 360, hw: 140 }, ARCH_S: 0.6, ARCH_DY: 82,
   BODY_SRC: [352, 1600], BODY_DEST_TOP: 233, RING_SRC_Y: 1500,
-  SLOT: { x: [421, 490, 559], w: 63.5, h: 88, y0: 72, pitch: 90 },       // mm
+  SLOT: { x: [413.5, 480, 546.5], w: 63.5, h: 88, y0: 72, pitch: 90 },       // mm
   DOOR: { sx0: 1500, sx1: 1790, sy0: 1640, sy1: 1950, s: 0.36, dy: 1800 },
 };
 
@@ -64,6 +64,7 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
     x.drawImage(base, B, B, G.SRC_DIV - B, G.SRC_BOTB - B, B, B, G.LEFT_END - B, BOT - B);
     // fascia di destra: x scala XK
     const rx = sx => G.LEFT_END + (sx - G.SRC_DIV) * G.XK;
+    const RIGHT_DEST = G.W - (G.SRC_W - G.SRC_RIGHT);
     const rw = G.SRC_RIGHT - G.SRC_DIV;
     const [b0, b1] = G.BODY_SRC;
     const slotTop = Math.round(G.SLOT.y0 * PX), pitchPx = G.SLOT.pitch * PX, slotH = G.SLOT.h * PX;
@@ -107,7 +108,7 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       const rad = 16;
       x.save();
       x.beginPath(); x.roundRect(sx, sy, sw, sh, rad);
-      const tint = [[8,24,52],[30,18,62],[52,34,10]][Math.floor((n - 1) / 5)];
+      const tint = [[8,18,40],[19,15,46],[32,24,20]][Math.floor((n - 1) / 5)];
       x.fillStyle = 'rgba(' + tint[0] + ',' + tint[1] + ',' + tint[2] + ',.84)'; x.fill();
       const g = x.createLinearGradient(0, sy, 0, sy + sh); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(.18, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(255,255,255,.05)');
       x.fillStyle = g; x.fill();
@@ -124,10 +125,10 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       }
     });
     // ---- 5) cornice: bande native sopra, sotto, a sinistra e a destra ----
-    x.drawImage(img, 0, 0, G.SRC_W, B, 0, 0, G.W, B);
+    x.drawImage(img, 0, 0, G.SRC_W, B, 0, 0, G.W, B);   // (la cornice alta e bassa si comprime del 2%)
     x.drawImage(img, 0, G.SRC_BOTB, G.SRC_W, G.SRC_H - G.SRC_BOTB, 0, BOT, G.W, G.H - BOT);
     x.drawImage(img, 0, B, B, G.SRC_BOTB - B, 0, B, B, BOT - B);
-    x.drawImage(img, G.SRC_RIGHT, B, G.SRC_W - G.SRC_RIGHT, G.SRC_BOTB - B, G.SRC_RIGHT, B, G.SRC_W - G.SRC_RIGHT, BOT - B);
+    x.drawImage(img, G.SRC_RIGHT, B, G.SRC_W - G.SRC_RIGHT, G.SRC_BOTB - B, RIGHT_DEST, B, G.SRC_W - G.SRC_RIGHT, BOT - B);
     // separatore dorato sottile fra tabellone e percorso
     x.fillStyle = 'rgba(214,176,106,.55)'; x.fillRect(G.LEFT_END - 3, B, 2.5, BOT - B);
     const finalUrl = cv.toDataURL('image/jpeg', 0.93).split(',')[1];
