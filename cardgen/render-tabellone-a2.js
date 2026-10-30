@@ -30,7 +30,7 @@ const JPG_CACHE = path.join(__dirname, '..', 'cards_final', 'print', '_jpgcache'
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 // sfondo UNICO dell'utente (1728x2464 = 7:10): una sola immagine, una sola cornice (le due meta' precedenti sono archiviate come v1/alto/basso)
-const BG_UNICO = path.join(UI, 'tabellone_percorso_v2.jpg');   // sfondo ricomposto da cardgen/compose-sfondo-percorso.js (2064x1990)
+const BG_UNICO = path.join(UI, 'tabellone_percorso_v2_senzafilo.jpg');   // sfondo ricomposto (versione senza il filo di luce; con il filo: tabellone_percorso_v2.jpg) da cardgen/compose-sfondo-percorso.js (2064x1990)
 
 const BW = 602, BH = 580, HALF = 290;
 const SEAMS_X = [203, 399], SEAM_Y = 290;           // linee di taglio verticali (meta' delle sovrapposizioni di 14mm) e orizzontale
@@ -170,7 +170,8 @@ function pathHtml() {
   h += `<div class="ts" style="position:absolute; left:${PX(SLOT.x[1]) - 36}mm; top:${PY(539)}mm; width:24mm; text-align:right; font-size:2.9mm; margin:0; color:#f1d9a0;">16° salto ▸</div>`;
   h += `<div class="ts" style="position:absolute; left:${PX(SLOT.x[1]) + 12}mm; top:${PY(539)}mm; width:30mm; text-align:left; font-size:2.9mm; margin:0; color:#f1d9a0;">◂ nuovo giro: EPICO</div>`;
   // legenda sotto la mappa
-  h += `<div class="ts" style="position:absolute; left:26mm; top:519mm; width:346mm; text-align:left; font-size:2.8mm; margin:0; line-height:1.4;">PERCORSO · ogni Incontro risolto va nella casella del suo salto (a destra) · 5°, 10°, 15°: livello e mazzo Generico · 16°: nuovo giro, mazzo Epico<br>PEDINE · si mette una pedina sul nodo solo quando il piano viene visitato · famiglia completata = tutti i suoi nodi occupati → Incontro Epico</div>`;
+  h += `<div style="position:absolute; left:${PX(110)}mm; top:${PY(528)}mm; width:${(280) * BG_SCALE}mm; height:.35mm; background:linear-gradient(90deg, transparent, rgba(231,201,136,.7), transparent);"></div>`;
+  h += `<div class="ts" style="position:absolute; left:${PX(30)}mm; top:${PY(531.5)}mm; width:${(338) * BG_SCALE}mm; text-align:center; font-size:3mm; margin:0; line-height:1.45; color:#e1d6b8;">Ogni Incontro risolto va nella casella del suo salto (a destra) · 5°, 10°, 15°: livello e mazzo Generico · 16°: nuovo giro, mazzo Epico<br>Una pedina sul nodo di ogni piano visitato · famiglia completata (tutti i nodi occupati) = Incontro Epico</div>`;
   return h;
 }
 

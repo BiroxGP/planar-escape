@@ -30,13 +30,28 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
 
 (async () => {
   const preview = process.argv.includes('anteprima');
+  const noThread = process.argv.includes('senzafilo');
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM, args: ['--allow-file-access-from-files'] });
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   const tmp = path.join(__dirname, '_compose.html'); fs.writeFileSync(tmp, PAGE);
   await page.goto(pathToFileURL(tmp).href);
-  const res = await page.evaluate(async ([src, G, cards, preview, PX]) => {
+  const res = await page.evaluate(async ([src, G, cards, preview, PX, noThread]) => {
     const load = u => new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = u; });
-    const img = await load(src);
+    let img = await load(src);
+    if (noThread) {   // toglie il filo di polvere di stelle dalla fascia di destra: i puntini luminosi azzurrini piccoli diventano il colore sfocato attorno
+      const cl = document.createElement('canvas'); cl.width = img.naturalWidth; cl.height = img.naturalHeight; const cx = cl.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0);
+      const bl = document.createElement('canvas'); bl.width = cl.width; bl.height = cl.height; const bx2 = bl.getContext('2d', { willReadFrequently: true }); bx2.filter = 'blur(9px)'; bx2.drawImage(img, 0, 0);
+      const X0 = G.SRC_DIV + 3, X1 = G.SRC_RIGHT - 3, Y0 = G.BORDER, Y1 = G.SRC_BOTB - 3;
+      for (let pass = 0; pass < 2; pass++) {
+        const d = cx.getImageData(X0, Y0, X1 - X0, Y1 - Y0), e = bx2.getImageData(X0, Y0, X1 - X0, Y1 - Y0);
+        for (let i = 0; i < d.data.length; i += 4) {
+          const r = d.data[i], g = d.data[i + 1], b = d.data[i + 2], lum = (r * .3 + g * .59 + b * .11), lb = (e.data[i] * .3 + e.data[i + 1] * .59 + e.data[i + 2] * .11);
+          if (b >= r - 6 && lum - lb > 22 && lum > 70) { d.data[i] = e.data[i]; d.data[i + 1] = e.data[i + 1]; d.data[i + 2] = e.data[i + 2]; }
+        }
+        cx.putImageData(d, X0, Y0);
+      }
+      img = cl;
+    }
     const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
     // ---- 0) copia di lavoro della sorgente, senza la porta (clone dei mattoni della colonna 1, ruotati di tinta verso il viola) ----
     const base = mk(G.SRC_W, G.SRC_H), bx = base.getContext('2d'); bx.drawImage(img, 0, 0);
@@ -94,7 +109,7 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
     }
     // filo di luce (polvere di stelle) negli spazi fra le colonne
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    [(G.SLOT.x[0] + G.SLOT.x[1]) / 2, (G.SLOT.x[1] + G.SLOT.x[2]) / 2].forEach((mmx, li) => {
+    if (!noThread) [(G.SLOT.x[0] + G.SLOT.x[1]) / 2, (G.SLOT.x[1] + G.SLOT.x[2]) / 2].forEach((mmx, li) => {
       const x0p = mmx * PX;
       for (let yy = slotTop - 12; yy < slotTop + 4 * pitchPx + slotH + 14; yy += 3.4) {
         const off = Math.sin(yy / 140 + li * 2) * 2.2 + (rnd() - .5) * 3;
@@ -144,8 +159,8 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       prevUrl = pv.toDataURL('image/png').split(',')[1];
     }
     return { finalUrl, prevUrl };
-  }, [pathToFileURL(SRC).href, GEO, CARDS, preview, PX]);
-  fs.writeFileSync(OUT, Buffer.from(res.finalUrl, 'base64'));
+  }, [pathToFileURL(SRC).href, GEO, CARDS, preview, PX, noThread]);
+  fs.writeFileSync(noThread ? OUT.replace('_v2', '_v2_senzafilo') : OUT, Buffer.from(res.finalUrl, 'base64'));
   if (res.prevUrl) { fs.mkdirSync(path.dirname(PREV), { recursive: true }); fs.writeFileSync(PREV, Buffer.from(res.prevUrl, 'base64')); }
   await browser.close(); fs.unlinkSync(tmp);
   console.log('Fatto: ' + OUT);
