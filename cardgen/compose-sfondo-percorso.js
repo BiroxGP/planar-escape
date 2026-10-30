@@ -99,12 +99,12 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       x.drawImage(v, 0, 560, v.naturalWidth, 2400, dx, topBand, dw, 1800 - topBand);
       x.drawImage(v, 0, 3000, v.naturalWidth, 160, dx, 1795, dw, BOT - 1795);
       // archi (da y 40..520 originali) rimpiccioliti per stare nei 36x44mm sopra le caselle; centri colonna dell'immagine: 221, 629, 1045
-      [221, 629, 1045].forEach(cx0 => {
-        const aw = 330, ah = 485, ds = 0.35;
-        feather(x, v, cx0 - aw / 2, 36, aw, ah, dx + cx0 * sx - aw * ds / 2, B + 6, aw * ds, ah * ds, 14);
+      [191, 620, 1037].forEach((cx0, i) => {   // centri degli archi nell'immagine (non coincidono con i centri delle colonne)
+        const aw = 420, ah = 500, ds = 0.34, cxd = dx + [221, 629, 1045][i] * sx;
+        feather(x, v, cx0 - aw / 2, 20, aw, ah, cxd - aw * ds / 2, B + 4, aw * ds, ah * ds, 7);
       });
       // porta (centro colonna 2) rimpicciolita in basso
-      feather(x, v, 629 - 150, 3150, 300, 242, dx + 629 * sx - 150 * 0.5, BOT - 242 * 0.5 - 4, 300 * 0.5, 242 * 0.5, 12);
+      feather(x, v, 625 - 150, 3080, 300, 312, dx + 629 * sx - 150 * 0.4, BOT - 312 * 0.4 - 6, 300 * 0.4, 312 * 0.4, 8);
       const sg = x.createLinearGradient(0, BOT - 22, 0, BOT); sg.addColorStop(0, 'rgba(10,12,28,0)'); sg.addColorStop(1, 'rgba(10,12,28,.9)'); x.fillStyle = sg; x.fillRect(dx, BOT - 22, dw, 22);
     } else {
     // fascia alta (lastra): src 352..445 allungata
