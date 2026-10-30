@@ -61,7 +61,7 @@ function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n 
 
 // ---------- META' ALTA -------------------------------------------------------------------------------
 const ROW1 = 82, ROW2 = 186;                    // file di mazzi Poker: 82..170 e 186..274 (sotto le candele agli angoli dello sfondo, che con la riduzione per il margine fisico arrivano a y~76)
-const COLX = [60, 130.5, 201, 271.5, 342];      // centri delle 5 colonne (passo 70,5: l'ultima resta a 5mm dal percorso a destra; la centrale e' sulla giunzione)
+const COLX = [62, 130.5, 199, 267.5, 336];      // centri delle 5 colonne (passo 68,5, mazzi piu' vicini e lontani dalle cornici; la centrale e' sulla giunzione)
 const zx = i => COLX[i] - P.w / 2;
 const DECKS = [
   { n: 'ARMONIA', col: FAM.armonia.c, x: zx(0), y: ROW1, retro: ['retro_incontro_armonia'] },
@@ -73,31 +73,31 @@ const DECKS = [
   { n: 'MAZZO EPICO', col: '#e7c988', x: zx(2), y: ROW2, retro: ['retro_incontro_epico'] },
   { n: 'DEMONIACO', col: FAM.demoniaco.c, x: zx(4), y: ROW2, retro: ['retro_incontro_demoni'] },
   // il Mazzo Piani da solo a sinistra, separato dai mazzi Incontro (Tarocco, centrato verticalmente nella fila)
-  { n: 'MAZZO PIANI', col: '#c9a15a', x: 28, y: ROW2 + (P.h - T.h) / 2, w: T.w, h: T.h, retro: ['retro_piani'] },
+  { n: 'MAZZO PIANI', col: '#c9a15a', x: 30.25, y: ROW2 + (P.h - T.h) / 2, w: T.w, h: T.h, retro: ['retro_piani'] },
 ].map(d => ({ ...P, ...d }));
 
 // ---------- META' BASSA -------------------------------------------------------------------------------
 const Y0 = HALF;
 // Piano corrente e Incontro attivo: vicini, ai due lati della giunzione (il taglio cade fra i due)
 const ACTIVE = [
-  { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 76, y: Y0 + 31, ...T },
-  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Risolta, va nel percorso<br>a destra, nella casella<br>del suo salto.<br>Ogni 5° salto: Generico;<br>famiglia completa o nuovo<br>giro: Epico (vince).', col: '#aeb4c0', x: 210, y: Y0 + 22, ...P },
+  { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 63.2, y: Y0 + 17, ...T },
+  { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Risolta, va nel percorso<br>a destra, nella casella<br>del suo salto.<br>Ogni 5° salto: Generico;<br>famiglia completa o nuovo<br>giro: Epico (vince).', col: '#aeb4c0', x: 195.2, y: Y0 + 8, ...P },
 ];
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
 const CW = 76, CY = Y0 + 110;
 const G3 = [12.5, 38, 63.5];
 const CLUSTERS = [
-  { fam: 'armonia', ox: 28, oy: CY, w: CW, pts: [[G3[0], 29], [G3[1], 26], [G3[2], 30], [G3[0], 63], [G3[1], 61], [G3[2], 65], [G3[0], 97], [G3[1], 95], [G3[2], 98]],
+  { fam: 'armonia', ox: 32, oy: CY, w: CW, pts: [[G3[0], 29], [G3[1], 26], [G3[2], 30], [G3[0], 63], [G3[1], 61], [G3[2], 65], [G3[0], 97], [G3[1], 95], [G3[2], 98]],
     links: [[0, 1], [1, 2], [3, 4], [4, 5], [6, 7], [7, 8], [0, 3], [3, 6], [1, 4], [4, 7], [2, 5], [5, 8]] },
-  { fam: 'elementare', ox: 114, oy: CY, w: CW, pts: [[25, 28], [51, 26], [G3[0], 62], [G3[1], 61], [G3[2], 63], [25, 96], [51, 97]],
+  { fam: 'elementare', ox: 118, oy: CY, w: CW, pts: [[25, 28], [51, 26], [G3[0], 62], [G3[1], 61], [G3[2], 63], [25, 96], [51, 97]],
     links: [[0, 1], [0, 2], [0, 3], [1, 3], [1, 4], [2, 3], [3, 4], [2, 5], [3, 5], [3, 6], [4, 6], [5, 6]] },
-  { fam: 'eterei', ox: 216, oy: CY, w: CW, pts: [[G3[0], 30], [G3[2], 27], [G3[1], 62], [G3[0], 96], [G3[2], 94]],
+  { fam: 'eterei', ox: 204, oy: CY, w: CW, pts: [[G3[0], 30], [G3[2], 27], [G3[1], 62], [G3[0], 96], [G3[2], 94]],
     links: [[0, 2], [1, 2], [2, 3], [2, 4], [0, 1], [3, 4]] },
-  { fam: 'entropia', ox: 295, oy: CY, w: CW, pts: [[G3[0], 27], [G3[1], 30], [G3[2], 26], [G3[0], 62], [G3[1], 64], [G3[2], 61], [G3[0], 97], [G3[1], 94], [G3[2], 98]],
+  { fam: 'entropia', ox: 290, oy: CY, w: CW, pts: [[G3[0], 27], [G3[1], 30], [G3[2], 26], [G3[0], 62], [G3[1], 64], [G3[2], 61], [G3[0], 97], [G3[1], 94], [G3[2], 98]],
     links: [[0, 1], [1, 2], [0, 3], [1, 4], [2, 5], [3, 4], [4, 5], [3, 6], [4, 7], [5, 8], [6, 7], [7, 8]] },
   // le due catene oscure, insieme sul lato di Entropia (tre gironi / tre livelli)
-  { fam: 'nonmorti', ox: 290, oy: Y0 + 20, w: 40, pts: [[20, 28], [20, 55], [20, 82]], links: [[0, 1], [1, 2]] },
-  { fam: 'demoniaco', ox: 334, oy: Y0 + 20, w: 40, pts: [[20, 28], [20, 55], [20, 82]], links: [[0, 1], [1, 2]] },
+  { fam: 'nonmorti', ox: 286, oy: Y0 + 20, w: 40, pts: [[20, 28], [20, 55], [20, 82]], links: [[0, 1], [1, 2]] },
+  { fam: 'demoniaco', ox: 330, oy: Y0 + 20, w: 40, pts: [[20, 28], [20, 55], [20, 82]], links: [[0, 1], [1, 2]] },
 ];
 const SHORT = { 'Le Porte di Brace': 'Porte di Brace', 'Il Baratro in Fiamme': 'Baratro in Fiamme', "Il Gelo dell'Abisso": "Gelo dell'Abisso", 'La Palude Sconsacrata': 'Palude Sconsacrata', 'Il Velo dei Sussurri': 'Velo dei Sussurri', 'La Voragine della Negatività': 'Voragine' };
 const PIANI = JSON.parse(fs.readFileSync(path.join(__dirname, 'piani-data.json'), 'utf8'));
