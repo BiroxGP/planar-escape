@@ -61,7 +61,7 @@ function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n 
 
 // ---------- META' ALTA -------------------------------------------------------------------------------
 const ROW1 = 82, ROW2 = 186;                    // file di mazzi Poker: 82..170 e 186..274 (sotto le candele agli angoli dello sfondo, che con la riduzione per il margine fisico arrivano a y~76)
-const COLX = [60, 131.5, 203, 274.5, 346];      // centri delle 5 colonne (pitch 71,5; la centrale e' sulla giunzione)
+const COLX = [60, 130.5, 201, 271.5, 342];      // centri delle 5 colonne (passo 70,5: l'ultima resta a 5mm dal percorso a destra; la centrale e' sulla giunzione)
 const zx = i => COLX[i] - P.w / 2;
 const DECKS = [
   { n: 'ARMONIA', col: FAM.armonia.c, x: zx(0), y: ROW1, retro: ['retro_incontro_armonia'] },
@@ -93,7 +93,7 @@ const CLUSTERS = [
     links: [[0, 1], [0, 2], [0, 3], [1, 3], [1, 4], [2, 3], [3, 4], [2, 5], [3, 5], [3, 6], [4, 6], [5, 6]] },
   { fam: 'eterei', ox: 216, oy: CY, w: CW, pts: [[G3[0], 30], [G3[2], 27], [G3[1], 62], [G3[0], 96], [G3[2], 94]],
     links: [[0, 2], [1, 2], [2, 3], [2, 4], [0, 1], [3, 4]] },
-  { fam: 'entropia', ox: 304, oy: CY, w: CW, pts: [[G3[0], 27], [G3[1], 30], [G3[2], 26], [G3[0], 62], [G3[1], 64], [G3[2], 61], [G3[0], 97], [G3[1], 94], [G3[2], 98]],
+  { fam: 'entropia', ox: 295, oy: CY, w: CW, pts: [[G3[0], 27], [G3[1], 30], [G3[2], 26], [G3[0], 62], [G3[1], 64], [G3[2], 61], [G3[0], 97], [G3[1], 94], [G3[2], 98]],
     links: [[0, 1], [1, 2], [0, 3], [1, 4], [2, 5], [3, 4], [4, 5], [3, 6], [4, 7], [5, 8], [6, 7], [7, 8]] },
   // le due catene oscure, insieme sul lato di Entropia (tre gironi / tre livelli)
   { fam: 'nonmorti', ox: 290, oy: Y0 + 20, w: 40, pts: [[20, 28], [20, 55], [20, 82]], links: [[0, 1], [1, 2]] },
