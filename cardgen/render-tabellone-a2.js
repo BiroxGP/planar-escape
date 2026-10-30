@@ -30,7 +30,7 @@ const JPG_CACHE = path.join(__dirname, '..', 'cards_final', 'print', '_jpgcache'
 const OUT_PRINT = path.join(__dirname, '..', 'cards_final', 'print');
 const OUT_ALTRO = path.join(__dirname, '..', 'cards_final', 'altro');
 // sfondo UNICO dell'utente (1728x2464 = 7:10): una sola immagine, una sola cornice (le due meta' precedenti sono archiviate come v1/alto/basso)
-const BG_UNICO = path.join(UI, 'tabellone_percorso_v2_senzafilo.jpg');   // sfondo ricomposto (versione senza il filo di luce; con il filo: tabellone_percorso_v2.jpg) da cardgen/compose-sfondo-percorso.js (2064x1990)
+const BG_UNICO = path.join(UI, 'tabellone_percorso_v3.jpg');   // sfondo ricomposto (fascia verticale rigenerata dall'utente, senza filo; compose: node compose-sfondo-percorso.js fascia senzafilo) da cardgen/compose-sfondo-percorso.js (2064x1990)
 
 const BW = 602, BH = 580, HALF = 290;
 const SEAMS_X = [203, 399], SEAM_Y = 290;           // linee di taglio verticali (meta' delle sovrapposizioni di 14mm) e orizzontale

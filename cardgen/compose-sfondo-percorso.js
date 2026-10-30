@@ -10,6 +10,7 @@ const { chromium } = require('playwright');
 
 const SRC = path.join(__dirname, '..', 'assets', 'ui', 'tabellone_percorso_v1.jpg');
 const OUT = path.join(__dirname, '..', 'assets', 'ui', 'tabellone_percorso_v2.jpg');
+const VERT = path.join(__dirname, '..', 'assets', 'ui', 'fascia_percorso_v1.jpg');   // fascia verticale rigenerata dall'utente (1248x3392), senza filo di luce
 const PREV = path.join(__dirname, '..', 'cards_final', 'altro', 'percorso_sfondo_anteprima.png');
 const CARDS = ['el_elementale', 'el_vena', 'ar_custode', 'et_incubo', 'ge_viandante', 'en_caos', 'nm_spettro'].map(id => pathToFileURL(path.join(__dirname, '..', 'assets', 'cards', id + '.png')).href);
 
@@ -31,11 +32,13 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
 (async () => {
   const preview = process.argv.includes('anteprima');
   const noThread = process.argv.includes('senzafilo');
+  const useVert = process.argv.includes('fascia');
+  if (useVert) { /* niente filo */ }
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM, args: ['--allow-file-access-from-files'] });
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   const tmp = path.join(__dirname, '_compose.html'); fs.writeFileSync(tmp, PAGE);
   await page.goto(pathToFileURL(tmp).href);
-  const res = await page.evaluate(async ([src, G, cards, preview, PX, noThread]) => {
+  const res = await page.evaluate(async ([src, G, cards, preview, PX, noThread, vsrc]) => {
     const load = u => new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = u; });
     let img = await load(src);
     if (noThread) {   // toglie il filo di polvere di stelle dalla fascia di destra: i puntini luminosi azzurrini piccoli diventano il colore sfocato attorno
@@ -86,21 +89,40 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
     const ringDest = slotTop + 4 * pitchPx + slotH / 2;
     const k = (ringDest - G.BODY_DEST_TOP) / (G.RING_SRC_Y - b0);
     const bodyDestBot = G.BODY_DEST_TOP + (b1 - b0) * k;
+    if (vsrc) {
+      const v = await load(vsrc);
+      const sx = (rw * G.XK) / v.naturalWidth;               // scala orizzontale della fascia
+      const dx = G.LEFT_END, dw = rw * G.XK;
+      const topBand = 250;                                    // fascia alta (sotto gli archi) fino a dove parte il corpo
+      // corpo e fasce: la lastra (y 520..700) riempie la fascia alta, il corpo (520..2950) si allunga fino a poco sopra la porta
+      x.drawImage(v, 0, 560, v.naturalWidth, 160, dx, B, dw, topBand - B + 2);
+      x.drawImage(v, 0, 560, v.naturalWidth, 2400, dx, topBand, dw, 1800 - topBand);
+      x.drawImage(v, 0, 3000, v.naturalWidth, 160, dx, 1795, dw, BOT - 1795);
+      // archi (da y 40..520 originali) rimpiccioliti per stare nei 36x44mm sopra le caselle; centri colonna dell'immagine: 221, 629, 1045
+      [221, 629, 1045].forEach(cx0 => {
+        const aw = 330, ah = 485, ds = 0.35;
+        feather(x, v, cx0 - aw / 2, 36, aw, ah, dx + cx0 * sx - aw * ds / 2, B + 6, aw * ds, ah * ds, 14);
+      });
+      // porta (centro colonna 2) rimpicciolita in basso
+      feather(x, v, 629 - 150, 3150, 300, 242, dx + 629 * sx - 150 * 0.5, BOT - 242 * 0.5 - 4, 300 * 0.5, 242 * 0.5, 12);
+      const sg = x.createLinearGradient(0, BOT - 22, 0, BOT); sg.addColorStop(0, 'rgba(10,12,28,0)'); sg.addColorStop(1, 'rgba(10,12,28,.9)'); x.fillStyle = sg; x.fillRect(dx, BOT - 22, dw, 22);
+    } else {
     // fascia alta (lastra): src 352..445 allungata
     x.drawImage(base, G.SRC_DIV, 352, rw, 93, G.LEFT_END, B, rw * G.XK, G.BODY_DEST_TOP - B + 2);
     // corpo
     x.drawImage(base, G.SRC_DIV, b0, rw, b1 - b0, G.LEFT_END, G.BODY_DEST_TOP, rw * G.XK, bodyDestBot - G.BODY_DEST_TOP);
     // zona porta (mattoni, senza porta): src 1600..1945 schiacciata
     x.drawImage(base, G.SRC_DIV, b1, rw, G.SRC_BOTB - b1, G.LEFT_END, bodyDestBot, rw * G.XK, BOT - bodyDestBot);
+    }
     // ---- 2) archi rimpiccioliti ----
     const A = G.ARCH_SRC;
-    A.cx.forEach(cx => {
+    if (!vsrc) A.cx.forEach(cx => {
       const dw = 2 * A.hw * G.ARCH_S, dh = (A.y1 - A.y0) * G.ARCH_S;
       feather(x, img, cx - A.hw, A.y0, 2 * A.hw, A.y1 - A.y0, rx(cx) - dw / 2, G.ARCH_DY, dw, dh, 16);
     });
     // ---- 3) porta rimpicciolita ----
     const D = G.DOOR, dw2 = (D.sx1 - D.sx0) * D.s, dh2 = (D.sy1 - D.sy0) * D.s;
-    feather(x, img, D.sx0, D.sy0, D.sx1 - D.sx0, D.sy1 - D.sy0, rx(1648) - dw2 / 2, D.dy, dw2, dh2, 14);
+    if (!vsrc) feather(x, img, D.sx0, D.sy0, D.sx1 - D.sx0, D.sy1 - D.sy0, rx(1648) - dw2 / 2, D.dy, dw2, dh2, 14);
     // ---- 4) nicchie delle 15 caselle ----
     const slots = [];
     for (let c = 0; c < 3; c++) for (let r = 0; r < 5; r++) {
@@ -124,7 +146,7 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       x.save();
       x.beginPath(); x.roundRect(sx, sy, sw, sh, rad);
       const tint = [[8,18,40],[19,15,46],[32,24,20]][Math.floor((n - 1) / 5)];
-      x.fillStyle = 'rgba(' + tint[0] + ',' + tint[1] + ',' + tint[2] + ',.84)'; x.fill();
+      x.fillStyle = 'rgba(' + tint[0] + ',' + tint[1] + ',' + tint[2] + (vsrc ? ',.95)' : ',.84)'); x.fill();
       const g = x.createLinearGradient(0, sy, 0, sy + sh); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(.18, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(255,255,255,.05)');
       x.fillStyle = g; x.fill();
       x.lineWidth = 3; x.strokeStyle = 'rgba(231,201,136,.42)'; x.stroke();
@@ -159,8 +181,8 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
       prevUrl = pv.toDataURL('image/png').split(',')[1];
     }
     return { finalUrl, prevUrl };
-  }, [pathToFileURL(SRC).href, GEO, CARDS, preview, PX, noThread]);
-  fs.writeFileSync(noThread ? OUT.replace('_v2', '_v2_senzafilo') : OUT, Buffer.from(res.finalUrl, 'base64'));
+  }, [pathToFileURL(SRC).href, GEO, CARDS, preview, PX, noThread, useVert ? pathToFileURL(VERT).href : null]);
+  fs.writeFileSync(useVert ? OUT.replace('_v2', '_v3') : (noThread ? OUT.replace('_v2', '_v2_senzafilo') : OUT), Buffer.from(res.finalUrl, 'base64'));
   if (res.prevUrl) { fs.mkdirSync(path.dirname(PREV), { recursive: true }); fs.writeFileSync(PREV, Buffer.from(res.prevUrl, 'base64')); }
   await browser.close(); fs.unlinkSync(tmp);
   console.log('Fatto: ' + OUT);
