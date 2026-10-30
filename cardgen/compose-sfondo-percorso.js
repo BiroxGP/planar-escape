@@ -166,6 +166,28 @@ const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canva
     x.drawImage(img, 0, G.SRC_BOTB, G.SRC_W, G.SRC_H - G.SRC_BOTB, 0, BOT, G.W, G.H - BOT);
     x.drawImage(img, 0, B, B, G.SRC_BOTB - B, 0, B, B, BOT - B);
     x.drawImage(img, G.SRC_RIGHT, B, G.SRC_W - G.SRC_RIGHT, G.SRC_BOTB - B, RIGHT_DEST, B, G.SRC_W - G.SRC_RIGHT, BOT - B);
+    // i nodi celtici degli angoli sporgono oltre la fascia della cornice: si ridisegnano per intero (la fascia del percorso non deve coprirli)
+    const CS = 138;
+    // maschera del solo nodo metallico (luminosita' alta, dilatata per chiudere le fessure scure), cosi' non si copia lo sfondo navy attorno
+    const cornerKnot = (sx0, sy0) => {
+      const t = mk(CS, CS), tx = t.getContext('2d', { willReadFrequently: true });
+      tx.drawImage(img, sx0, sy0, CS, CS, 0, 0, CS, CS);
+      const d = tx.getImageData(0, 0, CS, CS), m = mk(CS, CS), mx = m.getContext('2d', { willReadFrequently: true }), md = mx.createImageData(CS, CS);
+      for (let i = 0; i < d.data.length; i += 4) { const lum = d.data[i] * .3 + d.data[i + 1] * .59 + d.data[i + 2] * .11; const on = lum > 72 ? 255 : 0; md.data[i] = md.data[i + 1] = md.data[i + 2] = 255; md.data[i + 3] = on; }
+      mx.putImageData(md, 0, 0);
+      const m2 = mk(CS, CS), m2x = m2.getContext('2d', { willReadFrequently: true });
+      m2x.filter = 'blur(7px)'; m2x.drawImage(m, 0, 0); m2x.filter = 'none';
+      const e = m2x.getImageData(0, 0, CS, CS);
+      for (let i = 3; i < e.data.length; i += 4) e.data[i] = e.data[i] > 40 ? 255 : 0;
+      m2x.putImageData(e, 0, 0);
+      const m3 = mk(CS, CS), m3x = m3.getContext('2d'); m3x.filter = 'blur(2px)'; m3x.drawImage(m2, 0, 0);
+      tx.globalCompositeOperation = 'destination-in'; tx.drawImage(m3, 0, 0);
+      return t;
+    };
+    [[0, 0], [G.SRC_W - CS, 0], [0, G.SRC_H - CS], [G.SRC_W - CS, G.SRC_H - CS]].forEach(([sx0, sy0]) => {
+      const dx0 = sx0 === 0 ? 0 : G.W - CS, dy0 = sy0 === 0 ? 0 : G.H - CS;
+      x.drawImage(cornerKnot(sx0, sy0), dx0, dy0);
+    });
     // separatore dorato sottile fra tabellone e percorso
     x.fillStyle = 'rgba(214,176,106,.55)'; x.fillRect(G.LEFT_END - 3, B, 2.5, BOT - B);
     const finalUrl = cv.toDataURL('image/jpeg', 0.93).split(',')[1];
