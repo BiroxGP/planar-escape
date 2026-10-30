@@ -80,7 +80,7 @@ const DECKS = [
 const Y0 = HALF;
 // Piano corrente e Incontro attivo: vicini, ai due lati della giunzione (il taglio cade fra i due)
 const ACTIVE = [
-  { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 63.2, y: Y0 + 17, ...T },
+  { n: 'PIANO CORRENTE', sub: 'Il piano in corso:<br>effetto subito.', col: '#c9a15a', x: 51.2, y: Y0 + 17, ...T },
   { n: 'INCONTRO ATTIVO', sub: 'La carta del turno.<br>Risolta, va nel percorso<br>a destra, nella casella<br>del suo salto.<br>Ogni 5° salto: Generico;<br>famiglia completa o nuovo<br>giro: Epico (vince).', col: '#aeb4c0', x: 195.2, y: Y0 + 8, ...P },
 ];
 // cluster: origine (x,y) = angolo in alto a sinistra dell'area, larghezza 76; punti relativi all'angolo
