@@ -61,7 +61,7 @@ function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n 
 
 // ---------- META' ALTA -------------------------------------------------------------------------------
 const ROW1 = 82, ROW2 = 186;                    // file di mazzi Poker: 82..170 e 186..274 (sotto le candele agli angoli dello sfondo, che con la riduzione per il margine fisico arrivano a y~76)
-const COLX = [62, 130.5, 199, 267.5, 336];      // centri delle 5 colonne (passo 68,5, mazzi piu' vicini e lontani dalle cornici; la centrale e' sulla giunzione)
+const COLX = [65, 133.5, 202, 270.5, 339];      // centri delle 5 colonne (passo 68,5, mazzi piu' vicini e lontani dalle cornici; la centrale e' sulla giunzione)
 const zx = i => COLX[i] - P.w / 2;
 const DECKS = [
   { n: 'ARMONIA', col: FAM.armonia.c, x: zx(0), y: ROW1, retro: ['retro_incontro_armonia'] },
@@ -73,7 +73,7 @@ const DECKS = [
   { n: 'MAZZO EPICO', col: '#e7c988', x: zx(2), y: ROW2, retro: ['retro_incontro_epico'] },
   { n: 'DEMONIACO', col: FAM.demoniaco.c, x: zx(4), y: ROW2, retro: ['retro_incontro_demoni'] },
   // il Mazzo Piani da solo a sinistra, separato dai mazzi Incontro (Tarocco, centrato verticalmente nella fila)
-  { n: 'MAZZO PIANI', col: '#c9a15a', x: 30.25, y: ROW2 + (P.h - T.h) / 2, w: T.w, h: T.h, retro: ['retro_piani'] },
+  { n: 'MAZZO PIANI', col: '#c9a15a', x: 33.25, y: ROW2 + (P.h - T.h) / 2, w: T.w, h: T.h, retro: ['retro_piani'] },
 ].map(d => ({ ...P, ...d }));
 
 // ---------- META' BASSA -------------------------------------------------------------------------------
