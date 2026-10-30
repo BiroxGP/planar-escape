@@ -80,3 +80,10 @@ Un'unica immagine **1736 × 2480 px** (7:10 = 406 × 580mm). Allega come riferim
 - Se la nebulosa in fondo viene troppo luminosa o troppo piccola, aggiungi: *"the nebula vortex is the main subject of the lower half, large, centered, dim and atmospheric"*.
 - Se il bordo ha pezzi diversi tra metà alta e bassa, rigenera con più peso al riferimento del bordo o con la frase: *"the Celtic braid border is one single continuous strip, copy-pasted identically on all four sides"*.
 - Se esce con un rapporto diverso da 7:10, va bene qualsiasi immagine con quel rapporto, la scalo io; meglio se almeno 1600 px di larghezza.
+
+## SFONDO UNICO ALLARGATO (tabellone 616 × 580 mm con il percorso dei salti a destra)
+Immagine **2560 × 2410 px** (rapporto 1,062 = 616 × 580 mm), UNA sola cornice celtica argento su tutti e quattro i lati, stesso stile e stessa palette del tabellone unico attuale (, da allegare come riferimento di stile). Con il prompt allega la guida  (si rigenera dallo schizzo del percorso) scrivendo: *"use this layout only as composition reference: keep the dashed zones calm and dark; do not draw the dashes, boxes or any text"*.
+- **Sinistra (circa i primi due terzi): come il tabellone di prima.** Stanza di pietra in alto con candele e rune sul muro; zona centrale scura e calma per i mazzi e le carte; in basso la nebulosa spirale dove stanno le costellazioni.
+- **Destra (ultimo terzo): fascia del percorso.** Stesso navy profondo e stessa texture di pietra/velluto, un filo piu' calmo e scuro: ci vanno 3 colonne da 5 carte. Una sottile linea verticale dorata a sinistra della fascia, come separatore leggero. Niente nebulose forti ne' simboli in questa fascia.
+- **Cornice:** unica e continua attorno a tutto, nodi celtici agli angoli, nessuna cornice interna.
+- Niente testo, lettere, numeri, personaggi. Margine di 7mm di cornice sul bordo (la stampante non arriva al bordo).
